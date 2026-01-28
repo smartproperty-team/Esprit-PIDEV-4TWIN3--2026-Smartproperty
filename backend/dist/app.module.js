@@ -7,15 +7,108 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
+const mailer_1 = require("@nestjs-modules/mailer");
+const handlebars_adapter_1 = require("@nestjs-modules/mailer/dist/adapters/handlebars.adapter");
+const bull_1 = require("@nestjs/bull");
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const schedule_1 = require("@nestjs/schedule");
+const throttler_1 = require("@nestjs/throttler");
+const typeorm_1 = require("@nestjs/typeorm");
+const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const config_2 = require("./config");
+const validation_schema_1 = require("./config/validation.schema");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [],
+        imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+                envFilePath: ['.env', '.env.development', '.env.local'],
+                load: [
+                    config_2.appConfig,
+                    config_2.databaseConfig,
+                    config_2.jwtConfig,
+                    config_2.redisConfig,
+                    config_2.mailConfig,
+                    config_2.awsConfig,
+                    config_2.throttlerConfig,
+                ],
+                validationSchema: validation_schema_1.validationSchema,
+                validationOptions: {
+                    abortEarly: false,
+                    allowUnknown: true,
+                },
+            }),
+            typeorm_1.TypeOrmModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    type: 'mongodb',
+                    url: configService.get('database.uri'),
+                    database: configService.get('database.database'),
+                    entities: [(0, path_1.join)(__dirname, '**', '*.entity.{ts,js}')],
+                    synchronize: configService.get('app.nodeEnv') !== 'production',
+                    logging: configService.get('app.nodeEnv') === 'development',
+                    useNewUrlParser: true,
+                    useUnifiedTopology: true,
+                }),
+            }),
+            throttler_1.ThrottlerModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    throttlers: [
+                        {
+                            ttl: (configService.get('throttler.ttl') ?? 60) * 1000,
+                            limit: configService.get('throttler.limit') ?? 100,
+                        },
+                    ],
+                }),
+            }),
+            schedule_1.ScheduleModule.forRoot(),
+            bull_1.BullModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    redis: {
+                        host: configService.get('redis.host'),
+                        port: configService.get('redis.port'),
+                        password: configService.get('redis.password'),
+                    },
+                    defaultJobOptions: configService.get('redis.bull.defaultJobOptions'),
+                }),
+            }),
+            mailer_1.MailerModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    transport: {
+                        host: configService.get('mail.host'),
+                        port: configService.get('mail.port'),
+                        secure: configService.get('mail.secure'),
+                        auth: {
+                            user: configService.get('mail.auth.user'),
+                            pass: configService.get('mail.auth.pass'),
+                        },
+                    },
+                    defaults: {
+                        from: `"${configService.get('mail.defaults.from.name')}" <${configService.get('mail.defaults.from.address')}>`,
+                    },
+                    template: {
+                        dir: (0, path_1.join)(__dirname, 'templates', 'emails'),
+                        adapter: new handlebars_adapter_1.HandlebarsAdapter(),
+                        options: {
+                            strict: true,
+                        },
+                    },
+                }),
+            }),
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

@@ -1,0 +1,80 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Welcome to SmartProperty</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        border-radius: 10px 10px 0 0;
+      }
+      .content {
+        background: #f9f9f9;
+        padding: 30px;
+        border: 1px solid #ddd;
+        border-top: none;
+      }
+      .button {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        padding: 12px 30px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        color: #888;
+        font-size: 12px;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='header'>
+      <h1>🏠 SmartProperty</h1>
+      <p>Welcome to the future of property management</p>
+    </div>
+
+    <div class='content'>
+      <h2>Hello {{firstName}}!</h2>
+
+      <p>Welcome to
+        <strong>SmartProperty</strong>! We're excited to have you on board.</p>
+
+      <p>Your account has been successfully created. You can now:</p>
+
+      <ul>
+        <li>🔍 Search and discover properties</li>
+        <li>📝 Submit rental applications</li>
+        <li>💬 Connect with property owners</li>
+        <li>📊 Track your rental journey</li>
+      </ul>
+
+      <p>Click the button below to get started:</p>
+
+      <a href='{{appUrl}}/dashboard' class='button'>Go to Dashboard</a>
+
+      <p>If you have any questions, feel free to reach out to our support team.</p>
+
+      <p>Best regards,<br />The SmartProperty Team</p>
+    </div>
+
+    <div class='footer'>
+      <p>&copy; {{year}} SmartProperty. All rights reserved.</p>
+      <p>This email was sent to {{email}}</p>
+    </div>
+  </body>
+</html>

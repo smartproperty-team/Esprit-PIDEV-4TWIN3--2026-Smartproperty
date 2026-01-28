@@ -99,12 +99,14 @@ SmartProperty aims to:
 
 - **Framework**: [NestJS](https://nestjs.com/) - Progressive Node.js framework
 - **Language**: TypeScript
-- **ORM**: [TypeORM](https://typeorm.io/) - TypeScript-first ORM
-- **Database**: [PostgreSQL](https://www.postgresql.org/) - Advanced open-source relational database
+- **ORM**: [TypeORM](https://typeorm.io/) - TypeScript-first ORM with MongoDB support
+- **Database**: [MongoDB](https://www.mongodb.com/) - NoSQL document database
 - **Cache**: [Redis](https://redis.io/) - In-memory data structure store
-- **Authentication**: JWT (JSON Web Tokens)
+- **Queue**: [Bull](https://github.com/OptimalBits/bull) - Redis-based queue for background jobs
+- **Authentication**: JWT (JSON Web Tokens) with Passport.js
 - **Validation**: class-validator & class-transformer
 - **API Documentation**: Swagger/OpenAPI
+- **Rate Limiting**: @nestjs/throttler
 
 ### AI Services (Planned)
 
@@ -224,22 +226,20 @@ Before you begin, ensure you have the following installed on your system:
 
 - **Node.js** (v18.x or higher) - [Download](https://nodejs.org/)
 - **npm** (v9.x or higher) or **yarn** (v1.22.x or higher)
-- **PostgreSQL** (v14.x or higher) - [Download](https://www.postgresql.org/download/)
-- **Redis** (v7.x or higher) - [Download](https://redis.io/download)
+- **Docker Desktop** - [Download](https://www.docker.com/products/docker-desktop) (for MongoDB, Redis, and other services)
 - **Git** - [Download](https://git-scm.com/downloads)
 
 ### Optional (for AI services)
 
 - **Python** (v3.10 or higher) - [Download](https://www.python.org/downloads/)
 - **pip** (v22.x or higher)
-- **Docker** & **Docker Compose** - [Download](https://www.docker.com/products/docker-desktop)
 
 ### Recommended Tools
 
 - **VS Code** - Code editor with excellent TypeScript support
 - **Postman** or **Insomnia** - API testing
-- **pgAdmin** or **DBeaver** - PostgreSQL database management
-- **Redis Commander** - Redis GUI
+- **Mongo Express** - MongoDB GUI (included in Docker setup, accessible at http://localhost:8081)
+- **Redis Commander** - Redis GUI (included in Docker setup, accessible at http://localhost:8082)
 
 ---
 
@@ -250,11 +250,33 @@ Follow these steps to set up the SmartProperty platform on your local machine:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/waeldaagi/examanspring.git
-cd examanspring
+git clone https://github.com/your-username/smartproperty.git
+cd smartproperty
 ```
 
-### 2. Backend Setup
+### 2. Start Docker Services
+
+Make sure Docker Desktop is running, then start all services:
+
+```bash
+# From project root
+docker-compose up -d
+```
+
+This will start:
+
+- **MongoDB** (port 27017) - NoSQL database
+- **Mongo Express** (port 8081) - MongoDB admin UI
+- **Redis** (port 6379) - Caching and queues
+- **Redis Commander** (port 8082) - Redis admin UI
+- **MailHog** (ports 1025, 8025) - Email testing
+
+**Mongo Express Credentials:**
+
+- Username: `admin`
+- Password: `admin123`
+
+### 3. Backend Setup
 
 ```bash
 # Navigate to backend directory
@@ -263,62 +285,41 @@ cd backend
 # Install dependencies
 npm install
 
-# Copy environment variables template
-cp .env.example .env
-
-# Edit .env file with your configuration
-# Required environment variables:
-# - DATABASE_URL
-# - REDIS_URL
-# - JWT_SECRET
-# - PORT
-nano .env  # or use your preferred editor
+# The .env file should already exist, but verify it has:
+# - MongoDB connection string
+# - Redis configuration
+# - JWT secrets
 ```
 
-**Example `.env` configuration:**
+**Example `.env` configuration (already created):**
 
 ```env
-# Database
-DATABASE_URL=postgresql://postgres:password@localhost:5432/smartproperty
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=password
-DB_NAME=smartproperty
+# Application
+NODE_ENV=development
+PORT=3000
+API_PREFIX=api
+CORS_ORIGIN=http://localhost:5173
+
+# MongoDB
+MONGODB_URI=mongodb://smartproperty:smartproperty123@localhost:27017/smartproperty?authSource=admin
 
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# Application
-PORT=3000
-NODE_ENV=development
+REDIS_PASSWORD=smartproperty_redis_secret
 
 # JWT
-JWT_SECRET=your-super-secret-jwt-key-change-this
-JWT_EXPIRATION=7d
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
+JWT_REFRESH_EXPIRES_IN=30d
 
-# CORS
-CORS_ORIGIN=http://localhost:5173
-
-# File Upload
-MAX_FILE_SIZE=10485760
-UPLOAD_DIR=./uploads
+# Rate Limiting
+THROTTLE_TTL=60
+THROTTLE_LIMIT=100
 ```
 
-```bash
-# Create database
-createdb smartproperty
-
-# Run migrations
-npm run migration:run
-
-# Seed database (optional)
-npm run seed
-```
-
-### 3. Frontend Setup
+### 4. Frontend Setup
 
 ```bash
 # Navigate to frontend directory (from project root)
@@ -326,65 +327,14 @@ cd frontend
 
 # Install dependencies
 npm install
-
-# Copy environment variables template
-cp .env.example .env
-
-# Edit .env file with backend API URL
-nano .env
 ```
 
-**Example `.env` configuration:**
+**Example `.env` configuration (already created):**
 
 ```env
 VITE_API_URL=http://localhost:3000/api
 VITE_APP_NAME=SmartProperty
-VITE_ENABLE_ANALYTICS=false
-```
-
-### 4. Redis Setup
-
-**Using Docker (Recommended):**
-
-```bash
-docker run -d --name smartproperty-redis -p 6379:6379 redis:7-alpine
-```
-
-**Or install locally:**
-
-- Follow the [Redis installation guide](https://redis.io/docs/getting-started/installation/) for your OS
-
-### 5. Database Setup
-
-```bash
-# Start PostgreSQL service
-# On macOS with Homebrew:
-brew services start postgresql
-
-# On Linux:
-sudo service postgresql start
-
-# Create database user (if needed)
-psql postgres
-CREATE USER smartproperty WITH PASSWORD 'your-password';
-CREATE DATABASE smartproperty OWNER smartproperty;
-GRANT ALL PRIVILEGES ON DATABASE smartproperty TO smartproperty;
-\q
-```
-
-### 6. Using Docker Compose (Alternative)
-
-For a simpler setup, use Docker Compose to run all services:
-
-```bash
-# From project root
-docker-compose up -d
-
-# This will start:
-# - PostgreSQL database
-# - Redis cache
-# - Backend API
-# - Frontend application
+VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ```
 
 ---
@@ -393,7 +343,13 @@ docker-compose up -d
 
 ### Development Mode
 
-**Run Backend:**
+**1. Ensure Docker services are running:**
+
+```bash
+docker-compose up -d
+```
+
+**2. Run Backend:**
 
 ```bash
 cd backend
@@ -455,10 +411,36 @@ docker-compose down
 
 ---
 
+## 🌐 Development Services & URLs
+
+When running locally, the following services are available:
+
+| Service             | URL                              | Description                       |
+| ------------------- | -------------------------------- | --------------------------------- |
+| **Backend API**     | http://localhost:3000            | NestJS REST API                   |
+| **Swagger Docs**    | http://localhost:3000/api/docs   | Interactive API documentation     |
+| **Health Check**    | http://localhost:3000/api/health | API health status                 |
+| **Frontend**        | http://localhost:5173            | React development server          |
+| **Mongo Express**   | http://localhost:8081            | MongoDB admin UI (admin/admin123) |
+| **Redis Commander** | http://localhost:8082            | Redis admin UI                    |
+| **MailHog**         | http://localhost:8025            | Email testing UI                  |
+
+### Docker Container Ports
+
+| Container       | Internal Port | External Port |
+| --------------- | ------------- | ------------- |
+| MongoDB         | 27017         | 27017         |
+| Redis           | 6379          | 6379          |
+| Mongo Express   | 8081          | 8081          |
+| Redis Commander | 8081          | 8082          |
+| MailHog SMTP    | 1025          | 1025          |
+| MailHog Web     | 8025          | 8025          |
+
+---
+
 ## 📜 Available Scripts
 
 ### Backend Scripts
-
 
 | Script                       | Description                                               |
 | ---------------------------- | --------------------------------------------------------- |
@@ -478,7 +460,6 @@ docker-compose down
 | `npm run seed`               | Seed the database with initial data                       |
 
 ### Frontend Scripts
-
 
 | Script                  | Description                              |
 | ----------------------- | ---------------------------------------- |
@@ -922,36 +903,36 @@ For partnership or business inquiries:
 
 #### Phase 1: MVP (Q1 2026) - In Progress
 
-- [X]  Project setup and architecture
-- [X]  Basic authentication system
-- [X]  Property listing CRUD operations
-- [ ]  User management
-- [ ]  Property search functionality
-- [ ]  Basic frontend UI
+- [x] Project setup and architecture
+- [x] Basic authentication system
+- [x] Property listing CRUD operations
+- [ ] User management
+- [ ] Property search functionality
+- [ ] Basic frontend UI
 
 #### Phase 2: Core Features (Q2 2026)
 
-- [ ]  Advanced property search with filters
-- [ ]  Rental application workflow
-- [ ]  Payment integration
-- [ ]  Notification system
-- [ ]  Dashboard analytics
-- [ ]  Mobile responsive design
+- [ ] Advanced property search with filters
+- [ ] Rental application workflow
+- [ ] Payment integration
+- [ ] Notification system
+- [ ] Dashboard analytics
+- [ ] Mobile responsive design
 
 #### Phase 3: AI Integration (Q3 2026)
 
-- [ ]  Property recommendation engine
-- [ ]  Price prediction model
-- [ ]  Image classification
-- [ ]  NLP-powered search
+- [ ] Property recommendation engine
+- [ ] Price prediction model
+- [ ] Image classification
+- [ ] NLP-powered search
 
 #### Phase 4: Enhancement (Q4 2026)
 
-- [ ]  Virtual tours
-- [ ]  Advanced analytics
-- [ ]  Multi-language support
-- [ ]  Mobile app (React Native)
-- [ ]  Third-party integrations
+- [ ] Virtual tours
+- [ ] Advanced analytics
+- [ ] Multi-language support
+- [ ] Mobile app (React Native)
+- [ ] Third-party integrations
 
 ### Known Limitations
 
