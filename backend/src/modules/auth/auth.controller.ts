@@ -3,6 +3,7 @@
 // ===========================================
 
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -27,6 +28,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { User } from '../users/entities/user.entity';
 import { AuthResponse, AuthService, AuthTokens } from './auth.service';
 import {
   ChangePasswordDto,
@@ -141,10 +143,14 @@ export class AuthController {
     status: 401,
     description: 'Invalid refresh token',
   })
-  async refreshTokens(
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ): Promise<AuthTokens> {
-    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+  async refreshTokens(@Req() req: Request): Promise<AuthTokens> {
+    const refreshToken = (req.body as { refreshToken?: string })?.refreshToken;
+    if (!refreshToken) {
+      throw new BadRequestException(
+        'Refresh token is required in request body',
+      );
+    }
+    return this.authService.refreshTokens(refreshToken);
   }
 
   // ===========================================
@@ -162,9 +168,9 @@ export class AuthController {
   })
   async logout(
     @CurrentUser('id') userId: string,
-    @Body() body: { refreshToken?: string },
+    @Body() body?: { refreshToken?: string },
   ): Promise<{ message: string }> {
-    await this.authService.logout(userId, body.refreshToken);
+    await this.authService.logout(userId, body?.refreshToken);
     return { message: 'Logged out successfully' };
   }
 
@@ -179,11 +185,11 @@ export class AuthController {
   })
   async logoutAll(
     @CurrentUser('id') userId: string,
-    @Body() body: { currentSessionId?: string },
+    @Body() body?: { currentSessionId?: string },
   ): Promise<{ message: string; revokedCount: number }> {
     const { revokedCount } = await this.authService.revokeAllSessions(
       userId,
-      body.currentSessionId,
+      body?.currentSessionId,
     );
     return {
       message: `Logged out from ${revokedCount} device(s)`,
@@ -301,7 +307,7 @@ export class AuthController {
     status: 401,
     description: 'Not authenticated',
   })
-  async getCurrentUser(@CurrentUser() user: any) {
+  getCurrentUser(@CurrentUser() user: Partial<User>) {
     return user;
   }
 

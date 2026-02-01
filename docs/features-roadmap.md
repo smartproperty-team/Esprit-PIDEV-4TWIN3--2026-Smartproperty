@@ -52,6 +52,9 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [x] Token refresh endpoint
 - [x] Token blacklisting on logout
 - [x] Multiple device session management (max 5 sessions, device tracking, revocation)
+- [x] Session list endpoint with device info
+- [x] Single session revocation endpoint
+- [x] Logout from all devices endpoint
 
 ### Password Management
 
@@ -83,12 +86,14 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 - [x] User entity with TypeORM/MongoDB
 - [x] User roles (admin, owner, tenant, manager, agent)
-- [ ] User profile entity (extended info)
+- [x] User status (active, inactive, suspended, pending_verification)
+- [x] Full user profile fields (firstName, lastName, phone, avatar, etc.)
 - [ ] Avatar upload and storage
 
 ### User CRUD Operations
 
-- [x] Get current user profile
+- [x] Get current user profile (/auth/me endpoint)
+- [x] Get user sessions with device info
 - [ ] Update user profile
 - [ ] Change email (with verification)
 - [ ] Deactivate account
@@ -392,13 +397,17 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [x] React 19 + Vite configuration
 - [x] TailwindCSS v4 styling
 - [x] React Router setup
-- [x] Zustand state management
-- [x] Axios API client
+- [x] Zustand state management with localStorage persistence
+- [x] Axios API client with token refresh interceptors
 - [x] React Hook Form + Zod validation
+- [x] Custom useAuth hook with auto-initialization
+- [x] Form validation utilities (email, password, phone)
+- [x] Error handling utilities
+- [x] Auth configuration constants
 
 ### Layout & Navigation
 
-- [ ] Main layout component
+- [x] Main layout component (Dashboard header)
 - [ ] Responsive navigation
 - [ ] Footer component
 - [ ] Sidebar (dashboard)
@@ -406,20 +415,23 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 ### Authentication Pages
 
-- [x] Login page
-- [x] Registration page
+- [x] Login page with validation
+- [x] Registration page with password requirements display
 - [x] Forgot password page
 - [x] Reset password page
-- [x] Email verification page
+- [x] Email verification page with auto-redirect to dashboard
 - [x] Protected route wrapper
+- [x] Sessions management page (view/revoke)
 
 ### Dashboard
 
-- [x] Dashboard layout
+- [x] Dashboard layout with header and user menu
+- [x] Email verification status alert
 - [ ] Overview widgets
 - [ ] Quick actions
 - [ ] Recent activity
 - [x] Notifications dropdown
+- [x] User profile card
 
 ### Property Pages
 

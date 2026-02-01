@@ -4,12 +4,15 @@
 
 import { Building2, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, CardContent } from "../../components/ui";
 import { authService } from "../../services";
+import { useAuthStore } from "../../store";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const checkAuth = useAuthStore((state) => state.checkAuth);
   const token = searchParams.get("token");
 
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -29,6 +32,15 @@ export default function VerifyEmailPage() {
         const response = await authService.verifyEmail({ token });
         setStatus("success");
         setMessage(response.message);
+
+        // Update the auth store with the latest user data
+        // so the email verification status is reflected immediately
+        await checkAuth();
+
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 2000);
       } catch (err: unknown) {
         setStatus("error");
         const errorMessage =
@@ -40,7 +52,7 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
-  }, [token]);
+  }, [token, checkAuth, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12">
@@ -76,8 +88,11 @@ export default function VerifyEmailPage() {
                   Email Verified!
                 </h2>
                 <p className="mt-2 text-center text-gray-600">{message}</p>
-                <Link to="/login" className="mt-6">
-                  <Button size="lg">Continue to Login</Button>
+                <p className="mt-4 text-sm text-gray-500">
+                  Redirecting to dashboard in a few seconds...
+                </p>
+                <Link to="/dashboard" className="mt-6">
+                  <Button size="lg">Go to Dashboard</Button>
                 </Link>
               </>
             )}

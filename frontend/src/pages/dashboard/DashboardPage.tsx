@@ -162,8 +162,8 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Email verification warning */}
-        {user && !user.isEmailVerified && (
+        {/* Email verification warning - only show after initial load */}
+        {!isLoading && user && !user.isEmailVerified && (
           <div className="mb-6">
             <Alert
               type="warning"
