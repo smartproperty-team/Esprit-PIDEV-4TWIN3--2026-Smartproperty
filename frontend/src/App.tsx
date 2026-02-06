@@ -15,6 +15,7 @@ import {
   VerifyEmailPage,
 } from "./pages/auth";
 import { DashboardPage, SessionsPage } from "./pages/dashboard";
+import { HomePage } from "./pages/home";
 import { useAuthStore } from "./store";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
+      <Route path="/" element={<HomePage />} />
       <Route
         path="/login"
         element={
@@ -64,14 +66,6 @@ function App() {
           <ProtectedRoute>
             <SessionsPage />
           </ProtectedRoute>
-        }
-      />
-
-      {/* Default Route */}
-      <Route
-        path="/"
-        element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
         }
       />
 
