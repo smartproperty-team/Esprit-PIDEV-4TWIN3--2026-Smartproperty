@@ -36,6 +36,7 @@ import {
 } from './dto/auth.dto';
 import { Session } from './entities/session.entity';
 import { DeviceInfo, SessionService } from './session.service';
+import { FacebookProfile } from './strategies/facebook.strategy';
 import { GoogleProfile } from './strategies/google.strategy';
 
 // ===========================================
@@ -693,6 +694,84 @@ export class AuthService {
       user._id.toHexString(),
       tokens.refreshToken,
       deviceInfo || { deviceName: 'Google OAuth Login' },
+    );
+
+    return {
+      user: user.toJSON(),
+      tokens,
+      sessionId: session.id,
+    };
+  }
+
+  // ===========================================
+  // Facebook OAuth Login
+  // ===========================================
+
+  async facebookLogin(
+    facebookProfile: FacebookProfile,
+    deviceInfo?: DeviceInfo,
+  ): Promise<AuthResponse> {
+    const { email, firstName, lastName, avatar, facebookId } = facebookProfile;
+
+    // Check if user exists with this Facebook ID
+    let user = await this.userRepository.findOne({
+      where: { facebookId },
+    });
+
+    if (!user) {
+      // Check if user exists with the same email
+      user = await this.userRepository.findOne({
+        where: { email: email.toLowerCase() },
+      });
+
+      if (user) {
+        // Link Facebook account to existing user
+        user.facebookId = facebookId;
+        user.authProvider = AuthProvider.FACEBOOK;
+        if (!user.avatar && avatar) {
+          user.avatar = avatar;
+        }
+        // Facebook accounts are pre-verified
+        user.isEmailVerified = true;
+        if (user.status === UserStatus.PENDING_VERIFICATION) {
+          user.status = UserStatus.ACTIVE;
+        }
+        await this.userRepository.save(user);
+      } else {
+        // Create new user with Facebook account
+        user = this.userRepository.create({
+          email: email.toLowerCase(),
+          firstName,
+          lastName,
+          avatar,
+          facebookId,
+          authProvider: AuthProvider.FACEBOOK,
+          role: UserRole.TENANT,
+          status: UserStatus.ACTIVE,
+          isEmailVerified: true, // Facebook accounts are pre-verified
+        });
+
+        await this.userRepository.save(user);
+      }
+    }
+
+    // Check if account is suspended
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('Account is suspended');
+    }
+
+    // Update last login
+    user.resetLoginAttempts();
+    await this.userRepository.save(user);
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    // Create session for this device
+    const session = await this.sessionService.createSession(
+      user._id.toHexString(),
+      tokens.refreshToken,
+      deviceInfo || { deviceName: 'Facebook OAuth Login' },
     );
 
     return {

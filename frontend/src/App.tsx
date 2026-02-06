@@ -7,6 +7,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { ProtectedRoute } from "./components/auth";
 import {
+  FacebookCallbackPage,
   ForgotPasswordPage,
   GoogleCallbackPage,
   LoginPage,
@@ -50,6 +51,10 @@ function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+      <Route
+        path="/auth/facebook/callback"
+        element={<FacebookCallbackPage />}
+      />
 
       {/* Protected Routes */}
       <Route

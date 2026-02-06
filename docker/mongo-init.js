@@ -41,12 +41,16 @@ db.createCollection("users", {
           description: "User account status",
         },
         authProvider: {
-          enum: ["local", "google"],
+          enum: ["local", "google", "facebook"],
           description: "Authentication provider",
         },
         googleId: {
           bsonType: "string",
           description: "Google OAuth ID",
+        },
+        facebookId: {
+          bsonType: "string",
+          description: "Facebook OAuth ID",
         },
         isEmailVerified: {
           bsonType: "bool",

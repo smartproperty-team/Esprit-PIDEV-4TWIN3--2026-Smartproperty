@@ -13,6 +13,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Session } from './entities/session.entity';
 import { SessionService } from './session.service';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -28,6 +29,22 @@ const googleStrategyFactory: Provider = {
       return new GoogleStrategy(configService);
     }
     // Return null if Google OAuth is not configured
+    return null;
+  },
+  inject: [ConfigService],
+};
+
+// Factory to conditionally provide FacebookStrategy only when credentials exist
+const facebookStrategyFactory: Provider = {
+  provide: FacebookStrategy,
+  useFactory: (configService: ConfigService) => {
+    const clientId = configService.get<string>('facebook.clientId');
+    const clientSecret = configService.get<string>('facebook.clientSecret');
+
+    if (clientId && clientSecret) {
+      return new FacebookStrategy(configService);
+    }
+    // Return null if Facebook OAuth is not configured
     return null;
   },
   inject: [ConfigService],
@@ -63,6 +80,7 @@ const googleStrategyFactory: Provider = {
     JwtStrategy,
     JwtRefreshStrategy,
     googleStrategyFactory,
+    facebookStrategyFactory,
   ],
   exports: [AuthService, SessionService, JwtModule, PassportModule],
 })

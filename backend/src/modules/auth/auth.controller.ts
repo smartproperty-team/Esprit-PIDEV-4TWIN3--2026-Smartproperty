@@ -44,10 +44,12 @@ import {
   VerifyEmailDto,
 } from './dto/auth.dto';
 import { Session } from './entities/session.entity';
+import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { SessionService } from './session.service';
+import { FacebookProfile } from './strategies/facebook.strategy';
 import { GoogleProfile } from './strategies/google.strategy';
 
 // ===========================================
@@ -189,6 +191,79 @@ export class AuthController {
     // Redirect to frontend with tokens in URL params
     const frontendCallbackUrl = this.configService.get<string>(
       'google.frontendCallbackUrl',
+    );
+
+    const params = new URLSearchParams({
+      accessToken: authResponse.tokens.accessToken,
+      refreshToken: authResponse.tokens.refreshToken,
+      expiresIn: authResponse.tokens.expiresIn.toString(),
+    });
+
+    res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
+  }
+
+  // ===========================================
+  // Facebook OAuth
+  // ===========================================
+
+  private isFacebookOAuthConfigured(): boolean {
+    const clientId = this.configService.get<string>('facebook.clientId');
+    const clientSecret = this.configService.get<string>(
+      'facebook.clientSecret',
+    );
+    return !!(clientId && clientSecret);
+  }
+
+  @Public()
+  @Get('facebook')
+  @UseGuards(FacebookOAuthGuard)
+  @ApiOperation({ summary: 'Initiate Facebook OAuth login' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to Facebook OAuth consent screen',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Facebook OAuth is not configured',
+  })
+  async facebookAuth(): Promise<void> {
+    if (!this.isFacebookOAuthConfigured()) {
+      throw new ServiceUnavailableException(
+        'Facebook OAuth is not configured. Please set FACEBOOK_CLIENT_ID and FACEBOOK_CLIENT_SECRET environment variables.',
+      );
+    }
+    // Guard redirects to Facebook
+  }
+
+  @Public()
+  @Get('facebook/callback')
+  @UseGuards(FacebookOAuthGuard)
+  @ApiOperation({ summary: 'Facebook OAuth callback' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to frontend with auth tokens',
+  })
+  async facebookAuthCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!this.isFacebookOAuthConfigured()) {
+      throw new ServiceUnavailableException(
+        'Facebook OAuth is not configured.',
+      );
+    }
+
+    const facebookProfile = req.user as FacebookProfile;
+    const deviceInfo = this.getDeviceInfo(req);
+
+    const authResponse = await this.authService.facebookLogin(
+      facebookProfile,
+      deviceInfo,
+    );
+
+    // Redirect to frontend with tokens in URL params
+    const frontendCallbackUrl = this.configService.get<string>(
+      'facebook.frontendCallbackUrl',
     );
 
     const params = new URLSearchParams({
