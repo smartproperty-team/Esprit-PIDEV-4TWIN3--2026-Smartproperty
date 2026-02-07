@@ -316,7 +316,7 @@ export default function HomePage() {
           <h1 id="hero-title" className="hero-title">
             The <span className="highlight">#1</span> site real estate
             <br />
-            <span className="hero-title-secondary">professionals trust*</span>
+            <span className="hero-title-secondary">professionals trust</span>
           </h1>
 
           {/* Search Tabs */}
@@ -424,23 +424,7 @@ export default function HomePage() {
             </div>
           </form>
 
-          {/* Trust Indicators */}
-          <div className="trust-indicators" aria-label="Trust statistics">
-            <div className="trust-item">
-              <span className="trust-number">50K+</span>
-              <span className="trust-label">Properties</span>
-            </div>
-            <div className="trust-divider" aria-hidden="true"></div>
-            <div className="trust-item">
-              <span className="trust-number">10K+</span>
-              <span className="trust-label">Customers</span>
-            </div>
-            <div className="trust-divider" aria-hidden="true"></div>
-            <div className="trust-item">
-              <span className="trust-number">200+</span>
-              <span className="trust-label">Awards</span>
-            </div>
-          </div>
+
         </div>
         <div className="hero-cityscape" aria-hidden="true"></div>
       </section>

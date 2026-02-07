@@ -671,8 +671,7 @@ select:focus-visible {
   width: 100%;
   z-index: 1;
   height: 45%;
-  background: url("https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")
-    center bottom/cover no-repeat;
+  background: url("/images/image1.png") center bottom/cover no-repeat;
 }
 
 .hero-cityscape img {

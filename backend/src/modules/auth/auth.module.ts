@@ -9,8 +9,10 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from '../users/entities/user.entity';
+import { AuthAuditService } from './auth-audit.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthAuditLog } from './entities/auth-audit-log.entity';
 import { Session } from './entities/session.entity';
 import { SessionService } from './session.service';
 import { FacebookStrategy } from './strategies/facebook.strategy';
@@ -53,7 +55,7 @@ const facebookStrategyFactory: Provider = {
 @Module({
   imports: [
     // User and Session repositories
-    TypeOrmModule.forFeature([User, Session]),
+    TypeOrmModule.forFeature([User, Session, AuthAuditLog]),
 
     // Config for OAuth
     ConfigModule,
@@ -76,6 +78,7 @@ const facebookStrategyFactory: Provider = {
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthAuditService,
     SessionService,
     JwtStrategy,
     JwtRefreshStrategy,

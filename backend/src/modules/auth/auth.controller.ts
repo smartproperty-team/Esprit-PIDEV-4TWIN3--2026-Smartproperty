@@ -32,6 +32,7 @@ import type { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { User } from '../users/entities/user.entity';
+import { AuthAuditService } from './auth-audit.service';
 import { AuthResponse, AuthService, AuthTokens } from './auth.service';
 import {
   ChangePasswordDto,
@@ -43,12 +44,13 @@ import {
   ResetPasswordDto,
   VerifyEmailDto,
 } from './dto/auth.dto';
+import { AuthAuditEventType } from './entities/auth-audit-log.entity';
 import { Session } from './entities/session.entity';
 import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
-import { SessionService } from './session.service';
+import { DeviceInfo, SessionService } from './session.service';
 import { FacebookProfile } from './strategies/facebook.strategy';
 import { GoogleProfile } from './strategies/google.strategy';
 
@@ -62,6 +64,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
+    private readonly authAuditService: AuthAuditService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -77,6 +80,28 @@ export class AuthController {
       req.socket?.remoteAddress ||
       'Unknown';
     return deviceInfo;
+  }
+
+  private async logAuthEvent(
+    req: Request,
+    details: {
+      eventType: AuthAuditEventType;
+      success: boolean;
+      userId?: string;
+      email?: string;
+      sessionId?: string;
+      failureReason?: string;
+      metadata?: Record<string, unknown>;
+    },
+    deviceInfo?: DeviceInfo,
+  ): Promise<void> {
+    const userAgent = req.headers['user-agent'] || '';
+    const resolvedDeviceInfo = deviceInfo || this.getDeviceInfo(req);
+    await this.authAuditService.logEvent({
+      ...details,
+      deviceInfo: resolvedDeviceInfo,
+      userAgent,
+    });
   }
 
   // ===========================================
@@ -105,7 +130,41 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthResponse> {
     const deviceInfo = this.getDeviceInfo(req);
-    return this.authService.register(registerDto, deviceInfo);
+
+    try {
+      const authResponse = await this.authService.register(
+        registerDto,
+        deviceInfo,
+      );
+      const user = authResponse.user as { id?: string; email?: string };
+
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.REGISTER,
+          success: true,
+          userId: user?.id,
+          email: user?.email || registerDto.email,
+          sessionId: authResponse.sessionId,
+        },
+        deviceInfo,
+      );
+
+      return authResponse;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.REGISTER,
+          success: false,
+          email: registerDto.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -130,7 +189,38 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthResponse> {
     const deviceInfo = this.getDeviceInfo(req);
-    return this.authService.login(loginDto, deviceInfo);
+
+    try {
+      const authResponse = await this.authService.login(loginDto, deviceInfo);
+      const user = authResponse.user as { id?: string; email?: string };
+
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.LOGIN,
+          success: true,
+          userId: user?.id,
+          email: user?.email || loginDto.email,
+          sessionId: authResponse.sessionId,
+        },
+        deviceInfo,
+      );
+
+      return authResponse;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.LOGIN,
+          success: false,
+          email: loginDto.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -183,23 +273,51 @@ export class AuthController {
     const googleProfile = req.user as GoogleProfile;
     const deviceInfo = this.getDeviceInfo(req);
 
-    const authResponse = await this.authService.googleLogin(
-      googleProfile,
-      deviceInfo,
-    );
+    try {
+      const authResponse = await this.authService.googleLogin(
+        googleProfile,
+        deviceInfo,
+      );
+      const user = authResponse.user as { id?: string; email?: string };
 
-    // Redirect to frontend with tokens in URL params
-    const frontendCallbackUrl = this.configService.get<string>(
-      'google.frontendCallbackUrl',
-    );
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.OAUTH_GOOGLE,
+          success: true,
+          userId: user?.id,
+          email: user?.email,
+          sessionId: authResponse.sessionId,
+        },
+        deviceInfo,
+      );
 
-    const params = new URLSearchParams({
-      accessToken: authResponse.tokens.accessToken,
-      refreshToken: authResponse.tokens.refreshToken,
-      expiresIn: authResponse.tokens.expiresIn.toString(),
-    });
+      // Redirect to frontend with tokens in URL params
+      const frontendCallbackUrl = this.configService.get<string>(
+        'google.frontendCallbackUrl',
+      );
 
-    res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
+      const params = new URLSearchParams({
+        accessToken: authResponse.tokens.accessToken,
+        refreshToken: authResponse.tokens.refreshToken,
+        expiresIn: authResponse.tokens.expiresIn.toString(),
+      });
+
+      res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.OAUTH_GOOGLE,
+          success: false,
+          email: googleProfile?.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -256,23 +374,51 @@ export class AuthController {
     const facebookProfile = req.user as FacebookProfile;
     const deviceInfo = this.getDeviceInfo(req);
 
-    const authResponse = await this.authService.facebookLogin(
-      facebookProfile,
-      deviceInfo,
-    );
+    try {
+      const authResponse = await this.authService.facebookLogin(
+        facebookProfile,
+        deviceInfo,
+      );
+      const user = authResponse.user as { id?: string; email?: string };
 
-    // Redirect to frontend with tokens in URL params
-    const frontendCallbackUrl = this.configService.get<string>(
-      'facebook.frontendCallbackUrl',
-    );
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.OAUTH_FACEBOOK,
+          success: true,
+          userId: user?.id,
+          email: user?.email,
+          sessionId: authResponse.sessionId,
+        },
+        deviceInfo,
+      );
 
-    const params = new URLSearchParams({
-      accessToken: authResponse.tokens.accessToken,
-      refreshToken: authResponse.tokens.refreshToken,
-      expiresIn: authResponse.tokens.expiresIn.toString(),
-    });
+      // Redirect to frontend with tokens in URL params
+      const frontendCallbackUrl = this.configService.get<string>(
+        'facebook.frontendCallbackUrl',
+      );
 
-    res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
+      const params = new URLSearchParams({
+        accessToken: authResponse.tokens.accessToken,
+        refreshToken: authResponse.tokens.refreshToken,
+        expiresIn: authResponse.tokens.expiresIn.toString(),
+      });
+
+      res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.OAUTH_FACEBOOK,
+          success: false,
+          email: facebookProfile?.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -300,7 +446,40 @@ export class AuthController {
         'Refresh token is required in request body',
       );
     }
-    return this.authService.refreshTokens(refreshToken);
+    const deviceInfo = this.getDeviceInfo(req);
+    const currentUser = req.user as { id?: string; email?: string };
+
+    try {
+      const authResponse = await this.authService.refreshTokens(refreshToken);
+
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.TOKEN_REFRESH,
+          success: true,
+          userId: currentUser?.id,
+          email: currentUser?.email,
+          sessionId: authResponse.sessionId,
+        },
+        deviceInfo,
+      );
+
+      return authResponse;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.TOKEN_REFRESH,
+          success: false,
+          userId: currentUser?.id,
+          email: currentUser?.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -319,9 +498,41 @@ export class AuthController {
   async logout(
     @CurrentUser('id') userId: string,
     @Body() body?: { refreshToken?: string },
+    @Req() req?: Request,
   ): Promise<{ message: string }> {
-    await this.authService.logout(userId, body?.refreshToken);
-    return { message: 'Logged out successfully' };
+    const deviceInfo = req ? this.getDeviceInfo(req) : undefined;
+
+    try {
+      await this.authService.logout(userId, body?.refreshToken);
+      if (req) {
+        await this.logAuthEvent(
+          req,
+          {
+            eventType: AuthAuditEventType.LOGOUT,
+            success: true,
+            userId,
+            metadata: { hasRefreshToken: !!body?.refreshToken },
+          },
+          deviceInfo,
+        );
+      }
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      if (req) {
+        await this.logAuthEvent(
+          req,
+          {
+            eventType: AuthAuditEventType.LOGOUT,
+            success: false,
+            userId,
+            failureReason:
+              error instanceof Error ? error.message : 'Unknown error',
+          },
+          deviceInfo,
+        );
+      }
+      throw error;
+    }
   }
 
   @Post('logout-all')
@@ -336,15 +547,50 @@ export class AuthController {
   async logoutAll(
     @CurrentUser('id') userId: string,
     @Body() body?: { currentSessionId?: string },
+    @Req() req?: Request,
   ): Promise<{ message: string; revokedCount: number }> {
-    const { revokedCount } = await this.authService.revokeAllSessions(
-      userId,
-      body?.currentSessionId,
-    );
-    return {
-      message: `Logged out from ${revokedCount} device(s)`,
-      revokedCount,
-    };
+    const deviceInfo = req ? this.getDeviceInfo(req) : undefined;
+
+    try {
+      const { revokedCount } = await this.authService.revokeAllSessions(
+        userId,
+        body?.currentSessionId,
+      );
+      if (req) {
+        await this.logAuthEvent(
+          req,
+          {
+            eventType: AuthAuditEventType.LOGOUT_ALL,
+            success: true,
+            userId,
+            metadata: {
+              revokedCount,
+              currentSessionId: body?.currentSessionId,
+            },
+          },
+          deviceInfo,
+        );
+      }
+      return {
+        message: `Logged out from ${revokedCount} device(s)`,
+        revokedCount,
+      };
+    } catch (error) {
+      if (req) {
+        await this.logAuthEvent(
+          req,
+          {
+            eventType: AuthAuditEventType.LOGOUT_ALL,
+            success: false,
+            userId,
+            failureReason:
+              error instanceof Error ? error.message : 'Unknown error',
+          },
+          deviceInfo,
+        );
+      }
+      throw error;
+    }
   }
 
   // ===========================================
@@ -365,8 +611,36 @@ export class AuthController {
   })
   async verifyEmail(
     @Body() verifyEmailDto: VerifyEmailDto,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return this.authService.verifyEmail(verifyEmailDto);
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.verifyEmail(verifyEmailDto);
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY,
+          success: true,
+          metadata: { tokenProvided: !!verifyEmailDto?.token },
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY,
+          success: false,
+          metadata: { tokenProvided: !!verifyEmailDto?.token },
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   @Public()
@@ -380,8 +654,38 @@ export class AuthController {
   })
   async resendVerification(
     @Body() resendDto: ResendVerificationDto,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return this.authService.resendVerificationEmail(resendDto.email);
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.resendVerificationEmail(
+        resendDto.email,
+      );
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY_RESEND,
+          success: true,
+          email: resendDto.email,
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY_RESEND,
+          success: false,
+          email: resendDto.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -399,8 +703,36 @@ export class AuthController {
   })
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return this.authService.forgotPassword(forgotPasswordDto);
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.forgotPassword(forgotPasswordDto);
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_RESET_REQUEST,
+          success: true,
+          email: forgotPasswordDto.email,
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_RESET_REQUEST,
+          success: false,
+          email: forgotPasswordDto.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   @Public()
@@ -417,8 +749,36 @@ export class AuthController {
   })
   async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return this.authService.resetPassword(resetPasswordDto);
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.resetPassword(resetPasswordDto);
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_RESET,
+          success: true,
+          metadata: { tokenProvided: !!resetPasswordDto?.token },
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_RESET,
+          success: false,
+          metadata: { tokenProvided: !!resetPasswordDto?.token },
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   @Post('change-password')
@@ -437,8 +797,39 @@ export class AuthController {
   async changePassword(
     @CurrentUser('id') userId: string,
     @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return this.authService.changePassword(userId, changePasswordDto);
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.changePassword(
+        userId,
+        changePasswordDto,
+      );
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_CHANGE,
+          success: true,
+          userId,
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.PASSWORD_CHANGE,
+          success: false,
+          userId,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 
   // ===========================================
@@ -494,8 +885,37 @@ export class AuthController {
   async revokeSession(
     @CurrentUser('id') userId: string,
     @Param('sessionId') sessionId: string,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    await this.authService.revokeSession(userId, sessionId);
-    return { message: 'Session revoked successfully' };
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      await this.authService.revokeSession(userId, sessionId);
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.SESSION_REVOKE,
+          success: true,
+          userId,
+          sessionId,
+        },
+        deviceInfo,
+      );
+      return { message: 'Session revoked successfully' };
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.SESSION_REVOKE,
+          success: false,
+          userId,
+          sessionId,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
   }
 }
