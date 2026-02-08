@@ -1,0 +1,30 @@
+#!/bin/sh
+# Pre-commit hook: runs lint on staged files
+
+echo "🔍 Running pre-commit checks..."
+
+# Backend lint (only if backend files changed)
+BACKEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^backend/" || true)
+if [ -n "$BACKEND_CHANGED" ]; then
+  echo "📦 Linting backend..."
+  cd backend && npx eslint --quiet $(echo "$BACKEND_CHANGED" | sed 's|^backend/||' | grep '\.ts$' | tr '\n' ' ') 2>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "❌ Backend lint failed. Fix errors before committing."
+    exit 1
+  fi
+  cd ..
+fi
+
+# Frontend lint (only if frontend files changed)
+FRONTEND_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep "^frontend/" || true)
+if [ -n "$FRONTEND_CHANGED" ]; then
+  echo "🎨 Linting frontend..."
+  cd frontend && npx eslint --quiet $(echo "$FRONTEND_CHANGED" | sed 's|^frontend/||' | grep '\.\(ts\|tsx\)$' | tr '\n' ' ') 2>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "❌ Frontend lint failed. Fix errors before committing."
+    exit 1
+  fi
+  cd ..
+fi
+
+echo "✅ Pre-commit checks passed!"
