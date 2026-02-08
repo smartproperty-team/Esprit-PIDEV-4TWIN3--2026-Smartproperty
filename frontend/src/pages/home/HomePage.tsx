@@ -316,7 +316,7 @@ export default function HomePage() {
           <h1 id="hero-title" className="hero-title">
             The <span className="highlight">#1</span> site real estate
             <br />
-            <span className="hero-title-secondary">professionals trust</span>
+            <span className="hero-title-secondary">professionals trust in Tunisia</span>
           </h1>
 
           {/* Search Tabs */}
