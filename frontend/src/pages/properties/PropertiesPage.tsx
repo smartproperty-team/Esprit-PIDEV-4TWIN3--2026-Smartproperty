@@ -2,40 +2,73 @@
 // SmartProperty - Properties List Page
 // ===========================================
 
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { HomeNavbar, HomeFooter } from '../../components/layout';
-import { propertyService } from '../../services/property.service';
-import type { Property, PropertyFilters, PropertyType, PropertyStatus } from '../../types/property';
-import './properties.css';
+import { useCallback, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { propertyService } from "../../services/property.service";
+import type {
+  Property,
+  PropertyFilters,
+  PropertyStatus,
+  PropertyType,
+} from "../../types/property";
+import "./properties.css";
 
 // ===========================================
 // Icons
 // ===========================================
 
 const LocationIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const BedIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
     <path d="M21 7H3l2-4h14l2 4z" />
   </svg>
 );
 
 const BathIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
     <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
   </svg>
 );
 
 const AreaIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <path d="M3 9h18" />
     <path d="M9 21V9" />
@@ -43,20 +76,41 @@ const AreaIcon = () => (
 );
 
 const PlusIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
 
 const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="11" cy="11" r="8" />
     <path d="m21 21-4.35-4.35" />
   </svg>
 );
 
 const HomeIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
     <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
     <polyline points="9,22 9,12 15,12 15,22" />
   </svg>
@@ -72,12 +126,15 @@ interface PropertyCardProps {
 }
 
 function PropertyCard({ property, onDelete }: PropertyCardProps) {
-  const propertyId = property.id || property._id || '';
-  const primaryImage = property.images?.find(img => img.isPrimary) || property.images?.[0];
-  const imageUrl = primaryImage?.url || '/placeholder-property.svg';
+  const propertyId = property.id || property._id || "";
+  const primaryImage =
+    property.images?.find((img) => img.isPrimary) || property.images?.[0];
+  const imageUrl = primaryImage?.url || "/placeholder-property.svg";
 
   const handleDelete = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette propriété ?')) {
+    if (
+      window.confirm("Êtes-vous sûr de vouloir supprimer cette propriété ?")
+    ) {
       if (propertyId) {
         onDelete?.(propertyId);
       }
@@ -92,20 +149,30 @@ function PropertyCard({ property, onDelete }: PropertyCardProps) {
           alt={property.title}
           loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder-property.svg';
+            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
           }}
         />
         <span className={`property-badge ${property.status}`}>
-          {property.status === 'available' ? 'Disponible' :
-           property.status === 'rented' ? 'Loué' :
-           property.status === 'maintenance' ? 'Maintenance' : 'Non listé'}
+          {property.status === "available"
+            ? "Disponible"
+            : property.status === "rented"
+              ? "Loué"
+              : property.status === "maintenance"
+                ? "Maintenance"
+                : "Non listé"}
         </span>
         <span className="property-type-badge">
-          {property.type === 'apartment' ? 'Appartement' :
-           property.type === 'house' ? 'Maison' :
-           property.type === 'villa' ? 'Villa' :
-           property.type === 'studio' ? 'Studio' :
-           property.type === 'condo' ? 'Condo' : 'Terrain'}
+          {property.type === "apartment"
+            ? "Appartement"
+            : property.type === "house"
+              ? "Maison"
+              : property.type === "villa"
+                ? "Villa"
+                : property.type === "studio"
+                  ? "Studio"
+                  : property.type === "condo"
+                    ? "Condo"
+                    : "Terrain"}
         </span>
       </div>
 
@@ -139,9 +206,7 @@ function PropertyCard({ property, onDelete }: PropertyCardProps) {
         </dl>
 
         <div className="property-price">
-          <span className="price">
-            {property.price.toLocaleString()}
-          </span>
+          <span className="price">{property.price.toLocaleString()}</span>
           <span className="currency">{property.currency}</span>
         </div>
 
@@ -175,10 +240,10 @@ export default function PropertiesPage() {
   const [filters, setFilters] = useState<PropertyFilters>({
     page: 1,
     limit: 12,
-    type: (searchParams.get('type') as PropertyType) || undefined,
-    status: (searchParams.get('status') as PropertyStatus) || undefined,
-    city: searchParams.get('city') || undefined,
-    search: searchParams.get('search') || undefined,
+    type: (searchParams.get("type") as PropertyType) || undefined,
+    status: (searchParams.get("status") as PropertyStatus) || undefined,
+    city: searchParams.get("city") || undefined,
+    search: searchParams.get("search") || undefined,
   });
 
   // Load properties
@@ -192,8 +257,8 @@ export default function PropertiesPage() {
       setTotal(response.total);
       setCurrentPage(response.page);
     } catch (err) {
-      console.error('Failed to load properties:', err);
-      setError('Impossible de charger les propriétés. Veuillez réessayer.');
+      console.error("Failed to load properties:", err);
+      setError("Impossible de charger les propriétés. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -210,10 +275,10 @@ export default function PropertiesPage() {
 
     // Update URL params
     const params = new URLSearchParams();
-    if (newFilters.type) params.set('type', newFilters.type);
-    if (newFilters.status) params.set('status', newFilters.status);
-    if (newFilters.city) params.set('city', newFilters.city);
-    if (newFilters.search) params.set('search', newFilters.search);
+    if (newFilters.type) params.set("type", newFilters.type);
+    if (newFilters.status) params.set("status", newFilters.status);
+    if (newFilters.city) params.set("city", newFilters.city);
+    if (newFilters.search) params.set("search", newFilters.search);
     setSearchParams(params);
   };
 
@@ -233,11 +298,11 @@ export default function PropertiesPage() {
   const handleDelete = async (id: string) => {
     try {
       await propertyService.deleteProperty(id);
-      setProperties(properties.filter(p => (p.id || p._id) !== id));
+      setProperties(properties.filter((p) => (p.id || p._id) !== id));
       setTotal(total - 1);
     } catch (err) {
-      console.error('Failed to delete property:', err);
-      alert('Impossible de supprimer la propriété. Veuillez réessayer.');
+      console.error("Failed to delete property:", err);
+      alert("Impossible de supprimer la propriété. Veuillez réessayer.");
     }
   };
 
@@ -245,7 +310,7 @@ export default function PropertiesPage() {
   const totalPages = Math.ceil(total / (filters.limit || 12));
   const handlePageChange = (page: number) => {
     setFilters({ ...filters, page });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -258,7 +323,10 @@ export default function PropertiesPage() {
           <div className="header-actions">
             <div>
               <h1>Propriétés</h1>
-              <p>{total} propriété{total > 1 ? 's' : ''} trouvée{total > 1 ? 's' : ''}</p>
+              <p>
+                {total} propriété{total > 1 ? "s" : ""} trouvée
+                {total > 1 ? "s" : ""}
+              </p>
             </div>
             <Link to="/properties/new" className="btn-add-property">
               <PlusIcon />
@@ -276,8 +344,8 @@ export default function PropertiesPage() {
                 id="filter-search"
                 type="text"
                 placeholder="Titre, description..."
-                value={filters.search || ''}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={filters.search || ""}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
               />
             </div>
 
@@ -285,8 +353,8 @@ export default function PropertiesPage() {
               <label htmlFor="filter-type">Type</label>
               <select
                 id="filter-type"
-                value={filters.type || ''}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
+                value={filters.type || ""}
+                onChange={(e) => handleFilterChange("type", e.target.value)}
               >
                 <option value="">Tous les types</option>
                 <option value="apartment">Appartement</option>
@@ -302,8 +370,8 @@ export default function PropertiesPage() {
               <label htmlFor="filter-status">Statut</label>
               <select
                 id="filter-status"
-                value={filters.status || ''}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                value={filters.status || ""}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
               >
                 <option value="">Tous les statuts</option>
                 <option value="available">Disponible</option>
@@ -319,8 +387,8 @@ export default function PropertiesPage() {
                 id="filter-city"
                 type="text"
                 placeholder="Ville..."
-                value={filters.city || ''}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
+                value={filters.city || ""}
+                onChange={(e) => handleFilterChange("city", e.target.value)}
               />
             </div>
 
@@ -329,7 +397,11 @@ export default function PropertiesPage() {
                 <SearchIcon />
                 Rechercher
               </button>
-              <button type="button" className="btn-filter secondary" onClick={handleResetFilters}>
+              <button
+                type="button"
+                className="btn-filter secondary"
+                onClick={handleResetFilters}
+              >
                 Réinitialiser
               </button>
             </div>
@@ -344,7 +416,7 @@ export default function PropertiesPage() {
           </div>
         ) : error ? (
           <div className="empty-state">
-            <p style={{ color: '#ef4444' }}>{error}</p>
+            <p style={{ color: "#ef4444" }}>{error}</p>
             <button className="btn-filter primary" onClick={loadProperties}>
               Réessayer
             </button>
@@ -355,8 +427,8 @@ export default function PropertiesPage() {
             <h3>Aucune propriété trouvée</h3>
             <p>
               {filters.search || filters.type || filters.status || filters.city
-                ? 'Essayez de modifier vos filtres de recherche.'
-                : 'Commencez par ajouter votre première propriété.'}
+                ? "Essayez de modifier vos filtres de recherche."
+                : "Commencez par ajouter votre première propriété."}
             </p>
             <Link to="/properties/new" className="btn-add-property">
               <PlusIcon />
@@ -388,9 +460,14 @@ export default function PropertiesPage() {
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(page => {
+                  .filter((page) => {
                     const distance = Math.abs(page - currentPage);
-                    return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                    return (
+                      distance === 0 ||
+                      distance === 1 ||
+                      page === 1 ||
+                      page === totalPages
+                    );
                   })
                   .map((page, index, array) => (
                     <span key={page}>
@@ -398,7 +475,7 @@ export default function PropertiesPage() {
                         <span className="pagination-info">...</span>
                       )}
                       <button
-                        className={`pagination-btn ${page === currentPage ? 'active' : ''}`}
+                        className={`pagination-btn ${page === currentPage ? "active" : ""}`}
                         onClick={() => handlePageChange(page)}
                       >
                         {page}
@@ -423,4 +500,3 @@ export default function PropertiesPage() {
     </div>
   );
 }
-

@@ -2,40 +2,73 @@
 // SmartProperty - Property Form Page (Create/Edit)
 // ===========================================
 
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { HomeNavbar, HomeFooter } from '../../components/layout';
-import { propertyService } from '../../services/property.service';
-import type { CreatePropertyDto, Property, PropertyType, PropertyStatus } from '../../types/property';
-import './properties.css';
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { propertyService } from "../../services/property.service";
+import type {
+  CreatePropertyDto,
+  Property,
+  PropertyStatus,
+  PropertyType,
+} from "../../types/property";
+import "./properties.css";
 
 // ===========================================
 // Icons
 // ===========================================
 
 const InfoIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <path d="M12 16v-4M12 8h.01" />
   </svg>
 );
 
 const LocationIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const FeaturesIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M12 2 2 7l10 5 10-5-10-5z" />
     <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
   </svg>
 );
 
 const ImageIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <circle cx="8.5" cy="8.5" r="1.5" />
     <path d="m21 15-5-5L5 21" />
@@ -43,7 +76,14 @@ const ImageIcon = () => (
 );
 
 const CloseIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M18 6 6 18M6 6l12 12" />
   </svg>
 );
@@ -74,24 +114,24 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  title: '',
-  description: '',
-  type: 'apartment',
-  status: 'available',
-  price: '',
-  currency: 'TND',
-  street: '',
-  city: '',
-  state: '',
-  zipCode: '',
-  country: 'Tunisie',
-  bedrooms: '',
-  bathrooms: '',
-  area: '',
-  parkingSpaces: '',
+  title: "",
+  description: "",
+  type: "apartment",
+  status: "available",
+  price: "",
+  currency: "TND",
+  street: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  country: "Tunisie",
+  bedrooms: "",
+  bathrooms: "",
+  area: "",
+  parkingSpaces: "",
   furnished: false,
   petFriendly: false,
-  amenities: '',
+  amenities: "",
 };
 
 // ===========================================
@@ -105,10 +145,14 @@ export default function PropertyFormPage() {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [images, setImages] = useState<File[]>([]);
-  const [existingImages, setExistingImages] = useState<{ url: string; key: string }[]>([]);
+  const [existingImages, setExistingImages] = useState<
+    { url: string; key: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(isEditing);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {},
+  );
 
   // Load existing property for editing
   const loadProperty = useCallback(async () => {
@@ -119,7 +163,7 @@ export default function PropertyFormPage() {
       const property = await propertyService.getProperty(id);
       setFormData({
         title: property.title,
-        description: property.description || '',
+        description: property.description || "",
         type: property.type,
         status: property.status,
         price: property.price.toString(),
@@ -129,24 +173,24 @@ export default function PropertyFormPage() {
         state: property.address.state,
         zipCode: property.address.zipCode,
         country: property.address.country,
-        bedrooms: property.features?.bedrooms?.toString() || '',
-        bathrooms: property.features?.bathrooms?.toString() || '',
-        area: property.features?.area?.toString() || '',
-        parkingSpaces: property.features?.parkingSpaces?.toString() || '',
+        bedrooms: property.features?.bedrooms?.toString() || "",
+        bathrooms: property.features?.bathrooms?.toString() || "",
+        area: property.features?.area?.toString() || "",
+        parkingSpaces: property.features?.parkingSpaces?.toString() || "",
         furnished: property.features?.furnished || false,
         petFriendly: property.features?.petFriendly || false,
-        amenities: property.features?.amenities?.join(', ') || '',
+        amenities: property.features?.amenities?.join(", ") || "",
       });
       setExistingImages(
-        (property.images || []).map(img => ({
+        (property.images || []).map((img) => ({
           url: img.url,
-          key: img.key || '',
-        }))
+          key: img.key || "",
+        })),
       );
     } catch (err) {
-      console.error('Failed to load property:', err);
-      alert('Impossible de charger la propriété.');
-      navigate('/properties');
+      console.error("Failed to load property:", err);
+      alert("Impossible de charger la propriété.");
+      navigate("/properties");
     } finally {
       setLoadingProperty(false);
     }
@@ -160,36 +204,38 @@ export default function PropertyFormPage() {
 
   // Handle input change
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     // Clear error when user types
     if (errors[name as keyof FormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(file => {
-      const isValid = file.type.startsWith('image/');
+    const validFiles = files.filter((file) => {
+      const isValid = file.type.startsWith("image/");
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
       return isValid && isValidSize;
     });
-    setImages(prev => [...prev, ...validFiles]);
+    setImages((prev) => [...prev, ...validFiles]);
   };
 
   // Handle image removal
   const handleRemoveImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Handle existing image removal
@@ -198,32 +244,32 @@ export default function PropertyFormPage() {
 
     try {
       await propertyService.deleteImage(id, key);
-      setExistingImages(prev => prev.filter(img => img.key !== key));
+      setExistingImages((prev) => prev.filter((img) => img.key !== key));
     } catch (err) {
-      console.error('Failed to delete image:', err);
-      alert('Impossible de supprimer l\'image.');
+      console.error("Failed to delete image:", err);
+      alert("Impossible de supprimer l'image.");
     }
   };
 
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.add('dragover');
+    e.currentTarget.classList.add("dragover");
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('dragover');
+    e.currentTarget.classList.remove("dragover");
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('dragover');
+    e.currentTarget.classList.remove("dragover");
 
-    const files = Array.from(e.dataTransfer.files).filter(
-      file => file.type.startsWith('image/')
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
     );
-    setImages(prev => [...prev, ...files]);
+    setImages((prev) => [...prev, ...files]);
   };
 
   // Validate form
@@ -231,19 +277,19 @@ export default function PropertyFormPage() {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Le titre est requis';
+      newErrors.title = "Le titre est requis";
     }
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      newErrors.price = 'Le prix doit être supérieur à 0';
+      newErrors.price = "Le prix doit être supérieur à 0";
     }
     if (!formData.street.trim()) {
-      newErrors.street = 'La rue est requise';
+      newErrors.street = "La rue est requise";
     }
     if (!formData.city.trim()) {
-      newErrors.city = 'La ville est requise';
+      newErrors.city = "La ville est requise";
     }
     if (!formData.country.trim()) {
-      newErrors.country = 'Le pays est requis';
+      newErrors.country = "Le pays est requis";
     }
 
     setErrors(newErrors);
@@ -275,13 +321,20 @@ export default function PropertyFormPage() {
         },
         features: {
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
-          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
+          bathrooms: formData.bathrooms
+            ? parseInt(formData.bathrooms)
+            : undefined,
           area: formData.area ? parseInt(formData.area) : undefined,
-          parkingSpaces: formData.parkingSpaces ? parseInt(formData.parkingSpaces) : undefined,
+          parkingSpaces: formData.parkingSpaces
+            ? parseInt(formData.parkingSpaces)
+            : undefined,
           furnished: formData.furnished,
           petFriendly: formData.petFriendly,
           amenities: formData.amenities
-            ? formData.amenities.split(',').map(a => a.trim()).filter(Boolean)
+            ? formData.amenities
+                .split(",")
+                .map((a) => a.trim())
+                .filter(Boolean)
             : undefined,
         },
       };
@@ -297,7 +350,7 @@ export default function PropertyFormPage() {
       const propertyId = property.id || property._id;
 
       if (!propertyId) {
-        throw new Error('Missing property id in response');
+        throw new Error("Missing property id in response");
       }
 
       // Upload new images if any
@@ -307,8 +360,8 @@ export default function PropertyFormPage() {
 
       navigate(`/properties/${propertyId}`);
     } catch (err) {
-      console.error('Failed to save property:', err);
-      alert('Impossible de sauvegarder la propriété. Veuillez réessayer.');
+      console.error("Failed to save property:", err);
+      alert("Impossible de sauvegarder la propriété. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -336,11 +389,13 @@ export default function PropertyFormPage() {
       <main className="property-form-container">
         {/* Header */}
         <div className="property-form-header">
-          <h1>{isEditing ? 'Modifier la propriété' : 'Ajouter une propriété'}</h1>
+          <h1>
+            {isEditing ? "Modifier la propriété" : "Ajouter une propriété"}
+          </h1>
           <p>
             {isEditing
-              ? 'Modifiez les informations de votre propriété ci-dessous.'
-              : 'Remplissez les informations pour créer une nouvelle propriété.'}
+              ? "Modifiez les informations de votre propriété ci-dessous."
+              : "Remplissez les informations pour créer une nouvelle propriété."}
           </p>
         </div>
 
@@ -364,9 +419,11 @@ export default function PropertyFormPage() {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Ex: Appartement moderne au centre-ville"
-                  className={errors.title ? 'error' : ''}
+                  className={errors.title ? "error" : ""}
                 />
-                {errors.title && <span className="error-message">{errors.title}</span>}
+                {errors.title && (
+                  <span className="error-message">{errors.title}</span>
+                )}
               </div>
 
               <div className="form-group full-width">
@@ -425,9 +482,11 @@ export default function PropertyFormPage() {
                   value={formData.price}
                   onChange={handleChange}
                   placeholder="Prix"
-                  className={errors.price ? 'error' : ''}
+                  className={errors.price ? "error" : ""}
                 />
-                {errors.price && <span className="error-message">{errors.price}</span>}
+                {errors.price && (
+                  <span className="error-message">{errors.price}</span>
+                )}
               </div>
 
               <div className="form-group">
@@ -464,9 +523,11 @@ export default function PropertyFormPage() {
                   value={formData.street}
                   onChange={handleChange}
                   placeholder="Numéro et nom de rue"
-                  className={errors.street ? 'error' : ''}
+                  className={errors.street ? "error" : ""}
                 />
-                {errors.street && <span className="error-message">{errors.street}</span>}
+                {errors.street && (
+                  <span className="error-message">{errors.street}</span>
+                )}
               </div>
 
               <div className="form-group">
@@ -480,9 +541,11 @@ export default function PropertyFormPage() {
                   value={formData.city}
                   onChange={handleChange}
                   placeholder="Ville"
-                  className={errors.city ? 'error' : ''}
+                  className={errors.city ? "error" : ""}
                 />
-                {errors.city && <span className="error-message">{errors.city}</span>}
+                {errors.city && (
+                  <span className="error-message">{errors.city}</span>
+                )}
               </div>
 
               <div className="form-group">
@@ -520,9 +583,11 @@ export default function PropertyFormPage() {
                   value={formData.country}
                   onChange={handleChange}
                   placeholder="Pays"
-                  className={errors.country ? 'error' : ''}
+                  className={errors.country ? "error" : ""}
                 />
-                {errors.country && <span className="error-message">{errors.country}</span>}
+                {errors.country && (
+                  <span className="error-message">{errors.country}</span>
+                )}
               </div>
             </div>
           </div>
@@ -613,7 +678,9 @@ export default function PropertyFormPage() {
               </div>
 
               <div className="form-group full-width">
-                <label htmlFor="amenities">Équipements (séparés par des virgules)</label>
+                <label htmlFor="amenities">
+                  Équipements (séparés par des virgules)
+                </label>
                 <input
                   id="amenities"
                   name="amenities"
@@ -635,7 +702,10 @@ export default function PropertyFormPage() {
 
             {/* Existing Images */}
             {existingImages.length > 0 && (
-              <div className="image-preview-grid" style={{ marginBottom: '1.5rem' }}>
+              <div
+                className="image-preview-grid"
+                style={{ marginBottom: "1.5rem" }}
+              >
                 {existingImages.map((img, index) => (
                   <div key={img.key || index} className="image-preview-item">
                     <img src={img.url} alt={`Image ${index + 1}`} />
@@ -646,7 +716,9 @@ export default function PropertyFormPage() {
                     >
                       <CloseIcon />
                     </button>
-                    {index === 0 && <span className="image-preview-primary">Principal</span>}
+                    {index === 0 && (
+                      <span className="image-preview-primary">Principal</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -658,7 +730,7 @@ export default function PropertyFormPage() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => document.getElementById('image-input')?.click()}
+              onClick={() => document.getElementById("image-input")?.click()}
             >
               <ImageIcon />
               <h4>Glissez-déposez vos images ici</h4>
@@ -669,7 +741,7 @@ export default function PropertyFormPage() {
                 accept="image/*"
                 multiple
                 onChange={handleImageChange}
-                style={{ display: 'none' }}
+                style={{ display: "none" }}
               />
             </div>
 
@@ -700,13 +772,16 @@ export default function PropertyFormPage() {
             <button type="submit" className="btn-submit" disabled={loading}>
               {loading ? (
                 <>
-                  <span className="loading-spinner" style={{ width: 18, height: 18 }} />
+                  <span
+                    className="loading-spinner"
+                    style={{ width: 18, height: 18 }}
+                  />
                   Enregistrement...
                 </>
               ) : isEditing ? (
-                'Mettre à jour'
+                "Mettre à jour"
               ) : (
-                'Créer la propriété'
+                "Créer la propriété"
               )}
             </button>
           </div>
@@ -717,4 +792,3 @@ export default function PropertyFormPage() {
     </div>
   );
 }
-

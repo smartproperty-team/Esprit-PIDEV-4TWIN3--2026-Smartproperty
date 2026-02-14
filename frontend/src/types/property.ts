@@ -2,8 +2,18 @@
 // SmartProperty - Property Types
 // ===========================================
 
-export type PropertyType = 'apartment' | 'house' | 'condo' | 'studio' | 'villa' | 'land';
-export type PropertyStatus = 'available' | 'rented' | 'maintenance' | 'unlisted';
+export type PropertyType =
+  | "apartment"
+  | "house"
+  | "condo"
+  | "studio"
+  | "villa"
+  | "land";
+export type PropertyStatus =
+  | "available"
+  | "rented"
+  | "maintenance"
+  | "unlisted";
 
 export interface PropertyAddress {
   street: string;
@@ -90,4 +100,3 @@ export interface PropertyFilters {
   city?: string;
   search?: string;
 }
-

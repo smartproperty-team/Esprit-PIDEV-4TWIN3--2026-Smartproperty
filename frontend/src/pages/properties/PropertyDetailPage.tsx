@@ -2,40 +2,68 @@
 // SmartProperty - Property Detail Page
 // ===========================================
 
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { HomeNavbar, HomeFooter } from '../../components/layout';
-import { propertyService } from '../../services/property.service';
-import type { Property, PropertyImage } from '../../types/property';
-import './properties.css';
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { propertyService } from "../../services/property.service";
+import type { Property, PropertyImage } from "../../types/property";
+import "./properties.css";
 
 // ===========================================
 // Icons
 // ===========================================
 
 const LocationIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const BedIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
     <path d="M21 7H3l2-4h14l2 4z" />
   </svg>
 );
 
 const BathIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
     <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
   </svg>
 );
 
 const AreaIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <path d="M3 9h18" />
     <path d="M9 21V9" />
@@ -43,7 +71,14 @@ const AreaIcon = () => (
 );
 
 const CarIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" />
     <circle cx="6.5" cy="16.5" r="2.5" />
     <circle cx="16.5" cy="16.5" r="2.5" />
@@ -51,7 +86,14 @@ const CarIcon = () => (
 );
 
 const FurnitureIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4" />
     <rect x="2" y="11" width="20" height="8" rx="2" />
     <path d="M4 19v2M20 19v2" />
@@ -59,7 +101,14 @@ const FurnitureIcon = () => (
 );
 
 const PetIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5" />
     <path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5" />
     <path d="M8 14v.5" />
@@ -70,20 +119,41 @@ const PetIcon = () => (
 );
 
 const BackIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
 const DeleteIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
   </svg>
 );
@@ -123,9 +193,9 @@ function ImageGallery({ images }: ImageGalleryProps) {
       <div className="gallery-main">
         <img
           src={mainImage?.url}
-          alt={mainImage?.caption || 'Image de la propriété'}
+          alt={mainImage?.caption || "Image de la propriété"}
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder-property.svg';
+            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
           }}
         />
       </div>
@@ -141,13 +211,12 @@ function ImageGallery({ images }: ImageGalleryProps) {
                 src={img.url}
                 alt={img.caption || `Image ${index + 2}`}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder-property.svg';
+                  (e.target as HTMLImageElement).src =
+                    "/placeholder-property.svg";
                 }}
               />
               {index === 1 && images.length > 3 && (
-                <div className="gallery-more">
-                  +{images.length - 3} photos
-                </div>
+                <div className="gallery-more">+{images.length - 3} photos</div>
               )}
             </div>
           ))}
@@ -178,8 +247,8 @@ export default function PropertyDetailPage() {
       const data = await propertyService.getProperty(id);
       setProperty(data);
     } catch (err) {
-      console.error('Failed to load property:', err);
-      setError('Impossible de charger la propriété. Veuillez réessayer.');
+      console.error("Failed to load property:", err);
+      setError("Impossible de charger la propriété. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -195,36 +264,50 @@ export default function PropertyDetailPage() {
     const propertyId = property.id || property._id;
     if (!propertyId) return;
 
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette propriété ?')) {
+    if (
+      window.confirm("Êtes-vous sûr de vouloir supprimer cette propriété ?")
+    ) {
       try {
         await propertyService.deleteProperty(propertyId);
-        navigate('/properties');
+        navigate("/properties");
       } catch (err) {
-        console.error('Failed to delete property:', err);
-        alert('Impossible de supprimer la propriété. Veuillez réessayer.');
+        console.error("Failed to delete property:", err);
+        alert("Impossible de supprimer la propriété. Veuillez réessayer.");
       }
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'available': return 'Disponible';
-      case 'rented': return 'Loué';
-      case 'maintenance': return 'En maintenance';
-      case 'unlisted': return 'Non listé';
-      default: return status;
+      case "available":
+        return "Disponible";
+      case "rented":
+        return "Loué";
+      case "maintenance":
+        return "En maintenance";
+      case "unlisted":
+        return "Non listé";
+      default:
+        return status;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'apartment': return 'Appartement';
-      case 'house': return 'Maison';
-      case 'villa': return 'Villa';
-      case 'studio': return 'Studio';
-      case 'condo': return 'Condo';
-      case 'land': return 'Terrain';
-      default: return type;
+      case "apartment":
+        return "Appartement";
+      case "house":
+        return "Maison";
+      case "villa":
+        return "Villa";
+      case "studio":
+        return "Studio";
+      case "condo":
+        return "Condo";
+      case "land":
+        return "Terrain";
+      default:
+        return type;
     }
   };
 
@@ -250,7 +333,7 @@ export default function PropertyDetailPage() {
         <main className="property-detail-container">
           <div className="empty-state">
             <h3>Propriété non trouvée</h3>
-            <p>{error || 'Cette propriété n\'existe pas ou a été supprimée.'}</p>
+            <p>{error || "Cette propriété n'existe pas ou a été supprimée."}</p>
             <Link to="/properties" className="btn-filter primary">
               Retour aux propriétés
             </Link>
@@ -267,7 +350,11 @@ export default function PropertyDetailPage() {
 
       <main className="property-detail-container">
         {/* Back Button */}
-        <Link to="/properties" className="btn-cancel" style={{ marginBottom: '1.5rem' }}>
+        <Link
+          to="/properties"
+          className="btn-cancel"
+          style={{ marginBottom: "1.5rem" }}
+        >
           <BackIcon />
           Retour aux propriétés
         </Link>
@@ -278,18 +365,28 @@ export default function PropertyDetailPage() {
             <h1 className="property-detail-title">{property.title}</h1>
             <p className="property-detail-address">
               <LocationIcon />
-              {property.address.street}, {property.address.city}, {property.address.state} {property.address.zipCode}, {property.address.country}
+              {property.address.street}, {property.address.city},{" "}
+              {property.address.state} {property.address.zipCode},{" "}
+              {property.address.country}
             </p>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: "right" }}>
             <div className="property-detail-price">
               {property.price.toLocaleString()} {property.currency}
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <span className={`property-badge ${property.status}`} style={{ position: 'static' }}>
+            <div
+              style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}
+            >
+              <span
+                className={`property-badge ${property.status}`}
+                style={{ position: "static" }}
+              >
                 {getStatusLabel(property.status)}
               </span>
-              <span className="property-type-badge" style={{ position: 'static' }}>
+              <span
+                className="property-type-badge"
+                style={{ position: "static" }}
+              >
                 {getTypeLabel(property.type)}
               </span>
             </div>
@@ -337,7 +434,10 @@ export default function PropertyDetailPage() {
                   <CarIcon />
                   <div>
                     <span className="label">Parking</span>
-                    <span className="value">{property.features.parkingSpaces} place{property.features.parkingSpaces > 1 ? 's' : ''}</span>
+                    <span className="value">
+                      {property.features.parkingSpaces} place
+                      {property.features.parkingSpaces > 1 ? "s" : ""}
+                    </span>
                   </div>
                 </div>
               )}
@@ -346,7 +446,9 @@ export default function PropertyDetailPage() {
                   <FurnitureIcon />
                   <div>
                     <span className="label">Meublé</span>
-                    <span className="value">{property.features.furnished ? 'Oui' : 'Non'}</span>
+                    <span className="value">
+                      {property.features.furnished ? "Oui" : "Non"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -355,7 +457,9 @@ export default function PropertyDetailPage() {
                   <PetIcon />
                   <div>
                     <span className="label">Animaux acceptés</span>
-                    <span className="value">{property.features.petFriendly ? 'Oui' : 'Non'}</span>
+                    <span className="value">
+                      {property.features.petFriendly ? "Oui" : "Non"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -370,18 +474,19 @@ export default function PropertyDetailPage() {
             )}
 
             {/* Amenities */}
-            {property.features?.amenities && property.features.amenities.length > 0 && (
-              <div className="property-description">
-                <h3>Équipements</h3>
-                <div className="amenities-list">
-                  {property.features.amenities.map((amenity, index) => (
-                    <span key={index} className="amenity-tag">
-                      {amenity}
-                    </span>
-                  ))}
+            {property.features?.amenities &&
+              property.features.amenities.length > 0 && (
+                <div className="property-description">
+                  <h3>Équipements</h3>
+                  <div className="amenities-list">
+                    {property.features.amenities.map((amenity, index) => (
+                      <span key={index} className="amenity-tag">
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           {/* Sidebar */}
@@ -389,15 +494,33 @@ export default function PropertyDetailPage() {
             {/* Actions Card */}
             <div className="sidebar-card">
               <h3>Actions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <Link to={`/properties/${property.id || property._id}/edit`} className="btn-view" style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                <Link
+                  to={`/properties/${property.id || property._id}/edit`}
+                  className="btn-view"
+                  style={{ textAlign: "center" }}
+                >
                   <EditIcon />
                   Modifier la propriété
                 </Link>
-                <Link to={`/properties/${property.id || property._id}/images`} className="btn-edit" style={{ textAlign: 'center' }}>
+                <Link
+                  to={`/properties/${property.id || property._id}/images`}
+                  className="btn-edit"
+                  style={{ textAlign: "center" }}
+                >
                   Gérer les images
                 </Link>
-                <button className="btn-delete" onClick={handleDelete} style={{ width: '100%' }}>
+                <button
+                  className="btn-delete"
+                  onClick={handleDelete}
+                  style={{ width: "100%" }}
+                >
                   <DeleteIcon />
                   Supprimer
                 </button>
@@ -410,26 +533,37 @@ export default function PropertyDetailPage() {
                 <h3>Propriétaire</h3>
                 <div className="owner-info">
                   <div className="owner-avatar">
-                    {property.owner.name?.charAt(0) || 'P'}
+                    {property.owner.name?.charAt(0) || "P"}
                   </div>
                   <div className="owner-details">
-                    <h4>{property.owner.name || 'Propriétaire'}</h4>
+                    <h4>{property.owner.name || "Propriétaire"}</h4>
                     <p>{property.owner.email}</p>
                   </div>
                 </div>
-                <button className="btn-contact">
-                  Contacter
-                </button>
+                <button className="btn-contact">Contacter</button>
               </div>
             )}
 
             {/* Info Card */}
             <div className="sidebar-card">
               <h3>Informations</h3>
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                <p><strong>ID:</strong> {property.id || property._id}</p>
-                <p><strong>Créé le:</strong> {new Date(property.createdAt).toLocaleDateString('fr-FR')}</p>
-                <p><strong>Mis à jour le:</strong> {new Date(property.updatedAt).toLocaleDateString('fr-FR')}</p>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--color-text-muted)",
+                }}
+              >
+                <p>
+                  <strong>ID:</strong> {property.id || property._id}
+                </p>
+                <p>
+                  <strong>Créé le:</strong>{" "}
+                  {new Date(property.createdAt).toLocaleDateString("fr-FR")}
+                </p>
+                <p>
+                  <strong>Mis à jour le:</strong>{" "}
+                  {new Date(property.updatedAt).toLocaleDateString("fr-FR")}
+                </p>
               </div>
             </div>
           </div>
@@ -440,4 +574,3 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
-
