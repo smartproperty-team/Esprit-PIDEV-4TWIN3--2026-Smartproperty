@@ -123,7 +123,7 @@ export class LoginDto {
   @ApiPropertyOptional({
     description: 'reCAPTCHA token (v2 checkbox)',
   })
-  @IsNotEmpty({ message: 'Captcha token is required' })
+  @IsOptional()
   @IsString()
   captchaToken?: string;
 }

@@ -61,9 +61,9 @@ All protected endpoints require a Bearer token in the Authorization header.
             scheme: 'bearer',
             bearerFormat: 'JWT',
             name: 'JWT',
-            description: 'Enter your JWT token',
+            description: 'Enter JWT token in the format: your_token_here (without "Bearer" prefix)',
             in: 'header',
-        }, 'JWT-auth')
+        })
             .addTag('Auth', 'Authentication endpoints')
             .addTag('Users', 'User management endpoints')
             .addTag('Properties', 'Property management endpoints')

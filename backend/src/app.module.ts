@@ -29,12 +29,14 @@ import {
   redisConfig,
   throttlerConfig,
 } from './config';
+import { minioConfig } from './config/minio.config';
 import { validationSchema } from './config/validation.schema';
 
 // Feature Modules
 import { AuthModule } from './modules/auth/auth.module';
+import { PropertiesModule } from './modules/properties/properties.module';
+import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
-// import { PropertiesModule } from './modules/properties/properties.module';
 
 @Module({
   imports: [
@@ -54,6 +56,7 @@ import { UsersModule } from './modules/users/users.module';
         redisConfig,
         mailConfig,
         awsConfig,
+        minioConfig,
         throttlerConfig,
       ],
       validationSchema,
@@ -159,7 +162,8 @@ import { UsersModule } from './modules/users/users.module';
     // =====================
     AuthModule,
     UsersModule,
-    // PropertiesModule,
+    PropertiesModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

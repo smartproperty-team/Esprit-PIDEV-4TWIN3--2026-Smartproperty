@@ -92,17 +92,15 @@ All protected endpoints require a Bearer token in the Authorization header.
       `,
       )
       .setVersion('1.0.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'JWT',
-          description: 'Enter your JWT token',
-          in: 'header',
-        },
-        'JWT-auth',
-      )
+      .addBearerAuth({
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description:
+          'Enter JWT token in the format: your_token_here (without "Bearer" prefix)',
+        in: 'header',
+      })
       .addTag('Auth', 'Authentication endpoints')
       .addTag('Users', 'User management endpoints')
       .addTag('Properties', 'Property management endpoints')

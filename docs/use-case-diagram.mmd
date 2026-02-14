@@ -1,0 +1,87 @@
+graph TB
+    %% Actors on top row
+    T(("Tenant"))
+    O(("Owner"))
+    A(("Admin"))
+    AI(("AI System"))
+
+    subgraph SmartProperty["                                    SmartProperty Platform                                    "]
+
+        subgraph Core["Core Features"]
+            direction LR
+            UC1(["Authentication"])
+            UC2(["Search &\nBrowse"])
+            UC3(["Manage\nListings"])
+            UC4(["Apply for\nRental"])
+            UC5(["Manage\nLeases"])
+        end
+
+        subgraph Operations["Operations"]
+            direction LR
+            UC6(["Payments"])
+            UC7(["Maintenance\nRequests"])
+            UC8(["Messaging"])
+            UC9(["Reviews &\nFavorites"])
+            UC10(["Notifications"])
+        end
+
+        subgraph AIFeatures["AI-Powered Features"]
+            direction LR
+            UC11(["Recommendations"])
+            UC12(["Price\nPrediction"])
+            UC13(["Image\nAnalysis"])
+            UC14(["Smart\nSearch"])
+            UC15(["Market\nAnalytics"])
+        end
+
+        subgraph Admin["Administration"]
+            UC16(["User\nManagement"])
+        end
+
+    end
+
+    %% Tenant
+    T --- UC1
+    T --- UC2
+    T --- UC4
+    T --- UC6
+    T --- UC7
+    T --- UC8
+    T --- UC9
+    T --- UC10
+    T --- UC11
+    T --- UC14
+
+    %% Owner
+    O --- UC1
+    O --- UC3
+    O --- UC5
+    O --- UC6
+    O --- UC7
+    O --- UC8
+    O --- UC10
+    O --- UC12
+    O --- UC15
+
+    %% Admin
+    A --- UC1
+    A --- UC16
+
+    %% AI System
+    AI --- UC11
+    AI --- UC12
+    AI --- UC13
+    AI --- UC14
+    AI --- UC15
+
+    %% Styling
+    style SmartProperty fill:#f0f4ff,stroke:#4a6fa5,stroke-width:3px,color:#333
+    style Core fill:#e8f5e9,stroke:#66bb6a,stroke-width:2px
+    style Operations fill:#fff3e0,stroke:#ffa726,stroke-width:2px
+    style AIFeatures fill:#e3f2fd,stroke:#42a5f5,stroke-width:2px
+    style Admin fill:#fce4ec,stroke:#ef5350,stroke-width:2px
+
+    style T fill:#fff,stroke:#333,stroke-width:2px,font-size:16px
+    style O fill:#fff,stroke:#333,stroke-width:2px,font-size:16px
+    style A fill:#fff,stroke:#333,stroke-width:2px,font-size:16px
+    style AI fill:#fff,stroke:#333,stroke-width:2px,font-size:16px

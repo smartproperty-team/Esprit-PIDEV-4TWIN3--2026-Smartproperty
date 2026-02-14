@@ -96,3 +96,8 @@ env/
 
 # Uploads (local development)
 uploads/
+## ===========================================
+FILES_CREATED_SUMMARY
+FRONTEND/.dockerignore
+FRONTEND_AUTH_COMPLETE
+

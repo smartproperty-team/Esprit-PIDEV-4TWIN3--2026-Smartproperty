@@ -167,6 +167,14 @@ services:
       GOOGLE_FRONTEND_CALLBACK_URL: http://localhost:5173/auth/google/callback
       # reCAPTCHA
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-placeholder}
+      # MinIO (S3-compatible storage)
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: smartproperty_minio
+      MINIO_SECRET_KEY: smartproperty_minio_secret_2024
+      MINIO_BUCKET_NAME: smartproperty
+      MINIO_PUBLIC_URL: http://localhost:9000
       # Logging
       LOG_LEVEL: debug
       # GraphQL
@@ -254,6 +262,10 @@ services:
       REDIS_PASSWORD: redis_dev_password_2024
       BACKEND_API_URL: http://backend:3000/api
       JWT_SECRET: smartproperty_jwt_secret_dev_2024_change_in_prod
+      # MinIO
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: smartproperty_minio
+      MINIO_SECRET_KEY: smartproperty_minio_secret_2024
     ports:
       - "8000:8000"
     volumes:
@@ -268,6 +280,30 @@ services:
       retries: 3
       start_period: 10s
 
+  # =====================
+  # MinIO (S3-Compatible Object Storage)
+  # =====================
+  minio:
+    image: minio/minio:latest
+    container_name: smartproperty-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: smartproperty_minio
+      MINIO_ROOT_PASSWORD: smartproperty_minio_secret_2024
+    ports:
+      - "9000:9000"   # API endpoint
+      - "9001:9001"   # Web Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - smartproperty-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 # =====================
 # Volumes
 # =====================
@@ -277,6 +313,8 @@ volumes:
   mongodb_config:
     driver: local
   redis_data:
+    driver: local
+  minio_data:
     driver: local
   backend_node_modules:
     driver: local

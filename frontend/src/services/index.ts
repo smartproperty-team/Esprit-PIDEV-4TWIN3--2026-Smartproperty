@@ -7,3 +7,4 @@ export {
   setRefreshToken,
 } from "./api";
 export { default as authService } from "./auth.service";
+export { default as propertyService } from "./property.service";

@@ -19,8 +19,11 @@ const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const config_2 = require("./config");
+const minio_config_1 = require("./config/minio.config");
 const validation_schema_1 = require("./config/validation.schema");
 const auth_module_1 = require("./modules/auth/auth.module");
+const properties_module_1 = require("./modules/properties/properties.module");
+const upload_module_1 = require("./modules/upload/upload.module");
 const users_module_1 = require("./modules/users/users.module");
 let AppModule = class AppModule {
 };
@@ -41,6 +44,7 @@ exports.AppModule = AppModule = __decorate([
                     config_2.redisConfig,
                     config_2.mailConfig,
                     config_2.awsConfig,
+                    minio_config_1.minioConfig,
                     config_2.throttlerConfig,
                 ],
                 validationSchema: validation_schema_1.validationSchema,
@@ -117,6 +121,8 @@ exports.AppModule = AppModule = __decorate([
             }),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
+            properties_module_1.PropertiesModule,
+            upload_module_1.UploadModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

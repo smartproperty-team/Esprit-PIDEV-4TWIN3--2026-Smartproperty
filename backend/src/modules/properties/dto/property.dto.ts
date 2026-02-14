@@ -1,0 +1,324 @@
+// ===========================================
+// SmartProperty - Property DTOs
+// ===========================================
+
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { PropertyStatus, PropertyType } from '../entities/property.entity';
+
+// ===========================================
+// Nested DTOs
+// ===========================================
+
+export class PropertyCoordinatesDto {
+  @ApiProperty({ example: 40.7128 })
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat!: number;
+
+  @ApiProperty({ example: -74.006 })
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng!: number;
+}
+
+export class PropertyAddressDto {
+  @ApiProperty({ example: '123 Main St' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  street!: string;
+
+  @ApiProperty({ example: 'New York' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  city!: string;
+
+  @ApiProperty({ example: 'NY' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  state!: string;
+
+  @ApiProperty({ example: '10001' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  zipCode!: string;
+
+  @ApiProperty({ example: 'USA' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  country!: string;
+
+  @ApiPropertyOptional({ type: PropertyCoordinatesDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PropertyCoordinatesDto)
+  coordinates?: PropertyCoordinatesDto;
+}
+
+export class PropertyFeaturesDto {
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  bedrooms?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  bathrooms?: number;
+
+  @ApiPropertyOptional({ example: 950 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  area?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  parkingSpaces?: number;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  furnished?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  petFriendly?: boolean;
+
+  @ApiPropertyOptional({ example: ['wifi', 'gym'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  amenities?: string[];
+}
+
+export class PropertyImageDto {
+  @ApiProperty({ example: 'https://example.com/image.jpg' })
+  @IsUrl()
+  url!: string;
+
+  @ApiPropertyOptional({ example: 'Living room' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  caption?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+}
+
+// ===========================================
+// Create DTO
+// ===========================================
+
+export class CreatePropertyDto {
+  @ApiProperty({ example: 'Modern Downtown Apartment' })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(200)
+  title!: string;
+
+  @ApiPropertyOptional({ example: 'Spacious 2-bedroom with city views.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description?: string;
+
+  @ApiProperty({ enum: PropertyType })
+  @IsEnum(PropertyType)
+  type!: PropertyType;
+
+  @ApiPropertyOptional({ enum: PropertyStatus })
+  @IsOptional()
+  @IsEnum(PropertyStatus)
+  status?: PropertyStatus;
+
+  @ApiProperty({ example: 1800 })
+  @IsNumber()
+  @Min(0)
+  price!: number;
+
+  @ApiPropertyOptional({ example: 'USD' })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(3)
+  currency?: string;
+
+  @ApiProperty({ type: PropertyAddressDto })
+  @ValidateNested()
+  @Type(() => PropertyAddressDto)
+  address!: PropertyAddressDto;
+
+  @ApiPropertyOptional({ type: PropertyFeaturesDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PropertyFeaturesDto)
+  features?: PropertyFeaturesDto;
+
+  @ApiPropertyOptional({ type: [PropertyImageDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PropertyImageDto)
+  images?: PropertyImageDto[];
+
+  @ApiPropertyOptional({ example: 'https://example.com/virtual-tour' })
+  @IsOptional()
+  @IsUrl()
+  virtualTour?: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439012' })
+  @IsOptional()
+  @IsString()
+  managerId?: string;
+}
+
+// ===========================================
+// Update DTO
+// ===========================================
+
+export class UpdatePropertyAddressDto {
+  @ApiPropertyOptional({ example: '123 Main St' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  street?: string;
+
+  @ApiPropertyOptional({ example: 'New York' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  city?: string;
+
+  @ApiPropertyOptional({ example: 'NY' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  state?: string;
+
+  @ApiPropertyOptional({ example: '10001' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  zipCode?: string;
+
+  @ApiPropertyOptional({ example: 'USA' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  country?: string;
+
+  @ApiPropertyOptional({ type: PropertyCoordinatesDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PropertyCoordinatesDto)
+  coordinates?: PropertyCoordinatesDto;
+}
+
+export class UpdatePropertyDto {
+  @ApiPropertyOptional({ example: 'Modern Downtown Apartment' })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(200)
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'Spacious 2-bedroom with city views.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description?: string;
+
+  @ApiPropertyOptional({ enum: PropertyType })
+  @IsOptional()
+  @IsEnum(PropertyType)
+  type?: PropertyType;
+
+  @ApiPropertyOptional({ enum: PropertyStatus })
+  @IsOptional()
+  @IsEnum(PropertyStatus)
+  status?: PropertyStatus;
+
+  @ApiPropertyOptional({ example: 1800 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
+  @ApiPropertyOptional({ example: 'USD' })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(3)
+  currency?: string;
+
+  @ApiPropertyOptional({ type: UpdatePropertyAddressDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdatePropertyAddressDto)
+  address?: UpdatePropertyAddressDto;
+
+  @ApiPropertyOptional({ type: PropertyFeaturesDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PropertyFeaturesDto)
+  features?: PropertyFeaturesDto;
+
+  @ApiPropertyOptional({ type: [PropertyImageDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PropertyImageDto)
+  images?: PropertyImageDto[];
+
+  @ApiPropertyOptional({ example: 'https://example.com/virtual-tour' })
+  @IsOptional()
+  @IsUrl()
+  virtualTour?: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439012' })
+  @IsOptional()
+  @IsString()
+  managerId?: string;
+}

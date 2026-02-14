@@ -135,7 +135,7 @@ export default function HomeNavbar() {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </Link>
-            <Link to="/add-property" className="btn-add-property">
+            <Link to="/properties/new" className="btn-add-property">
               <span className="btn-text">Add Property</span>
               <svg
                 className="btn-icon"

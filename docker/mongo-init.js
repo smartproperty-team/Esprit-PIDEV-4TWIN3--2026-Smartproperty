@@ -99,20 +99,60 @@ db.createCollection("properties", {
           description: "Property title - required",
         },
         description: {
-          bsonType: "string",
-          description: "Property description",
+          bsonType: ["string", "null", "undefined"],
+          description: "Property description - optional",
         },
         type: {
-          enum: ["apartment", "house", "studio", "villa", "commercial", "land"],
+          enum: ["apartment", "house", "condo", "studio", "villa", "land"],
           description: "Property type - required",
         },
         status: {
-          enum: ["available", "rented", "maintenance", "unavailable"],
+          enum: ["available", "rented", "maintenance", "unlisted"],
           description: "Property status - required",
         },
+        price: {
+          bsonType: ["number", "double", "int"],
+          description: "Property price",
+        },
+        currency: {
+          bsonType: "string",
+          description: "Currency code",
+        },
+        address: {
+          bsonType: ["object", "null", "undefined"],
+          description: "Property address",
+        },
+        features: {
+          bsonType: ["object", "null", "undefined"],
+          description: "Property features - optional",
+        },
+        images: {
+          bsonType: ["array", "null", "undefined"],
+          description: "Property images - optional",
+        },
+        virtualTour: {
+          bsonType: ["string", "null", "undefined"],
+          description: "Virtual tour URL - optional",
+        },
         ownerId: {
-          bsonType: "objectId",
+          bsonType: ["objectId", "string"],
           description: "Reference to owner user - required",
+        },
+        managerId: {
+          bsonType: ["objectId", "string", "null", "undefined"],
+          description: "Reference to manager user - optional",
+        },
+        createdAt: {
+          bsonType: "date",
+          description: "Creation timestamp",
+        },
+        updatedAt: {
+          bsonType: ["date", "null", "undefined"],
+          description: "Last update timestamp",
+        },
+        deletedAt: {
+          bsonType: ["date", "null", "undefined"],
+          description: "Deletion timestamp - for soft deletes",
         },
       },
     },

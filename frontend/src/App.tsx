@@ -17,6 +17,11 @@ import {
 } from "./pages/auth";
 import { DashboardPage, SessionsPage } from "./pages/dashboard";
 import { HomePage } from "./pages/home";
+import {
+  PropertiesPage,
+  PropertyDetailPage,
+  PropertyFormPage,
+} from "./pages/properties";
 import { useAuthStore } from "./store";
 
 function App() {
@@ -70,6 +75,26 @@ function App() {
         element={
           <ProtectedRoute>
             <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Properties Routes */}
+      <Route path="/properties" element={<PropertiesPage />} />
+      <Route path="/properties/:id" element={<PropertyDetailPage />} />
+      <Route
+        path="/properties/new"
+        element={
+          <ProtectedRoute>
+            <PropertyFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/properties/:id/edit"
+        element={
+          <ProtectedRoute>
+            <PropertyFormPage />
           </ProtectedRoute>
         }
       />
