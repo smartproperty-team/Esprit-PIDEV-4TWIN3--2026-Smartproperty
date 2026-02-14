@@ -756,6 +756,13 @@ export class AuthService {
   ): Promise<AuthResponse> {
     const { email, firstName, lastName, avatar, facebookId } = facebookProfile;
 
+    // Validate required fields
+    if (!email || !facebookId) {
+      throw new BadRequestException(
+        'Email and Facebook ID are required for Facebook login',
+      );
+    }
+
     // Check if user exists with this Facebook ID
     let user = await this.userRepository.findOne({
       where: { facebookId },
