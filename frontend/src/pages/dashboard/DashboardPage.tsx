@@ -18,7 +18,7 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -28,8 +28,9 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui';
-import { authService } from '../../services';
+import { authService, verificationService } from '../../services';
 import { useAuthStore } from '../../store';
+import { VerificationStatus } from '../../types/verification';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -40,6 +41,18 @@ export default function DashboardPage() {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const [verificationStatus, setVerificationStatus] =
+    useState<VerificationStatus | null>(null);
+
+  // Fetch verification status for tenants
+  useEffect(() => {
+    if (user?.role === 'tenant') {
+      verificationService
+        .getVerificationStatus()
+        .then((data) => setVerificationStatus(data.overallStatus))
+        .catch(() => setVerificationStatus(VerificationStatus.NOT_SUBMITTED));
+    }
+  }, [user?.role]);
 
   const handleLogout = async () => {
     await logout();
@@ -294,39 +307,41 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Verify Me CTA - Show for tenants */}
-        {user?.role === 'tenant' && (
-          <div className="mb-8">
-            <div className="relative overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 p-6 shadow-lg">
-              <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
-              <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
-              <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                    <ShieldCheck className="h-7 w-7 text-white" />
+        {/* Verify Me CTA - Show for tenants (hide if verified or rejected) */}
+        {user?.role === 'tenant' &&
+          verificationStatus !== VerificationStatus.VERIFIED &&
+          verificationStatus !== VerificationStatus.REJECTED && (
+            <div className="mb-8">
+              <div className="relative overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 p-6 shadow-lg">
+                <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
+                <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
+                <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                      <ShieldCheck className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        Get Verified
+                      </h3>
+                      <p className="text-sm text-indigo-100">
+                        Upload your documents to build trust with landlords and
+                        speed up your applications.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      Get Verified
-                    </h3>
-                    <p className="text-sm text-indigo-100">
-                      Upload your documents to build trust with landlords and
-                      speed up your applications.
-                    </p>
-                  </div>
+                  <Button
+                    onClick={() => navigate('/verification')}
+                    className="shrink-0 bg-white text-indigo-600 shadow-md hover:bg-indigo-50 focus-visible:ring-white"
+                    size="lg"
+                  >
+                    <ShieldCheck className="mr-2 h-5 w-5" />
+                    Verify Me
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => navigate('/verification')}
-                  className="shrink-0 bg-white text-indigo-600 shadow-md hover:bg-indigo-50 focus-visible:ring-white"
-                  size="lg"
-                >
-                  <ShieldCheck className="mr-2 h-5 w-5" />
-                  Verify Me
-                </Button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Admin: Review Verifications CTA */}
         {user?.role === 'admin' && (
