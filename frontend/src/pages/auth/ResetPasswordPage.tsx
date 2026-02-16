@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
+import { HomeFooter, HomeNavbar } from "../../components/layout";
 import {
   Alert,
   Button,
@@ -86,119 +87,127 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12">
-        <div className="w-full max-w-md">
-          <Card>
-            <CardContent className="pt-6">
-              <Alert
-                type="error"
-                message="Invalid or missing reset token. Please request a new password reset."
-              />
-              <div className="mt-4 text-center">
-                <Link
-                  to="/forgot-password"
-                  className="text-indigo-600 hover:underline"
-                >
-                  Request new reset link
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+      <>
+        <HomeNavbar />
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12 pt-28">
+          <div className="w-full max-w-md">
+            <Card>
+              <CardContent className="pt-6">
+                <Alert
+                  type="error"
+                  message="Invalid or missing reset token. Please request a new password reset."
+                />
+                <div className="mt-4 text-center">
+                  <Link
+                    to="/forgot-password"
+                    className="text-indigo-600 hover:underline"
+                  >
+                    Request new reset link
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+        <HomeFooter />
+      </>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600">
-            <Building2 className="h-8 w-8 text-white" />
+    <>
+      <HomeNavbar />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12 pt-28">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="mb-8 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600">
+              <Building2 className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="mt-4 text-3xl font-bold text-gray-900">
+              SmartProperty
+            </h1>
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-gray-900">
-            SmartProperty
-          </h1>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Reset Password</CardTitle>
-            <CardDescription>Enter your new password below</CardDescription>
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle>Reset Password</CardTitle>
+              <CardDescription>Enter your new password below</CardDescription>
+            </CardHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              {error && (
-                <Alert
-                  type="error"
-                  message={error}
-                  onClose={() => setError(null)}
-                />
-              )}
-
-              {successMessage && (
-                <Alert type="success" message={successMessage} />
-              )}
-
-              {!successMessage && (
-                <>
-                  <Input
-                    label="New Password"
-                    type="password"
-                    placeholder="••••••••"
-                    icon={<Lock className="h-5 w-5" />}
-                    error={errors.password?.message}
-                    {...register("password")}
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <CardContent className="space-y-4">
+                {error && (
+                  <Alert
+                    type="error"
+                    message={error}
+                    onClose={() => setError(null)}
                   />
+                )}
 
-                  <Input
-                    label="Confirm New Password"
-                    type="password"
-                    placeholder="••••••••"
-                    icon={<Lock className="h-5 w-5" />}
-                    error={errors.confirmPassword?.message}
-                    {...register("confirmPassword")}
-                  />
+                {successMessage && (
+                  <Alert type="success" message={successMessage} />
+                )}
 
-                  <div className="text-xs text-gray-500">
-                    <p className="font-medium">Password requirements:</p>
-                    <ul className="mt-1 list-inside list-disc">
-                      <li>At least 8 characters</li>
-                      <li>One uppercase letter</li>
-                      <li>One lowercase letter</li>
-                      <li>One number</li>
-                      <li>One special character (@$!%*?&)</li>
-                    </ul>
-                  </div>
-                </>
-              )}
-            </CardContent>
+                {!successMessage && (
+                  <>
+                    <Input
+                      label="New Password"
+                      type="password"
+                      placeholder="••••••••"
+                      icon={<Lock className="h-5 w-5" />}
+                      error={errors.password?.message}
+                      {...register("password")}
+                    />
 
-            <CardFooter className="flex-col space-y-4">
-              {!successMessage && (
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  isLoading={isLoading}
+                    <Input
+                      label="Confirm New Password"
+                      type="password"
+                      placeholder="••••••••"
+                      icon={<Lock className="h-5 w-5" />}
+                      error={errors.confirmPassword?.message}
+                      {...register("confirmPassword")}
+                    />
+
+                    <div className="text-xs text-gray-500">
+                      <p className="font-medium">Password requirements:</p>
+                      <ul className="mt-1 list-inside list-disc">
+                        <li>At least 8 characters</li>
+                        <li>One uppercase letter</li>
+                        <li>One lowercase letter</li>
+                        <li>One number</li>
+                        <li>One special character (@$!%*?&)</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+
+              <CardFooter className="flex-col space-y-4">
+                {!successMessage && (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    isLoading={isLoading}
+                  >
+                    Reset Password
+                  </Button>
+                )}
+
+                <Link
+                  to="/login"
+                  className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
                 >
-                  Reset Password
-                </Button>
-              )}
-
-              <Link
-                to="/login"
-                className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Sign In
-              </Link>
-            </CardFooter>
-          </form>
-        </Card>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Link>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
       </div>
-    </div>
+      <HomeFooter />
+    </>
   );
 }
