@@ -2,14 +2,14 @@
 // SmartProperty - Login Page
 // ===========================================
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Lock, Mail } from "lucide-react";
-import { useState } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Building2, Lock, Mail } from 'lucide-react';
+import { useState } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { HomeFooter, HomeNavbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -20,9 +20,9 @@ import {
   CardHeader,
   CardTitle,
   Input,
-} from "../../components/ui";
-import { authService } from "../../services";
-import { useAuthStore } from "../../store";
+} from '../../components/ui';
+import { authService } from '../../services';
+import { useAuthStore } from '../../store';
 
 // Google Icon SVG Component
 const GoogleIcon = () => (
@@ -54,8 +54,8 @@ const FacebookIcon = () => (
 );
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -81,14 +81,14 @@ export default function LoginPage() {
     try {
       clearError();
       if (!captchaToken) {
-        setCaptchaError("Please complete the CAPTCHA.");
+        setCaptchaError('Please complete the CAPTCHA.');
         return;
       }
       setCaptchaError(null);
       await login(data.email, data.password, captchaToken);
-      setSuccessMessage("Login successful! Redirecting...");
+      setSuccessMessage('Login successful! Redirecting...');
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate('/dashboard');
       }, 1000);
     } catch {
       // Error is handled by the store
@@ -148,7 +148,7 @@ export default function LoginPage() {
                   icon={<Mail className="h-5 w-5" />}
                   error={errors.email?.message}
                   className="focus-visible:ring-home-primary"
-                  {...register("email")}
+                  {...register('email')}
                 />
 
                 <Input
@@ -158,7 +158,7 @@ export default function LoginPage() {
                   icon={<Lock className="h-5 w-5" />}
                   error={errors.password?.message}
                   className="focus-visible:ring-home-primary"
-                  {...register("password")}
+                  {...register('password')}
                 />
 
                 <div className="flex items-center justify-between">
@@ -183,7 +183,7 @@ export default function LoginPage() {
                   {siteKey ? (
                     <ReCAPTCHA
                       sitekey={siteKey}
-                      onChange={(token) => {
+                      onChange={(token: string | null) => {
                         setCaptchaToken(token);
                         setCaptchaError(null);
                       }}
@@ -241,7 +241,7 @@ export default function LoginPage() {
                 </Button>
 
                 <p className="text-center text-sm text-home-muted">
-                  Don't have an account?{" "}
+                  Don't have an account?{' '}
                   <Link
                     to="/register"
                     className="font-medium text-home-primary hover:text-home-primary-dark"
@@ -256,7 +256,7 @@ export default function LoginPage() {
           <div className="mt-6 rounded-lg border border-home-border bg-white/70 p-4 backdrop-blur">
             <p className="text-center text-sm text-home-muted">
               <span className="font-medium">Testing?</span> Register a new
-              account or use the API docs at{" "}
+              account or use the API docs at{' '}
               <a
                 href="http://localhost:3000/api/docs"
                 target="_blank"

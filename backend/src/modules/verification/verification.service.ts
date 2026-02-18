@@ -5,15 +5,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import { MongoRepository } from 'typeorm';
+import { NotificationType } from '../notifications/entities/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 import { MinioService } from '../upload/minio.service';
 import {
   DocumentType,
@@ -32,6 +37,10 @@ export class VerificationService {
     @InjectRepository(TenantVerification)
     private readonly verificationRepo: MongoRepository<TenantVerification>,
     private readonly minioService: MinioService,
+    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ─── Get or create tenant verification record ──────────
@@ -264,6 +273,20 @@ export class VerificationService {
 
     this.logger.log(`Verification approved for user ${verification.userId}`);
 
+    // Send email & notification
+    await this.sendVerificationStatusEmail(
+      verification.userId,
+      'approved',
+    );
+    await this.notificationsService.create({
+      userId: verification.userId,
+      title: 'Account Verified ✅',
+      message:
+        'Congratulations! Your account has been verified by our admin team. You now have full access to all features.',
+      type: NotificationType.VERIFICATION_APPROVED,
+      link: '/dashboard',
+    });
+
     return this.getVerificationStatus(verification.userId);
   }
 
@@ -295,6 +318,74 @@ export class VerificationService {
       `Verification rejected for user ${verification.userId}: ${reason}`,
     );
 
+    // Send email & notification
+    await this.sendVerificationStatusEmail(
+      verification.userId,
+      'rejected',
+      reason,
+    );
+    await this.notificationsService.create({
+      userId: verification.userId,
+      title: 'Verification Rejected ❌',
+      message: `Your verification request has been rejected. Reason: ${reason}. You can re-submit your documents.`,
+      type: NotificationType.VERIFICATION_REJECTED,
+      link: '/dashboard',
+    });
+
     return this.getVerificationStatus(verification.userId);
+  }
+
+  // ─── Helper: Send verification status email ────────────
+  private async sendVerificationStatusEmail(
+    userId: string,
+    status: 'approved' | 'rejected',
+    reason?: string,
+  ) {
+    try {
+      const user = await this.usersService.findById(userId);
+      if (!user?.email) {
+        this.logger.warn(`Cannot send email: user ${userId} not found`);
+        return;
+      }
+
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      const dashboardUrl = `${frontendUrl}/dashboard`;
+      const name = user.firstName || user.email;
+
+      if (status === 'approved') {
+        await this.mailerService.sendMail({
+          to: user.email,
+          subject: '✅ Your SmartProperty Account is Verified!',
+          template: 'verification-approved',
+          context: {
+            name,
+            dashboardUrl,
+            year: new Date().getFullYear(),
+          },
+        });
+      } else {
+        await this.mailerService.sendMail({
+          to: user.email,
+          subject: '❌ SmartProperty Verification Update',
+          template: 'verification-rejected',
+          context: {
+            name,
+            reason: reason || 'No reason provided',
+            dashboardUrl,
+            year: new Date().getFullYear(),
+          },
+        });
+      }
+
+      this.logger.log(
+        `Verification ${status} email sent to ${user.email}`,
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to send verification ${status} email to user ${userId}`,
+        err,
+      );
+    }
   }
 }

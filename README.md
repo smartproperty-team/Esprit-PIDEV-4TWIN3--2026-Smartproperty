@@ -431,6 +431,7 @@ docker-compose down
 
 When running locally, the following services are available:
 
+
 | Service             | URL                              | Description                       |
 | ------------------- | -------------------------------- | --------------------------------- |
 | **Backend API**     | http://localhost:3000            | NestJS REST API                   |
@@ -439,9 +440,10 @@ When running locally, the following services are available:
 | **Frontend**        | http://localhost:5173            | React development server          |
 | **Mongo Express**   | http://localhost:8081            | MongoDB admin UI (admin/admin123) |
 | **Redis Commander** | http://localhost:8082            | Redis admin UI                    |
-| **MailHog**         | http://localhost:8025            | Email testing UI                  |
+| **MailHog**         | http://cd balocalhost:8025       | Email testing UI                  |
 
 ### Docker Container Ports
+
 
 | Container       | Internal Port | External Port |
 | --------------- | ------------- | ------------- |
@@ -457,6 +459,7 @@ When running locally, the following services are available:
 ## 📜 Available Scripts
 
 ### Backend Scripts
+
 
 | Script                       | Description                                               |
 | ---------------------------- | --------------------------------------------------------- |
@@ -476,6 +479,7 @@ When running locally, the following services are available:
 | `npm run seed`               | Seed the database with initial data                       |
 
 ### Frontend Scripts
+
 
 | Script                  | Description                              |
 | ----------------------- | ---------------------------------------- |
@@ -921,92 +925,92 @@ For partnership or business inquiries:
 
 **Phase 1: Environment & Infrastructure**
 
-- [x] Monorepo setup with npm workspaces
-- [x] Docker Compose configuration for local development
+- [X]  Monorepo setup with npm workspaces
+- [X]  Docker Compose configuration for local development
   - MongoDB (port 27017)
   - Redis (port 6379)
   - Mongo Express (port 8081)
   - Redis Commander (port 8082)
   - MailHog for email testing (ports 1025/8025)
-- [x] Backend NestJS configuration with TypeORM
-- [x] Frontend React + Vite + TypeScript setup
-- [x] TailwindCSS styling configuration
-- [x] Environment variables configuration
+- [X]  Backend NestJS configuration with TypeORM
+- [X]  Frontend React + Vite + TypeScript setup
+- [X]  TailwindCSS styling configuration
+- [X]  Environment variables configuration
 
 **Phase 2: Authentication System (Complete)**
 
-- [x] User registration with email verification
-- [x] Login with JWT access/refresh tokens
-- [x] Password hashing with bcrypt
-- [x] Account lockout after failed attempts
-- [x] Email verification flow
-- [x] Forgot password / Reset password
-- [x] Change password functionality
-- [x] Protected routes with JWT guards
-- [x] Role-based access control (admin, owner, tenant, manager, agent)
-- [x] Refresh token rotation
-- [x] Session management with device tracking
-- [x] Multi-device session support (max 5 sessions)
-- [x] Session revocation (single & all devices)
-- [x] Password history (prevent reuse of last 5)
+- [X]  User registration with email verification
+- [X]  Login with JWT access/refresh tokens
+- [X]  Password hashing with bcrypt
+- [X]  Account lockout after failed attempts
+- [X]  Email verification flow
+- [X]  Forgot password / Reset password
+- [X]  Change password functionality
+- [X]  Protected routes with JWT guards
+- [X]  Role-based access control (admin, owner, tenant, manager, agent)
+- [X]  Refresh token rotation
+- [X]  Session management with device tracking
+- [X]  Multi-device session support (max 5 sessions)
+- [X]  Session revocation (single & all devices)
+- [X]  Password history (prevent reuse of last 5)
 
 **Frontend Authentication UI (Complete)**
 
-- [x] Login page with form validation
-- [x] Registration page with password requirements
-- [x] Forgot password page
-- [x] Reset password page
-- [x] Email verification page with auto-redirect
-- [x] Dashboard with user profile and email verification status
-- [x] Sessions management page (view/revoke sessions)
-- [x] Protected routes component
-- [x] Zustand state management with localStorage persistence
-- [x] Axios API client with token refresh interceptors
-- [x] UI components (Button, Input, Card, Alert, etc.)
-- [x] Complete auth service with all 13+ endpoints
-- [x] Custom useAuth hook with auto-initialization
-- [x] Form validation utilities (email, password, phone)
-- [x] Error handling utilities
+- [X]  Login page with form validation
+- [X]  Registration page with password requirements
+- [X]  Forgot password page
+- [X]  Reset password page
+- [X]  Email verification page with auto-redirect
+- [X]  Dashboard with user profile and email verification status
+- [X]  Sessions management page (view/revoke sessions)
+- [X]  Protected routes component
+- [X]  Zustand state management with localStorage persistence
+- [X]  Axios API client with token refresh interceptors
+- [X]  UI components (Button, Input, Card, Alert, etc.)
+- [X]  Complete auth service with all 13+ endpoints
+- [X]  Custom useAuth hook with auto-initialization
+- [X]  Form validation utilities (email, password, phone)
+- [X]  Error handling utilities
 
 ### Roadmap
 
 #### Phase 1: MVP (Q1 2026) - ✅ Nearly Complete
 
-- [x] Project setup and architecture
-- [x] Docker development environment
-- [x] Complete authentication system (13+ endpoints)
-- [x] User registration & login with session management
-- [x] Email verification with auto-redirect
-- [x] Password reset flow
-- [x] Full frontend auth UI with all pages
-- [x] Session management UI
-- [ ] Property listing CRUD operations
-- [ ] User profile management
-- [ ] Property search functionality
+- [X]  Project setup and architecture
+- [X]  Docker development environment
+- [X]  Complete authentication system (13+ endpoints)
+- [X]  User registration & login with session management
+- [X]  Email verification with auto-redirect
+- [X]  Password reset flow
+- [X]  Full frontend auth UI with all pages
+- [X]  Session management UI
+- [ ]  Property listing CRUD operations
+- [ ]  User profile management
+- [ ]  Property search functionality
 
 #### Phase 2: Core Features (Q2 2026)
 
-- [ ] Advanced property search with filters
-- [ ] Rental application workflow
-- [ ] Payment integration
-- [ ] Notification system
-- [ ] Dashboard analytics
-- [ ] Mobile responsive design
+- [ ]  Advanced property search with filters
+- [ ]  Rental application workflow
+- [ ]  Payment integration
+- [ ]  Notification system
+- [ ]  Dashboard analytics
+- [ ]  Mobile responsive design
 
 #### Phase 3: AI Integration (Q3 2026)
 
-- [ ] Property recommendation engine
-- [ ] Price prediction model
-- [ ] Image classification
-- [ ] NLP-powered search
+- [ ]  Property recommendation engine
+- [ ]  Price prediction model
+- [ ]  Image classification
+- [ ]  NLP-powered search
 
 #### Phase 4: Enhancement (Q4 2026)
 
-- [ ] Virtual tours
-- [ ] Advanced analytics
-- [ ] Multi-language support
-- [ ] Mobile app (React Native)
-- [ ] Third-party integrations
+- [ ]  Virtual tours
+- [ ]  Advanced analytics
+- [ ]  Multi-language support
+- [ ]  Mobile app (React Native)
+- [ ]  Third-party integrations
 
 ### Quick Start
 

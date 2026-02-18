@@ -4,6 +4,8 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
 import { UploadModule } from '../upload/upload.module';
 import {
   TenantVerification,
@@ -16,6 +18,8 @@ import { VerificationService } from './verification.service';
   imports: [
     TypeOrmModule.forFeature([VerificationDocument, TenantVerification]),
     UploadModule,
+    NotificationsModule,
+    UsersModule,
   ],
   controllers: [VerificationController],
   providers: [VerificationService],

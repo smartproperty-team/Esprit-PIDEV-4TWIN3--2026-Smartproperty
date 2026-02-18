@@ -22,6 +22,7 @@ const config_2 = require("./config");
 const minio_config_1 = require("./config/minio.config");
 const validation_schema_1 = require("./config/validation.schema");
 const auth_module_1 = require("./modules/auth/auth.module");
+const notifications_module_1 = require("./modules/notifications/notifications.module");
 const properties_module_1 = require("./modules/properties/properties.module");
 const upload_module_1 = require("./modules/upload/upload.module");
 const users_module_1 = require("./modules/users/users.module");
@@ -125,6 +126,7 @@ exports.AppModule = AppModule = __decorate([
             properties_module_1.PropertiesModule,
             upload_module_1.UploadModule,
             verification_module_1.VerificationModule,
+            notifications_module_1.NotificationsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
