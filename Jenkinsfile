@@ -61,10 +61,10 @@ pipeline {
       }
     }
 
-    // stage('Build & Push Docker image') {
-    //   agent { label 'docker' }
-    //   steps {
-    //     script {
+    stage('Build & Push Docker image') {
+      agent { label 'docker' }
+      steps {
+        script {
           // If REGISTRY is not set, just build the image locally. If set, push to registry using credentials.
           if (!env.REGISTRY) {
             echo "No DOCKER_REGISTRY_URL set — building image locally only"
@@ -75,9 +75,9 @@ pipeline {
               img.push()
             }
           }
-    //     }
-    //   }
-    // }
+        }
+      }
+    }
   }
   post {
     success { echo 'Backend pipeline succeeded' }
