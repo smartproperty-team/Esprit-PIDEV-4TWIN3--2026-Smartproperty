@@ -4,7 +4,6 @@
 
 import {
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
   Clock,
   FileImage,
@@ -18,7 +17,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -260,7 +259,6 @@ function DropZone({
 
 // ─── Main page ───────────────────────────────────────────────
 export default function VerificationPage() {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const [verification, setVerification] = useState<TenantVerification | null>(
@@ -390,27 +388,9 @@ export default function VerificationPage() {
   // ─── Render ──────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex h-16 max-w-4xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </button>
-          <div className="h-6 w-px bg-gray-200" />
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-indigo-600" />
-            <span className="text-lg font-semibold text-gray-900">
-              Identity Verification
-            </span>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 pt-24 sm:px-6 lg:px-8">
         {/* Message */}
         {message && (
           <div className="mb-6">

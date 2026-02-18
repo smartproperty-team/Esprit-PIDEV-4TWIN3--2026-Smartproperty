@@ -6,7 +6,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HomeFooter, HomeNavbar } from '../../components/layout';
+import { HomeFooter, Navbar } from '../../components/layout';
 
 // Property type for cards
 interface Property {
@@ -295,7 +295,7 @@ export default function HomePage() {
         Skip to main content
       </a>
 
-      <HomeNavbar />
+      <Navbar />
 
       {/* Hero Section */}
       <section className="hero-section" aria-labelledby="hero-title">

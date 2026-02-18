@@ -212,7 +212,9 @@ export default function HomeNavbar() {
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                    <span className="notif-badge">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
                   )}
                 </button>
 
@@ -235,7 +237,15 @@ export default function HomeNavbar() {
                     <div className="notif-panel-list">
                       {notifications.length === 0 ? (
                         <div className="notif-empty">
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            aria-hidden="true"
+                          >
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                           </svg>
@@ -258,18 +268,25 @@ export default function HomeNavbar() {
                             }}
                           >
                             <div className="notif-icon">
-                              {n.type === 'verification_approved' ? '✅' : n.type === 'verification_rejected' ? '❌' : '🔔'}
+                              {n.type === 'verification_approved'
+                                ? '✅'
+                                : n.type === 'verification_rejected'
+                                  ? '❌'
+                                  : '🔔'}
                             </div>
                             <div className="notif-content">
                               <p className="notif-title">{n.title}</p>
                               <p className="notif-message">{n.message}</p>
                               <span className="notif-time">
-                                {new Date(n.createdAt).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {new Date(n.createdAt).toLocaleDateString(
+                                  'en-US',
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  },
+                                )}
                               </span>
                             </div>
                           </div>

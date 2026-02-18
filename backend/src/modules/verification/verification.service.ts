@@ -18,8 +18,8 @@ import { ObjectId } from 'mongodb';
 import { MongoRepository } from 'typeorm';
 import { NotificationType } from '../notifications/entities/notification.entity';
 import { NotificationsService } from '../notifications/notifications.service';
-import { UsersService } from '../users/users.service';
 import { MinioService } from '../upload/minio.service';
+import { UsersService } from '../users/users.service';
 import {
   DocumentType,
   TenantVerification,
@@ -274,10 +274,7 @@ export class VerificationService {
     this.logger.log(`Verification approved for user ${verification.userId}`);
 
     // Send email & notification
-    await this.sendVerificationStatusEmail(
-      verification.userId,
-      'approved',
-    );
+    await this.sendVerificationStatusEmail(verification.userId, 'approved');
     await this.notificationsService.create({
       userId: verification.userId,
       title: 'Account Verified ✅',
@@ -349,7 +346,8 @@ export class VerificationService {
       }
 
       const frontendUrl =
-        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:5173';
       const dashboardUrl = `${frontendUrl}/dashboard`;
       const name = user.firstName || user.email;
 
@@ -378,9 +376,7 @@ export class VerificationService {
         });
       }
 
-      this.logger.log(
-        `Verification ${status} email sent to ${user.email}`,
-      );
+      this.logger.log(`Verification ${status} email sent to ${user.email}`);
     } catch (err) {
       this.logger.error(
         `Failed to send verification ${status} email to user ${userId}`,

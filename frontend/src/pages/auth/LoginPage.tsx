@@ -9,7 +9,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { HomeFooter, HomeNavbar } from '../../components/layout';
+import { HomeFooter, Navbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
   return (
     <div className="home-page">
-      <HomeNavbar />
+      <Navbar />
 
       <main className="min-h-screen bg-gradient-to-br from-home-primary-light via-home-background to-home-background-alt px-4 py-12 pt-28 flex items-center justify-center">
         <div className="w-full max-w-md">

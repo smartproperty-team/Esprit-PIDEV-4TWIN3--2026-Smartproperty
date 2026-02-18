@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HomeFooter, HomeNavbar } from '../../components/layout';
+import { HomeFooter, Navbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -30,7 +30,7 @@ import { VerificationStatus } from '../../types/verification';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, logout, isLoading } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const [resendingEmail, setResendingEmail] = useState(false);
   const [emailMessage, setEmailMessage] = useState<{
     type: 'success' | 'error';
@@ -48,11 +48,6 @@ export default function DashboardPage() {
         .catch(() => setVerificationStatus(VerificationStatus.NOT_SUBMITTED));
     }
   }, [user?.role]);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const handleResendVerification = async () => {
     if (!user?.email) return;
@@ -96,7 +91,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <HomeNavbar />
+      <Navbar />
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
