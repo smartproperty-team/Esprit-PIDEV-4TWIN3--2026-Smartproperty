@@ -75,7 +75,16 @@ pipeline {
   }
   post {
     success { echo 'Backend pipeline succeeded' }
-    failure { echo 'Backend pipeline failed'; node { cleanWs() } }
-    always { node { cleanWs() } }
+    failure {
+      echo 'Backend pipeline failed'
+      script {
+        node('docker') { cleanWs() }
+      }
+    }
+    always {
+      script {
+        node('docker') { cleanWs() }
+      }
+    }
   }
 }
