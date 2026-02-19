@@ -91,6 +91,10 @@ export interface UpdateProfileData {
   phone?: string;
 }
 
+export interface RequestEmailChangeData {
+  newEmail: string;
+}
+
 export interface VerifyEmailData {
   token: string;
 }

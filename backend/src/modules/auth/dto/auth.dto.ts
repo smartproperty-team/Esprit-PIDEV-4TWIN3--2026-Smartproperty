@@ -267,6 +267,20 @@ export class ResendVerificationDto {
 }
 
 // ===========================================
+// Change Email DTO
+// ===========================================
+
+export class RequestEmailChangeDto {
+  @ApiProperty({
+    example: 'new.email@example.com',
+    description: 'New email address to verify and use for this account',
+  })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'New email is required' })
+  newEmail: string;
+}
+
+// ===========================================
 // Two-Factor Authentication DTOs
 // ===========================================
 

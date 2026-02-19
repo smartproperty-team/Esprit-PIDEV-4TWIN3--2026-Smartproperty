@@ -42,6 +42,7 @@ import {
   LoginDto,
   RefreshTokenDto,
   RegisterDto,
+  RequestEmailChangeDto,
   ResendVerificationDto,
   ResetPasswordDto,
   VerifyEmailDto,
@@ -681,6 +682,64 @@ export class AuthController {
           eventType: AuthAuditEventType.EMAIL_VERIFY_RESEND,
           success: false,
           email: resendDto.email,
+          failureReason:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        deviceInfo,
+      );
+      throw error;
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email-request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Request email change verification link' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email change verification link sent',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid email or email unchanged',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Email already in use',
+  })
+  async requestEmailChange(
+    @CurrentUser('id') userId: string,
+    @Body() requestEmailChangeDto: RequestEmailChangeDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const deviceInfo = this.getDeviceInfo(req);
+
+    try {
+      const result = await this.authService.requestEmailChange(
+        userId,
+        requestEmailChangeDto,
+      );
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY_RESEND,
+          success: true,
+          userId,
+          email: requestEmailChangeDto.newEmail,
+        },
+        deviceInfo,
+      );
+      return result;
+    } catch (error) {
+      await this.logAuthEvent(
+        req,
+        {
+          eventType: AuthAuditEventType.EMAIL_VERIFY_RESEND,
+          success: false,
+          userId,
+          email: requestEmailChangeDto.newEmail,
           failureReason:
             error instanceof Error ? error.message : 'Unknown error',
         },

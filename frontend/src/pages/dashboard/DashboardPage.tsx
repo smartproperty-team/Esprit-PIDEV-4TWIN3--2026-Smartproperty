@@ -40,12 +40,18 @@ export default function DashboardPage() {
   const [resendingEmail, setResendingEmail] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
   const [profileForm, setProfileForm] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     phone: user?.phone || "",
   });
+  const [newEmail, setNewEmail] = useState(user?.email || "");
   const [emailMessage, setEmailMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [emailChangeMessage, setEmailChangeMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
@@ -86,6 +92,8 @@ export default function DashboardPage() {
       lastName: user?.lastName || "",
       phone: user?.phone || "",
     });
+    setNewEmail(user?.email || "");
+    setEmailChangeMessage(null);
     setIsEditingProfile(true);
     accountInfoRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -100,6 +108,57 @@ export default function DashboardPage() {
       lastName: user?.lastName || "",
       phone: user?.phone || "",
     });
+    setNewEmail(user?.email || "");
+    setEmailChangeMessage(null);
+  };
+
+  const handleRequestEmailChange = async () => {
+    if (!user?.email) return;
+
+    const normalizedEmail = newEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      setEmailChangeMessage({
+        type: "error",
+        text: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    if (normalizedEmail === user.email.toLowerCase()) {
+      setEmailChangeMessage({
+        type: "error",
+        text: "New email must be different from current email.",
+      });
+      return;
+    }
+
+    setIsRequestingEmailChange(true);
+    setEmailChangeMessage(null);
+
+    try {
+      const response = await authService.requestEmailChange({
+        newEmail: normalizedEmail,
+      });
+      setEmailChangeMessage({
+        type: "success",
+        text:
+          response.message ||
+          "Verification link sent to your new email. Please confirm it to complete the change.",
+      });
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
+        "Failed to request email change. Please try again.";
+      setEmailChangeMessage({
+        type: "error",
+        text: message,
+      });
+    } finally {
+      setIsRequestingEmailChange(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -373,19 +432,62 @@ export default function DashboardPage() {
                     <label className="text-sm font-medium text-gray-500">
                       Email
                     </label>
-                    <p className="mt-1 flex items-center text-gray-900">
-                      <Mail className="mr-2 h-4 w-4 text-gray-400" />
-                      {user?.email}
-                      {user?.isEmailVerified ? (
-                        <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">
-                          Unverified
-                        </span>
-                      )}
-                    </p>
+                    {isEditingProfile ? (
+                      <div className="mt-1 space-y-2">
+                        <p className="flex items-center text-gray-900">
+                          <Mail className="mr-2 h-4 w-4 text-gray-400" />
+                          {user?.email}
+                          {user?.isEmailVerified ? (
+                            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                              Verified
+                            </span>
+                          ) : (
+                            <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">
+                              Unverified
+                            </span>
+                          )}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="email"
+                            placeholder="new.email@example.com"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRequestEmailChange}
+                            isLoading={isRequestingEmailChange}
+                          >
+                            Change Email
+                          </Button>
+                        </div>
+
+                        {emailChangeMessage && (
+                          <Alert
+                            type={emailChangeMessage.type}
+                            message={emailChangeMessage.text}
+                            onClose={() => setEmailChangeMessage(null)}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-1 flex items-center text-gray-900">
+                        <Mail className="mr-2 h-4 w-4 text-gray-400" />
+                        {user?.email}
+                        {user?.isEmailVerified ? (
+                          <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800">
+                            Unverified
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">

@@ -105,6 +105,10 @@ export class User {
   emailVerificationToken?: string;
 
   @Column({ nullable: true })
+  @Exclude()
+  pendingEmail?: string;
+
+  @Column({ nullable: true })
   emailVerificationExpires?: Date;
 
   @Column({ nullable: true })

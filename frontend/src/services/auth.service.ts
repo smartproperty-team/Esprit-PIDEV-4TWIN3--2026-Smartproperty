@@ -8,6 +8,7 @@ import type {
   ForgotPasswordData,
   LoginCredentials,
   RegisterData,
+  RequestEmailChangeData,
   ResetPasswordData,
   Session,
   UpdateProfileData,
@@ -145,6 +146,19 @@ export const authService = {
    */
   async updateProfile(data: UpdateProfileData): Promise<User> {
     const response = await api.put<User>("/users/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Request email change verification link to new email address
+   */
+  async requestEmailChange(
+    data: RequestEmailChangeData,
+  ): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(
+      "/auth/change-email-request",
+      data,
+    );
     return response.data;
   },
 
