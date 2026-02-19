@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node-18'
+        nodejs 'node-20'
     }
 
     environment {
@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Install Backend Deps') {
+        stage('Install Backend Dependencies') {
             steps {
                 dir('backend') {
                     sh 'npm install'
@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Install Frontend Deps') {
+        stage('Install Frontend Dependencies') {
             steps {
                 dir('frontend') {
                     sh 'npm install'
@@ -52,10 +52,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ SonarQube analysis completed successfully'
+            echo '✅ SonarQube analysis succeeded (coverage ignored)'
         }
         failure {
-            echo '❌ Pipeline failed'
+            echo '❌ Pipeline failed – check logs'
         }
     }
 }
