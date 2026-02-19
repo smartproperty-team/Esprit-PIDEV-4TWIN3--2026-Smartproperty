@@ -1,96 +1,61 @@
 pipeline {
-  agent { label 'docker' }
-  environment {
-    NODE_VERSION = '18'
-    REGISTRY = credentials('DOCKER_REGISTRY_URL') // e.g. myregistry.example.com stored as secret text
-    IMAGE_NAMESPACE = 'myorg/smartproperty-backend'
-    DOCKER_CREDENTIALS = 'docker-creds-id' // configure in Jenkins Credentials
-    // SONAR_HOST = credentials('SONAR_HOST_URL') // e.g. https://sonarqube.example.com
-  }
-  options { timestamps() }
-  stages {
-    stage('Checkout') {
-      steps { checkout scm }
+    agent any
+
+    tools {
+        nodejs 'node-18'
     }
 
-    stage('Install & Test') {
-      agent { label 'docker' }
-      steps {
-        dir('backend') {
-          // Start a temporary Mongo container for tests
-          sh '''
-            echo "Starting temporary MongoDB for tests..."
-            docker run -d --name test-mongo -e MONGO_INITDB_DATABASE=smartproperty mongo:6 || true
-            # wait for mongo to be ready
-            for i in $(seq 1 30); do
-              if docker exec test-mongo mongo --eval "db.adminCommand('ping')" >/dev/null 2>&1; then
-                echo "Mongo ready"; break
-              fi
-              sleep 1
-            done
-
-            echo "Running backend tests inside Node container..."
-            docker run --rm --network container:test-mongo -v ${WORKSPACE}/backend:/usr/src -w /usr/src node:${NODE_VERSION} bash -lc "npm ci && MONGODB_URI='mongodb://localhost:27017/smartproperty' npm test --silent"
-
-            echo "Tearing down temporary MongoDB..."
-            docker rm -f test-mongo || true
-          '''
-        }
-      }
+    environment {
+        SONAR_SCANNER_OPTS = "-Xmx512m"
     }
 
-    stage('Build (backend)') {
-      agent { label 'docker' }
-      steps {
-        dir('backend') {
-          // Build inside node container to keep environment consistent
-          sh "docker run --rm -v ${WORKSPACE}/backend:/usr/src -w /usr/src node:${NODE_VERSION} bash -lc 'npm ci && npm run build'"
-        }
-      }
-    }
+    stages {
 
-    stage('SonarQube Analysis') {
-      agent { label 'docker' }
-      steps {
-        dir('backend') {
-          // Use Jenkins SonarQube plugin environment and run sonar-scanner inside a short-lived container
-          withSonarQubeEnv('SonarQube') {
-            sh "docker run --rm -v ${env.WORKSPACE}/backend:/usr/src -w /usr/src -e SONAR_AUTH_TOKEN=${env.SONAR_AUTH_TOKEN} sonarsource/sonar-scanner-cli:latest -Dsonar.projectKey=smartproperty-backend -Dsonar.sources=src -Dsonar.login=${env.SONAR_AUTH_TOKEN}"
-          }
-        }
-      }
-    }
-
-    stage('Build & Push Docker image') {
-      agent { label 'docker' }
-      steps {
-        script {
-          // If REGISTRY is not set, just build the image locally. If set, push to registry using credentials.
-          if (!env.REGISTRY) {
-            echo "No DOCKER_REGISTRY_URL set — building image locally only"
-            sh "docker build -t ${env.IMAGE_NAMESPACE}:local-${env.BUILD_NUMBER} backend"
-          } else {
-            docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS) {
-              def img = docker.build("${env.IMAGE_NAMESPACE}:${env.BUILD_NUMBER}", "backend")
-              img.push()
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
-          }
         }
-      }
+
+        stage('Install Backend Deps') {
+            steps {
+                dir('backend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Install Frontend Deps') {
+            steps {
+                dir('frontend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube-local') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
     }
-  }
-  post {
-    success { echo 'Backend pipeline succeeded' }
-    failure {
-      echo 'Backend pipeline failed'
-      script {
-        node('docker') { cleanWs() }
-      }
+
+    post {
+        success {
+            echo '✅ SonarQube analysis completed successfully'
+        }
+        failure {
+            echo '❌ Pipeline failed'
+        }
     }
-    always {
-      script {
-        node('docker') { cleanWs() }
-      }
-    }
-  }
 }
