@@ -150,6 +150,14 @@ export const authService = {
   },
 
   /**
+   * Deactivate current authenticated account
+   */
+  async deactivateAccount(): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>("/users/deactivate");
+    return response.data;
+  },
+
+  /**
    * Request email change verification link to new email address
    */
   async requestEmailChange(

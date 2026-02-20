@@ -68,6 +68,12 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
   const [show2FA, setShow2FA] = useState(false);
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [pendingLoginData, setPendingLoginData] = useState<{
+    email: string;
+    password: string;
+    twoFactorCode?: string;
+  } | null>(null);
 
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
@@ -98,6 +104,42 @@ export default function LoginPage() {
       if (errorMessage.toLowerCase().includes("two-factor")) {
         setShow2FA(true);
       }
+      if (errorMessage.toLowerCase().includes("inactive")) {
+        clearError();
+        setPendingLoginData({
+          email: data.email,
+          password: data.password,
+          twoFactorCode: data.twoFactorCode,
+        });
+        setShowReactivateModal(true);
+      }
+    }
+  };
+
+  const handleConfirmReactivation = async () => {
+    if (!pendingLoginData) return;
+
+    try {
+      clearError();
+      await login(
+        pendingLoginData.email,
+        pendingLoginData.password,
+        undefined,
+        pendingLoginData.twoFactorCode,
+        true,
+      );
+      setShowReactivateModal(false);
+      setPendingLoginData(null);
+      setSuccessMessage("Account reactivated! Redirecting...");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || "";
+      if (errorMessage.toLowerCase().includes("two-factor")) {
+        setShow2FA(true);
+      }
+      setShowReactivateModal(false);
     }
   };
 
@@ -294,6 +336,38 @@ export default function LoginPage() {
       </main>
 
       <HomeFooter />
+
+      {showReactivateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Reactivate your account?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Your account is currently inactive. Do you want to activate it and
+              continue signing in?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReactivateModal(false);
+                  setPendingLoginData(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleConfirmReactivation}
+                isLoading={isLoading}
+              >
+                Yes, Activate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

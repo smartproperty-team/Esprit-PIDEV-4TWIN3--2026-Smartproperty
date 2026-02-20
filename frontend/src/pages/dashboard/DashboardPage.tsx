@@ -41,6 +41,8 @@ export default function DashboardPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
+  const [isDeactivatingAccount, setIsDeactivatingAccount] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [profileForm, setProfileForm] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -203,6 +205,25 @@ export default function DashboardPage() {
       setProfileMessage({ type: "error", text: message });
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    setIsDeactivatingAccount(true);
+    setProfileMessage(null);
+
+    try {
+      await authService.deactivateAccount();
+      await logout();
+      navigate("/login");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Failed to deactivate account. Please try again.";
+      setProfileMessage({ type: "error", text: message });
+    } finally {
+      setIsDeactivatingAccount(false);
+      setShowDeactivateModal(false);
     }
   };
 
@@ -578,6 +599,29 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+
+                {isEditingProfile && (
+                  <div className="col-span-full mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-red-900">
+                          Deactivate Account
+                        </h3>
+                        <p className="text-sm text-red-700">
+                          This will deactivate your account and sign you out.
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setShowDeactivateModal(true)}
+                        isLoading={isDeactivatingAccount}
+                      >
+                        Deactivate
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -693,6 +737,36 @@ export default function DashboardPage() {
           </Card>
         </main>
       </div>
+
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Deactivate your account?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Your account will become inactive and you will be signed out
+              immediately.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeactivateModal(false)}
+                disabled={isDeactivatingAccount}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeactivateAccount}
+                isLoading={isDeactivatingAccount}
+              >
+                Yes, Deactivate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <HomeFooter />
     </>
   );

@@ -199,7 +199,13 @@ export class AuthService {
     loginDto: LoginDto,
     deviceInfo?: DeviceInfo,
   ): Promise<AuthResponse> {
-    await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    // @Type(() => Boolean) in LoginDto ensures reactivateAccount is already boolean
+    const reactivateAccount = loginDto.reactivateAccount ?? false;
+
+    if (!reactivateAccount) {
+      await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    }
+
     const { email, password } = loginDto;
     const twoFactorCode = (loginDto as LoginDto & { twoFactorCode?: string })
       .twoFactorCode;
@@ -234,9 +240,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Check if account is suspended
+    // Check if account is suspended/inactive
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('Account is suspended');
+    }
+
+    const shouldReactivate =
+      user.status === UserStatus.INACTIVE && reactivateAccount;
+
+    if (user.status === UserStatus.INACTIVE && !reactivateAccount) {
+      throw new UnauthorizedException(
+        'Account is inactive. Confirm reactivation to continue',
+      );
     }
 
     // Check if 2FA is enabled
@@ -259,6 +274,13 @@ export class AuthService {
           'Invalid two-factor authentication code',
         );
       }
+    }
+
+    if (shouldReactivate) {
+      user.status = user.isEmailVerified
+        ? UserStatus.ACTIVE
+        : UserStatus.PENDING_VERIFICATION;
+      user.deletedAt = undefined;
     }
 
     // Reset login attempts on successful login

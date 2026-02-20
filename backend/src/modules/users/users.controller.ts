@@ -110,6 +110,22 @@ export class UsersController {
   }
 
   // ===========================================
+  // Deactivate Current User Account
+  // ===========================================
+
+  @Delete('deactivate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deactivate current user account' })
+  @ApiResponse({
+    status: 200,
+    description: 'Account deactivated successfully',
+  })
+  async deactivateCurrentUser(@CurrentUser('id') userId: string) {
+    await this.usersService.softDelete(userId);
+    return { message: 'Account deactivated successfully' };
+  }
+
+  // ===========================================
   // Get User by ID (Admin or self)
   // ===========================================
 

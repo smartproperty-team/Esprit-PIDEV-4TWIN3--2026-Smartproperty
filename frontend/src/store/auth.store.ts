@@ -27,6 +27,7 @@ interface AuthState {
     password: string,
     captchaToken?: string,
     twoFactorCode?: string,
+    reactivateAccount?: boolean,
   ) => Promise<void>;
   register: (data: {
     email: string;
@@ -96,7 +97,13 @@ export const useAuthStore = create<AuthState>()(
       // Authentication Methods
       // ===========================================
 
-      login: async (email, password, captchaToken, twoFactorCode) => {
+      login: async (
+        email,
+        password,
+        captchaToken,
+        twoFactorCode,
+        reactivateAccount,
+      ) => {
         set({ isLoading: true, error: null });
         try {
           const response = await authService.login({
@@ -104,6 +111,7 @@ export const useAuthStore = create<AuthState>()(
             password,
             captchaToken,
             twoFactorCode,
+            reactivateAccount,
           });
           set({
             user: response.user,
@@ -112,11 +120,15 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: unknown) {
+          const apiError = error as {
+            response?: { data?: { message?: string | string[] } };
+            message?: string;
+          };
+          const backendMessage = apiError?.response?.data?.message;
           const message =
-            error instanceof Error
-              ? error.message
-              : (error as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message || "Login failed";
+            (Array.isArray(backendMessage)
+              ? backendMessage.join(", ")
+              : backendMessage || apiError?.message) ?? "Login failed";
           set({ isLoading: false, error: message });
           throw error;
         }

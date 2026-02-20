@@ -56,6 +56,7 @@ export interface LoginCredentials {
   password: string;
   twoFactorCode?: string;
   captchaToken?: string;
+  reactivateAccount?: boolean;
 }
 
 export interface RegisterData {
