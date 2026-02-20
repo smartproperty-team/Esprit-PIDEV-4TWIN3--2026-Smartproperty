@@ -10,6 +10,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Post,
   Req,
@@ -64,6 +65,8 @@ import { GoogleProfile } from './strategies/google.strategy';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
+  private logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
@@ -275,6 +278,9 @@ export class AuthController {
 
     const googleProfile = req.user as GoogleProfile;
     const deviceInfo = this.getDeviceInfo(req);
+    const frontendCallbackUrl =
+      this.configService.get<string>('google.frontendCallbackUrl') ||
+      'http://localhost:5173/auth/google/callback';
 
     try {
       const authResponse = await this.authService.googleLogin(
@@ -296,10 +302,6 @@ export class AuthController {
       );
 
       // Redirect to frontend with tokens in URL params
-      const frontendCallbackUrl = this.configService.get<string>(
-        'google.frontendCallbackUrl',
-      );
-
       const params = new URLSearchParams({
         accessToken: authResponse.tokens.accessToken,
         refreshToken: authResponse.tokens.refreshToken,
@@ -308,6 +310,10 @@ export class AuthController {
 
       res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
     } catch (error) {
+      this.logger.error(
+        `Google OAuth callback error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+
       await this.logAuthEvent(
         req,
         {
@@ -319,7 +325,15 @@ export class AuthController {
         },
         deviceInfo,
       );
-      throw error;
+
+      // Redirect to frontend with error message instead of throwing
+      const errorMessage =
+        error instanceof Error ? error.message : 'Google authentication failed';
+      const params = new URLSearchParams({
+        error: encodeURIComponent(errorMessage),
+      });
+
+      res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
     }
   }
 
@@ -347,7 +361,7 @@ export class AuthController {
     status: 503,
     description: 'Facebook OAuth is not configured',
   })
-  async facebookAuth(): Promise<void> {
+  facebookAuth(): void {
     if (!this.isFacebookOAuthConfigured()) {
       throw new ServiceUnavailableException(
         'Facebook OAuth is not configured. Please set FACEBOOK_CLIENT_ID and FACEBOOK_CLIENT_SECRET environment variables.',
@@ -376,6 +390,9 @@ export class AuthController {
 
     const facebookProfile = req.user as FacebookProfile;
     const deviceInfo = this.getDeviceInfo(req);
+    const frontendCallbackUrl =
+      this.configService.get<string>('facebook.frontendCallbackUrl') ||
+      'http://localhost:5173/auth/facebook/callback';
 
     try {
       const authResponse = await this.authService.facebookLogin(
@@ -397,10 +414,6 @@ export class AuthController {
       );
 
       // Redirect to frontend with tokens in URL params
-      const frontendCallbackUrl = this.configService.get<string>(
-        'facebook.frontendCallbackUrl',
-      );
-
       const params = new URLSearchParams({
         accessToken: authResponse.tokens.accessToken,
         refreshToken: authResponse.tokens.refreshToken,
@@ -409,6 +422,10 @@ export class AuthController {
 
       res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
     } catch (error) {
+      this.logger.error(
+        `Facebook OAuth callback error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+
       await this.logAuthEvent(
         req,
         {
@@ -420,7 +437,17 @@ export class AuthController {
         },
         deviceInfo,
       );
-      throw error;
+
+      // Redirect to frontend with error message instead of throwing
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Facebook authentication failed';
+      const params = new URLSearchParams({
+        error: encodeURIComponent(errorMessage),
+      });
+
+      res.redirect(`${frontendCallbackUrl}?${params.toString()}`);
     }
   }
 
