@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ObjectId } from 'mongodb';
 import { Repository } from 'typeorm';
 import { User, UserRole, UserStatus } from './entities/user.entity';
 
@@ -125,8 +126,15 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<User> {
+    let objectId: ObjectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch {
+      throw new NotFoundException('User not found');
+    }
+
     const user = await this.userRepository.findOne({
-      where: { _id: id as any },
+      where: { _id: objectId as any },
     });
 
     if (!user) {
@@ -172,6 +180,50 @@ export class UsersService {
     const user = await this.findById(id);
     user.status = UserStatus.INACTIVE;
     user.deletedAt = new Date();
+    await this.userRepository.save(user);
+  }
+
+  /**
+   * Permanently delete user account with GDPR compliance (anonymize PII)
+   * This keeps a record for audit purposes but removes all personal identifiable information
+   */
+  async permanentDelete(id: string): Promise<void> {
+    const user = await this.findById(id);
+
+    // Anonymize personal information (GDPR compliance)
+    user.firstName = `[Deleted User]`;
+    user.lastName = `${new Date().getTime()}`;
+    user.email = `deleted-${user._id.toHexString()}@smartproperty.local`;
+    user.phone = null;
+    user.avatar = null;
+    user.address = null;
+
+    // Clear all sensitive data
+    user.password = null;
+    user.refreshToken = null;
+    user.emailVerificationToken = null;
+    user.passwordResetToken = null;
+    user.twoFactorSecret = null;
+    user.previousPasswords = [];
+    user.pendingEmail = null;
+
+    // Mark as permanently deleted (cannot be restored or logged into)
+    user.permanentlyDeleted = true;
+    user.status = UserStatus.INACTIVE;
+    user.deletedAt = new Date();
+    user.isEmailVerified = false;
+    user.twoFactorEnabled = false;
+    user.loginAttempts = 0;
+    user.lockUntil = null;
+
+    // Clear preferences
+    if (user.preferences) {
+      user.preferences = {
+        language: 'en',
+        timezone: 'UTC',
+      };
+    }
+
     await this.userRepository.save(user);
   }
 

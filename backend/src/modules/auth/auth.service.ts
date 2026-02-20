@@ -32,6 +32,7 @@ import {
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
+  RequestEmailChangeDto,
   ResetPasswordDto,
   VerifyEmailDto,
 } from './dto/auth.dto';
@@ -198,7 +199,13 @@ export class AuthService {
     loginDto: LoginDto,
     deviceInfo?: DeviceInfo,
   ): Promise<AuthResponse> {
-    await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    // @Type(() => Boolean) in LoginDto ensures reactivateAccount is already boolean
+    const reactivateAccount = loginDto.reactivateAccount ?? false;
+
+    if (!reactivateAccount) {
+      await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    }
+
     const { email, password } = loginDto;
     const twoFactorCode = (loginDto as LoginDto & { twoFactorCode?: string })
       .twoFactorCode;
@@ -210,6 +217,25 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Additional safety: reject if email follows the deleted account pattern
+    if (
+      user.email.includes('deleted-') &&
+      user.email.includes('@smartproperty.local')
+    ) {
+      throw new UnauthorizedException(
+        'This account has been permanently deleted and cannot be recovered',
+      );
+    }
+
+    // Check if account is permanently deleted BEFORE password validation
+    // This prevents timing attacks and improves security
+    // Check both the flag and defensive markers (deletedAt + no password)
+    if (user.permanentlyDeleted || (user.deletedAt && !user.password)) {
+      throw new UnauthorizedException(
+        'This account has been permanently deleted and cannot be recovered',
+      );
     }
 
     // Check if account is locked
@@ -238,6 +264,16 @@ export class AuthService {
       throw new UnauthorizedException('Account is suspended');
     }
 
+    // Check if account is inactive and user is not trying to reactivate
+    if (user.status === UserStatus.INACTIVE && !reactivateAccount) {
+      throw new UnauthorizedException(
+        'Account is inactive. Please reactivate your account to proceed.',
+      );
+    }
+
+    const shouldReactivate =
+      user.status === UserStatus.INACTIVE && reactivateAccount;
+
     // Check if 2FA is enabled
     if (user.twoFactorEnabled && user.twoFactorSecret) {
       if (!twoFactorCode) {
@@ -258,6 +294,13 @@ export class AuthService {
           'Invalid two-factor authentication code',
         );
       }
+    }
+
+    if (shouldReactivate) {
+      user.status = user.isEmailVerified
+        ? UserStatus.ACTIVE
+        : UserStatus.PENDING_VERIFICATION;
+      user.deletedAt = undefined;
     }
 
     // Reset login attempts on successful login
@@ -394,6 +437,23 @@ export class AuthService {
       throw new BadRequestException('Verification token has expired');
     }
 
+    if (user.pendingEmail) {
+      const normalizedPendingEmail = user.pendingEmail.toLowerCase();
+      const existingUser = await this.userRepository.findOne({
+        where: { email: normalizedPendingEmail },
+      });
+
+      if (
+        existingUser &&
+        existingUser._id.toHexString() !== user._id.toHexString()
+      ) {
+        throw new ConflictException('Email already registered');
+      }
+
+      user.email = normalizedPendingEmail;
+      user.pendingEmail = undefined;
+    }
+
     // Update user
     user.isEmailVerified = true;
     user.status = UserStatus.ACTIVE;
@@ -440,6 +500,63 @@ export class AuthService {
     await this.sendVerificationEmail(user, emailVerificationToken);
 
     return { message: 'Verification email sent' };
+  }
+
+  async requestEmailChange(
+    userId: string,
+    requestEmailChangeDto: RequestEmailChangeDto,
+  ): Promise<{ message: string }> {
+    let objectId: ObjectId;
+    try {
+      objectId = new ObjectId(userId);
+    } catch {
+      throw new NotFoundException('User not found');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { _id: objectId as any },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const normalizedNewEmail = requestEmailChangeDto.newEmail
+      .toLowerCase()
+      .trim();
+    if (normalizedNewEmail === user.email.toLowerCase()) {
+      throw new BadRequestException(
+        'New email must be different from current email',
+      );
+    }
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email: normalizedNewEmail },
+    });
+
+    if (
+      existingUser &&
+      existingUser._id.toHexString() !== user._id.toHexString()
+    ) {
+      throw new ConflictException('Email already registered');
+    }
+
+    const emailVerificationToken = this.generateToken();
+    user.pendingEmail = normalizedNewEmail;
+    user.emailVerificationToken = emailVerificationToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.userRepository.save(user);
+
+    await this.sendVerificationEmail(user, emailVerificationToken, {
+      toEmail: normalizedNewEmail,
+      subject: 'SmartProperty - Confirm your new email address',
+    });
+
+    return {
+      message:
+        'Verification link sent to your new email address. Please verify to complete the email change.',
+    };
   }
 
   // ===========================================
@@ -650,14 +767,21 @@ export class AuthService {
   private async sendVerificationEmail(
     user: User,
     token: string,
+    options?: {
+      toEmail?: string;
+      subject?: string;
+    },
   ): Promise<void> {
     const frontendUrl = this.configService.get<string>('app.corsOrigin');
     const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+    const recipientEmail = options?.toEmail || user.email;
+    const subject =
+      options?.subject || 'Welcome to SmartProperty - Verify Your Email';
 
     try {
       await this.mailerService.sendMail({
-        to: user.email,
-        subject: 'Welcome to SmartProperty - Verify Your Email',
+        to: recipientEmail,
+        subject,
         template: 'verification',
         context: {
           name: user.firstName,

@@ -110,6 +110,45 @@ export class UsersController {
   }
 
   // ===========================================
+  // Deactivate Current User Account
+  // ===========================================
+
+  @Delete('deactivate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deactivate current user account' })
+  @ApiResponse({
+    status: 200,
+    description: 'Account deactivated successfully',
+  })
+  async deactivateCurrentUser(@CurrentUser('id') userId: string) {
+    await this.usersService.softDelete(userId);
+    return { message: 'Account deactivated successfully' };
+  }
+
+  // ===========================================
+  // Permanently Delete Account (GDPR Compliance)
+  // ===========================================
+
+  @Delete('permanent-delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Permanently delete user account with GDPR compliance (anonymizes PII)',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Account deleted successfully. All personal data has been anonymized.',
+  })
+  async permanentlyDeleteCurrentUser(@CurrentUser('id') userId: string) {
+    await this.usersService.permanentDelete(userId);
+    return {
+      message:
+        'Account permanently deleted. All personal data has been anonymized.',
+    };
+  }
+
+  // ===========================================
   // Get User by ID (Admin or self)
   // ===========================================
 

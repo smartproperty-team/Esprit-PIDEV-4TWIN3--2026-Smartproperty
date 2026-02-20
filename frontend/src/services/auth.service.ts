@@ -8,8 +8,10 @@ import type {
   ForgotPasswordData,
   LoginCredentials,
   RegisterData,
+  RequestEmailChangeData,
   ResetPasswordData,
   Session,
+  UpdateProfileData,
   User,
   VerifyEmailData,
 } from "../types/auth";
@@ -136,6 +138,45 @@ export const authService = {
    */
   async getCurrentUser(): Promise<User> {
     const response = await api.get<User>("/auth/me");
+    return response.data;
+  },
+
+  /**
+   * Update current authenticated user profile
+   */
+  async updateProfile(data: UpdateProfileData): Promise<User> {
+    const response = await api.put<User>("/users/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Deactivate current authenticated account
+   */
+  async deactivateAccount(): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>("/users/deactivate");
+    return response.data;
+  },
+
+  /**
+   * Permanently delete account with GDPR compliance (anonymizes all PII)
+   */
+  async deleteAccountPermanently(): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(
+      "/users/permanent-delete",
+    );
+    return response.data;
+  },
+
+  /**
+   * Request email change verification link to new email address
+   */
+  async requestEmailChange(
+    data: RequestEmailChangeData,
+  ): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(
+      "/auth/change-email-request",
+      data,
+    );
     return response.data;
   },
 

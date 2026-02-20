@@ -3,6 +3,7 @@
 // ===========================================
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -97,6 +98,14 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Set to true to reactivate an inactive account after user confirmation',
+    example: false,
+  })
+  @IsOptional()
+  reactivateAccount?: boolean | string;
 }
 
 // ===========================================
@@ -139,6 +148,15 @@ export class LoginDto {
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Set to true to reactivate an inactive account after user confirmation',
+    example: false,
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  reactivateAccount?: boolean;
 }
 
 // ===========================================
@@ -264,6 +282,20 @@ export class ResendVerificationDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
+}
+
+// ===========================================
+// Change Email DTO
+// ===========================================
+
+export class RequestEmailChangeDto {
+  @ApiProperty({
+    example: 'new.email@example.com',
+    description: 'New email address to verify and use for this account',
+  })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'New email is required' })
+  newEmail: string;
 }
 
 // ===========================================

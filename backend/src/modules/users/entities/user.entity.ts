@@ -105,6 +105,10 @@ export class User {
   emailVerificationToken?: string;
 
   @Column({ nullable: true })
+  @Exclude()
+  pendingEmail?: string;
+
+  @Column({ nullable: true })
   emailVerificationExpires?: Date;
 
   @Column({ nullable: true })
@@ -147,6 +151,9 @@ export class User {
 
   @Column({ nullable: true })
   deletedAt?: Date;
+
+  @Column({ default: false })
+  permanentlyDeleted: boolean;
 
   // Address information
   @Column('simple-json', { nullable: true })
