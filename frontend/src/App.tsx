@@ -17,12 +17,14 @@ import {
 } from "./pages/auth";
 import { DashboardPage, SessionsPage } from "./pages/dashboard";
 import { HomePage } from "./pages/home";
+import { ProfilePage } from "./pages/profile";
 import {
   PropertiesPage,
   PropertyDetailPage,
   PropertyFormPage,
 } from "./pages/properties";
 import TwoFactorPage from "./pages/security/TwoFactorPage";
+import { SettingsPage } from "./pages/settings";
 import { useAuthStore } from "./store";
 
 function App() {
@@ -68,6 +70,22 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />
