@@ -35,14 +35,11 @@ export class MinioService implements OnModuleInit {
   private publicUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    const endpoint =
-      this.configService.get<string>('minio.endpoint') || 'localhost';
+    const endpoint = this.configService.get<string>('minio.endpoint') || 'localhost';
     const port = this.configService.get<number>('minio.port') || 9000;
     const useSSL = this.configService.get<boolean>('minio.useSSL') || false;
-    const accessKey =
-      this.configService.get<string>('minio.accessKey') || 'minioadmin';
-    const secretKey =
-      this.configService.get<string>('minio.secretKey') || 'minioadmin';
+    const accessKey = this.configService.get<string>('minio.accessKey') || 'minioadmin';
+    const secretKey = this.configService.get<string>('minio.secretKey') || 'minioadmin';
 
     this.bucketName =
       this.configService.get<string>('minio.bucketName') || 'smartproperty';
@@ -150,7 +147,7 @@ export class MinioService implements OnModuleInit {
   }
 
   async deleteFiles(keys: string[]): Promise<void> {
-    // `removeObjects` accepts an array of object names (string[]), ensure we pass string[]
+    // `removeObjects` expects an array of object names (string[])
     await this.minioClient.removeObjects(this.bucketName, keys);
     this.logger.log(`${keys.length} files deleted`);
   }
@@ -215,3 +212,4 @@ export class MinioService implements OnModuleInit {
     return lastDot !== -1 ? filename.slice(lastDot) : '';
   }
 }
+
