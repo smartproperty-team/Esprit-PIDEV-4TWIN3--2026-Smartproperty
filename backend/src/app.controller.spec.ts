@@ -23,7 +23,5 @@ describe('AppController', () => {
     });
   });
 });
-function expect(result: ApiInfo) {
-  throw new Error('Function not implemented.');
-}
+
 
