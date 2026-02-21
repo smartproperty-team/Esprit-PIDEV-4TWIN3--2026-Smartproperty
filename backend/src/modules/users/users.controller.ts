@@ -3,23 +3,23 @@
 // ===========================================
 
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Put,
-  Query,
-  UseGuards,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Put,
+    Query,
+    UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
+    ApiBearerAuth,
+    ApiOperation,
+    ApiQuery,
+    ApiResponse,
+    ApiTags,
 } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -110,6 +110,45 @@ export class UsersController {
   }
 
   // ===========================================
+  // Deactivate Current User Account
+  // ===========================================
+
+  @Delete('deactivate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deactivate current user account' })
+  @ApiResponse({
+    status: 200,
+    description: 'Account deactivated successfully',
+  })
+  async deactivateCurrentUser(@CurrentUser('id') userId: string) {
+    await this.usersService.softDelete(userId);
+    return { message: 'Account deactivated successfully' };
+  }
+
+  // ===========================================
+  // Permanently Delete Account (GDPR Compliance)
+  // ===========================================
+
+  @Delete('permanent-delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Permanently delete user account with GDPR compliance (anonymizes PII)',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Account deleted successfully. All personal data has been anonymized.',
+  })
+  async permanentlyDeleteCurrentUser(@CurrentUser('id') userId: string) {
+    await this.usersService.permanentDelete(userId);
+    return {
+      message:
+        'Account permanently deleted. All personal data has been anonymized.',
+    };
+  }
+
+  // ===========================================
   // Get User by ID (Admin or self)
   // ===========================================
 
@@ -125,8 +164,9 @@ export class UsersController {
   })
   async findOne(@Param('id') id: string, @CurrentUser() currentUser: any) {
     // Users can only view their own profile unless they're admin
-    if (currentUser.role !== UserRole.ADMIN && currentUser.id !== id) {
-      const user = await this.usersService.findById(currentUser.id);
+    const currentUserId = currentUser.id as string;
+    if (currentUser.role !== UserRole.ADMIN && currentUserId !== id) {
+      const user = await this.usersService.findById(currentUserId);
       return user.toJSON();
     }
 

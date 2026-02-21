@@ -56,6 +56,7 @@ const FacebookIcon = () => (
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  twoFactorCode: z.string().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -66,6 +67,13 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [show2FA, setShow2FA] = useState(false);
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [pendingLoginData, setPendingLoginData] = useState<{
+    email: string;
+    password: string;
+    twoFactorCode?: string;
+  } | null>(null);
 
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
@@ -85,13 +93,53 @@ export default function LoginPage() {
         return;
       }
       setCaptchaError(null);
-      await login(data.email, data.password, captchaToken);
+      await login(data.email, data.password, captchaToken, data.twoFactorCode);
       setSuccessMessage('Login successful! Redirecting...');
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
-    } catch {
-      // Error is handled by the store
+    } catch (err: any) {
+      // Check if 2FA is required
+      const errorMessage = err?.response?.data?.message || err?.message || "";
+      if (errorMessage.toLowerCase().includes("two-factor")) {
+        setShow2FA(true);
+      }
+      if (errorMessage.toLowerCase().includes("inactive")) {
+        clearError();
+        setPendingLoginData({
+          email: data.email,
+          password: data.password,
+          twoFactorCode: data.twoFactorCode,
+        });
+        setShowReactivateModal(true);
+      }
+    }
+  };
+
+  const handleConfirmReactivation = async () => {
+    if (!pendingLoginData) return;
+
+    try {
+      clearError();
+      await login(
+        pendingLoginData.email,
+        pendingLoginData.password,
+        undefined,
+        pendingLoginData.twoFactorCode,
+        true,
+      );
+      setShowReactivateModal(false);
+      setPendingLoginData(null);
+      setSuccessMessage("Account reactivated! Redirecting...");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || "";
+      if (errorMessage.toLowerCase().includes("two-factor")) {
+        setShow2FA(true);
+      }
+      setShowReactivateModal(false);
     }
   };
 
@@ -160,6 +208,23 @@ export default function LoginPage() {
                   className="focus-visible:ring-home-primary"
                   {...register('password')}
                 />
+
+                {show2FA && (
+                  <div className="space-y-2">
+                    <Input
+                      label="Two-Factor Code"
+                      type="text"
+                      placeholder="123456"
+                      maxLength={6}
+                      error={errors.twoFactorCode?.message}
+                      className="focus-visible:ring-home-primary"
+                      {...register("twoFactorCode")}
+                    />
+                    <p className="text-sm text-home-muted">
+                      Enter the 6-digit code from your authenticator app
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center">
@@ -271,6 +336,38 @@ export default function LoginPage() {
       </main>
 
       <HomeFooter />
+
+      {showReactivateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Reactivate your account?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Your account is currently inactive. Do you want to activate it and
+              continue signing in?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReactivateModal(false);
+                  setPendingLoginData(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleConfirmReactivation}
+                isLoading={isLoading}
+              >
+                Yes, Activate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

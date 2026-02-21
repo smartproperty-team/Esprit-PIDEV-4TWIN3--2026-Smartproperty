@@ -3,6 +3,7 @@
 // ===========================================
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -97,6 +98,14 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Set to true to reactivate an inactive account after user confirmation',
+    example: false,
+  })
+  @IsOptional()
+  reactivateAccount?: boolean | string;
 }
 
 // ===========================================
@@ -121,11 +130,33 @@ export class LoginDto {
   password: string;
 
   @ApiPropertyOptional({
+    example: '123456',
+    description: '6-digit 2FA code (required if 2FA is enabled)',
+    minLength: 6,
+    maxLength: 6,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(6, { message: 'Code must be 6 digits' })
+  @MaxLength(6, { message: 'Code must be 6 digits' })
+  @Matches(/^\d{6}$/, { message: 'Code must be 6 digits' })
+  twoFactorCode?: string;
+
+  @ApiPropertyOptional({
     description: 'reCAPTCHA token (v2 checkbox)',
   })
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Set to true to reactivate an inactive account after user confirmation',
+    example: false,
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  reactivateAccount?: boolean;
 }
 
 // ===========================================
@@ -251,4 +282,69 @@ export class ResendVerificationDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
+}
+
+// ===========================================
+// Change Email DTO
+// ===========================================
+
+export class RequestEmailChangeDto {
+  @ApiProperty({
+    example: 'new.email@example.com',
+    description: 'New email address to verify and use for this account',
+  })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'New email is required' })
+  newEmail: string;
+}
+
+// ===========================================
+// Two-Factor Authentication DTOs
+// ===========================================
+
+export class Enable2FADto {
+  @ApiProperty({
+    example: '123456',
+    description: '6-digit TOTP code from authenticator app',
+    minLength: 6,
+    maxLength: 6,
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Verification code is required' })
+  @MinLength(6, { message: 'Code must be 6 digits' })
+  @MaxLength(6, { message: 'Code must be 6 digits' })
+  @Matches(/^\d{6}$/, { message: 'Code must be 6 digits' })
+  code: string;
+}
+
+export class Verify2FADto {
+  @ApiProperty({
+    example: '123456',
+    description: '6-digit TOTP code from authenticator app',
+    minLength: 6,
+    maxLength: 6,
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Verification code is required' })
+  @MinLength(6, { message: 'Code must be 6 digits' })
+  @MaxLength(6, { message: 'Code must be 6 digits' })
+  @Matches(/^\d{6}$/, { message: 'Code must be 6 digits' })
+  code: string;
+
+  @ApiProperty({
+    description: 'Temporary token received after initial login',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Temporary token is required' })
+  tempToken: string;
+}
+
+export class Disable2FADto {
+  @ApiProperty({
+    example: 'MyPassword123!',
+    description: 'Current password for verification',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Password is required' })
+  password: string;
 }

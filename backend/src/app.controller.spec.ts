@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,7 +9,20 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string) => {
+              if (key === 'app.port') return 3000;
+              if (key === 'app.name') return 'SmartProperty API';
+              if (key === 'app.nodeEnv') return 'test';
+              return undefined;
+            },
+          },
+        },
+      ],
     }).compile();
 
     appController = app.get<AppController>(AppController);

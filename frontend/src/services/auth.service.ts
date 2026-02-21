@@ -8,8 +8,10 @@ import type {
   ForgotPasswordData,
   LoginCredentials,
   RegisterData,
+  RequestEmailChangeData,
   ResetPasswordData,
   Session,
+  UpdateProfileData,
   User,
   VerifyEmailData,
 } from "../types/auth";
@@ -139,6 +141,45 @@ export const authService = {
     return response.data;
   },
 
+  /**
+   * Update current authenticated user profile
+   */
+  async updateProfile(data: UpdateProfileData): Promise<User> {
+    const response = await api.put<User>("/users/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Deactivate current authenticated account
+   */
+  async deactivateAccount(): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>("/users/deactivate");
+    return response.data;
+  },
+
+  /**
+   * Permanently delete account with GDPR compliance (anonymizes all PII)
+   */
+  async deleteAccountPermanently(): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(
+      "/users/permanent-delete",
+    );
+    return response.data;
+  },
+
+  /**
+   * Request email change verification link to new email address
+   */
+  async requestEmailChange(
+    data: RequestEmailChangeData,
+  ): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(
+      "/auth/change-email-request",
+      data,
+    );
+    return response.data;
+  },
+
   // ===========================================
   // Token Management
   // ===========================================
@@ -238,6 +279,52 @@ export const authService = {
     const response = await api.delete<{ message: string }>(
       `/auth/sessions/${sessionId}`,
     );
+    return response.data;
+  },
+
+  // ===========================================
+  // Two-Factor Authentication
+  // ===========================================
+
+  /**
+   * Setup two-factor authentication (generates QR code)
+   */
+  async setup2FA(): Promise<{
+    secret: string;
+    qrCode: string;
+    otpauthUrl: string;
+  }> {
+    const response = await api.post<{
+      secret: string;
+      qrCode: string;
+      otpauthUrl: string;
+    }>("/auth/2fa/setup");
+    return response.data;
+  },
+
+  /**
+   * Enable two-factor authentication with verification code
+   */
+  async enable2FA(
+    code: string,
+  ): Promise<{ message: string; twoFactorEnabled: boolean }> {
+    const response = await api.post<{
+      message: string;
+      twoFactorEnabled: boolean;
+    }>("/auth/2fa/enable", { code });
+    return response.data;
+  },
+
+  /**
+   * Disable two-factor authentication
+   */
+  async disable2FA(
+    password: string,
+  ): Promise<{ message: string; twoFactorEnabled: boolean }> {
+    const response = await api.post<{
+      message: string;
+      twoFactorEnabled: boolean;
+    }>("/auth/2fa/disable", { password });
     return response.data;
   },
 };

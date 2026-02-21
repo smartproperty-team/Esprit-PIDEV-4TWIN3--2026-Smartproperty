@@ -74,7 +74,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 - [X]  Rate limiting on auth endpoints
 - [X]  CAPTCHA integration (optional)
-- [ ]  Two-factor authentication (2FA)
+- [X]  Two-factor authentication (2FA)
 - [X]  Session management (Session entity with device info, expiry, revocation)
 - [ ]  Audit logging for auth events
 
@@ -94,10 +94,10 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 - [X]  Get current user profile (/auth/me endpoint)
 - [X]  Get user sessions with device info
-- [ ]  Update user profile
-- [ ]  Change email (with verification)
-- [ ]  Deactivate account
-- [ ]  Delete account (GDPR compliance)
+- [X]  Update user profile
+- [X]  Change email (with verification)
+- [X]  Deactivate account
+- [X]  Delete account (GDPR compliance)
 
 ### User Preferences
 
@@ -116,59 +116,59 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 ### Admin User Management
 
-- [ ]  List all users (paginated)
-- [ ]  Search/filter users
-- [ ]  View user details
-- [ ]  Activate/deactivate users
-- [ ]  Change user roles
+- [X]  List all users (paginated)
+- [X]  Search/filter users
+- [X]  View user details
+- [X]  Activate/deactivate users
+- [X]  Change user roles
 - [ ]  Impersonate user (for support)
 
 ---
 
-## Phase 4: Properties Module
+## Phase 4: Properties Module 🔄 IN PROGRESS
 
 ### Property Entity
 
-- [ ]  Property entity with all fields
-- [ ]  Property types enum
-- [ ]  Property status enum
-- [ ]  Address embedded document
-- [ ]  Features embedded document
-- [ ]  Geospatial coordinates
+- [X]  Property entity with all fields
+- [X]  Property types enum
+- [X]  Property status enum
+- [X]  Address embedded document
+- [X]  Features embedded document
+- [X]  Geospatial coordinates
 
 ### Property CRUD
 
-- [ ]  Create property listing
-- [ ]  Update property details
-- [ ]  Delete property (soft delete)
-- [ ]  Get property by ID
-- [ ]  List owner's properties
+- [X]  Create property listing
+- [X]  Update property details
+- [X]  Delete property (soft delete)
+- [X]  Get property by ID
+- [X]  List owner's properties
 
 ### Property Images
 
-- [ ]  Multiple image upload
-- [ ]  Image optimization/resizing
-- [ ]  Primary image selection
-- [ ]  Image reordering
-- [ ]  Image deletion
-- [ ]  AWS S3 storage integration
+- [X]  Multiple image upload
+- [X]  Image optimization/resizing
+- [X]  Primary image selection
+- [X]  Image reordering
+- [X]  Image deletion
+- [X]  AWS S3/MinIO storage integration
 
 ### Property Search
 
-- [ ]  Full-text search
-- [ ]  Filter by type
-- [ ]  Filter by price range
+- [X]  Full-text search
+- [X]  Filter by type
+- [X]  Filter by price range
 - [ ]  Filter by bedrooms/bathrooms
 - [ ]  Filter by amenities
-- [ ]  Filter by location/city
+- [X]  Filter by location/city
 - [ ]  Geospatial search (nearby)
-- [ ]  Sort options (price, date, relevance)
-- [ ]  Pagination
+- [X]  Sort options (price, date, relevance)
+- [X]  Pagination
 
 ### Property Features
 
-- [ ]  Virtual tour URL
-- [ ]  Amenities list
+- [X]  Virtual tour URL
+- [X]  Amenities list
 - [ ]  Availability calendar
 - [ ]  Property comparison
 - [ ]  Share property link
@@ -409,8 +409,8 @@ This document outlines all features to be implemented in the SmartProperty platf
 ### Layout & Navigation
 
 - [X]  Main layout component (Dashboard header)
-- [ ]  Responsive navigation
-- [ ]  Footer component
+- [X]  Responsive navigation
+- [X]  Footer component
 - [ ]  Sidebar (dashboard)
 - [ ]  Mobile menu
 
@@ -436,11 +436,11 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 ### Property Pages
 
-- [ ]  Property listing grid
-- [ ]  Property search with filters
-- [ ]  Property detail page
+- [X]  Property listing grid
+- [X]  Property search with filters
+- [X]  Property detail page
 - [ ]  Property map view (Mapbox)
-- [ ]  Image gallery/carousel
+- [X]  Image gallery/carousel
 - [ ]  Virtual tour viewer
 
 ### User Pages
@@ -593,7 +593,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 1. ✅ Phase 1: Environment Setup
 2. ✅ Phase 2: Authentication
 3. 🔄 Phase 3: User Management
-4. Phase 4: Properties (basic CRUD + search)
+4. 🔄 Phase 4: Properties (basic CRUD + search)
 5. 🔄 Phase 12: Frontend (core pages)
 
 ### Medium Priority
@@ -622,7 +622,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 | Phase 1  | ✅ Completed       | Done        |
 | Phase 2  | ✅ Completed       | Done        |
 | Phase 3  | 2-3 days           | In Progress |
-| Phase 4  | 4-5 days           | Not Started |
+| Phase 4  | 4-5 days           | In Progress |
 | Phase 5  | 2-3 days           | Not Started |
 | Phase 6  | 2-3 days           | Not Started |
 | Phase 7  | 3-4 days           | Not Started |

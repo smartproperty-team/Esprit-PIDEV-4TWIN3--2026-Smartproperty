@@ -27,6 +27,7 @@ import {
   PropertyDetailPage,
   PropertyFormPage,
 } from './pages/properties';
+import TwoFactorPage from './pages/security/TwoFactorPage';
 import { useAuthStore } from './store';
 
 function App() {
@@ -96,6 +97,14 @@ function App() {
         element={
           <ProtectedRoute>
             <AdminVerificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/security/2fa"
+        element={
+          <ProtectedRoute>
+            <TwoFactorPage />
           </ProtectedRoute>
         }
       />

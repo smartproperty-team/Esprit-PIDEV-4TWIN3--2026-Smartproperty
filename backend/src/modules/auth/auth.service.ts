@@ -5,12 +5,12 @@
 
 import { MailerService } from '@nestjs-modules/mailer';
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -19,21 +19,24 @@ import axios from 'axios';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { ObjectId } from 'mongodb';
+import * as QRCode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
 
 import {
-  AuthProvider,
-  User,
-  UserRole,
-  UserStatus,
+    AuthProvider,
+    User,
+    UserRole,
+    UserStatus,
 } from '../users/entities/user.entity';
 import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  LoginDto,
-  RegisterDto,
-  ResetPasswordDto,
-  VerifyEmailDto,
+    ChangePasswordDto,
+    ForgotPasswordDto,
+    LoginDto,
+    RegisterDto,
+    RequestEmailChangeDto,
+    ResetPasswordDto,
+    VerifyEmailDto,
 } from './dto/auth.dto';
 import { Session } from './entities/session.entity';
 import { DeviceInfo, SessionService } from './session.service';
@@ -198,8 +201,16 @@ export class AuthService {
     loginDto: LoginDto,
     deviceInfo?: DeviceInfo,
   ): Promise<AuthResponse> {
-    await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    // @Type(() => Boolean) in LoginDto ensures reactivateAccount is already boolean
+    const reactivateAccount = loginDto.reactivateAccount ?? false;
+
+    if (!reactivateAccount) {
+      await this.verifyRecaptcha(loginDto.captchaToken, deviceInfo?.ipAddress);
+    }
+
     const { email, password } = loginDto;
+    const twoFactorCode = (loginDto as LoginDto & { twoFactorCode?: string })
+      .twoFactorCode;
 
     // Find user
     const user = await this.userRepository.findOne({
@@ -208,6 +219,25 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Additional safety: reject if email follows the deleted account pattern
+    if (
+      user.email.includes('deleted-') &&
+      user.email.includes('@smartproperty.local')
+    ) {
+      throw new UnauthorizedException(
+        'This account has been permanently deleted and cannot be recovered',
+      );
+    }
+
+    // Check if account is permanently deleted BEFORE password validation
+    // This prevents timing attacks and improves security
+    // Check both the flag and defensive markers (deletedAt + no password)
+    if (user.permanentlyDeleted || (user.deletedAt && !user.password)) {
+      throw new UnauthorizedException(
+        'This account has been permanently deleted and cannot be recovered',
+      );
     }
 
     // Check if account is locked
@@ -234,6 +264,45 @@ export class AuthService {
     // Check if account is suspended
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('Account is suspended');
+    }
+
+    // Check if account is inactive and user is not trying to reactivate
+    if (user.status === UserStatus.INACTIVE && !reactivateAccount) {
+      throw new UnauthorizedException(
+        'Account is inactive. Please reactivate your account to proceed.',
+      );
+    }
+
+    const shouldReactivate =
+      user.status === UserStatus.INACTIVE && reactivateAccount;
+
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      if (!twoFactorCode) {
+        // Return a special response indicating 2FA is required
+        throw new UnauthorizedException(
+          'Two-factor authentication code required',
+        );
+      }
+
+      // Verify 2FA code
+      const isValid = this.verifyTwoFactorCode(
+        user.twoFactorSecret,
+        twoFactorCode,
+      );
+
+      if (!isValid) {
+        throw new UnauthorizedException(
+          'Invalid two-factor authentication code',
+        );
+      }
+    }
+
+    if (shouldReactivate) {
+      user.status = user.isEmailVerified
+        ? UserStatus.ACTIVE
+        : UserStatus.PENDING_VERIFICATION;
+      user.deletedAt = undefined;
     }
 
     // Reset login attempts on successful login
@@ -370,6 +439,23 @@ export class AuthService {
       throw new BadRequestException('Verification token has expired');
     }
 
+    if (user.pendingEmail) {
+      const normalizedPendingEmail = user.pendingEmail.toLowerCase();
+      const existingUser = await this.userRepository.findOne({
+        where: { email: normalizedPendingEmail },
+      });
+
+      if (
+        existingUser &&
+        existingUser._id.toHexString() !== user._id.toHexString()
+      ) {
+        throw new ConflictException('Email already registered');
+      }
+
+      user.email = normalizedPendingEmail;
+      user.pendingEmail = undefined;
+    }
+
     // Update user
     user.isEmailVerified = true;
     user.status = UserStatus.ACTIVE;
@@ -416,6 +502,63 @@ export class AuthService {
     await this.sendVerificationEmail(user, emailVerificationToken);
 
     return { message: 'Verification email sent' };
+  }
+
+  async requestEmailChange(
+    userId: string,
+    requestEmailChangeDto: RequestEmailChangeDto,
+  ): Promise<{ message: string }> {
+    let objectId: ObjectId;
+    try {
+      objectId = new ObjectId(userId);
+    } catch {
+      throw new NotFoundException('User not found');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { _id: objectId as any },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const normalizedNewEmail = requestEmailChangeDto.newEmail
+      .toLowerCase()
+      .trim();
+    if (normalizedNewEmail === user.email.toLowerCase()) {
+      throw new BadRequestException(
+        'New email must be different from current email',
+      );
+    }
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email: normalizedNewEmail },
+    });
+
+    if (
+      existingUser &&
+      existingUser._id.toHexString() !== user._id.toHexString()
+    ) {
+      throw new ConflictException('Email already registered');
+    }
+
+    const emailVerificationToken = this.generateToken();
+    user.pendingEmail = normalizedNewEmail;
+    user.emailVerificationToken = emailVerificationToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.userRepository.save(user);
+
+    await this.sendVerificationEmail(user, emailVerificationToken, {
+      toEmail: normalizedNewEmail,
+      subject: 'SmartProperty - Confirm your new email address',
+    });
+
+    return {
+      message:
+        'Verification link sent to your new email address. Please verify to complete the email change.',
+    };
   }
 
   // ===========================================
@@ -626,14 +769,21 @@ export class AuthService {
   private async sendVerificationEmail(
     user: User,
     token: string,
+    options?: {
+      toEmail?: string;
+      subject?: string;
+    },
   ): Promise<void> {
     const frontendUrl = this.configService.get<string>('app.corsOrigin');
     const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+    const recipientEmail = options?.toEmail || user.email;
+    const subject =
+      options?.subject || 'Welcome to SmartProperty - Verify Your Email';
 
     try {
       await this.mailerService.sendMail({
-        to: user.email,
-        subject: 'Welcome to SmartProperty - Verify Your Email',
+        to: recipientEmail,
+        subject,
         template: 'verification',
         context: {
           name: user.firstName,
@@ -677,6 +827,13 @@ export class AuthService {
     deviceInfo?: DeviceInfo,
   ): Promise<AuthResponse> {
     const { email, firstName, lastName, avatar, googleId } = googleProfile;
+
+    // Validate required fields
+    if (!email || !googleId) {
+      throw new BadRequestException(
+        'Email and Google ID are required for Google login',
+      );
+    }
 
     // Check if user exists with this Google ID
     let user = await this.userRepository.findOne({
@@ -755,6 +912,13 @@ export class AuthService {
     deviceInfo?: DeviceInfo,
   ): Promise<AuthResponse> {
     const { email, firstName, lastName, avatar, facebookId } = facebookProfile;
+
+    // Validate required fields
+    if (!email || !facebookId) {
+      throw new BadRequestException(
+        'Email and Facebook ID are required for Facebook login',
+      );
+    }
 
     // Check if user exists with this Facebook ID
     let user = await this.userRepository.findOne({
@@ -844,5 +1008,139 @@ export class AuthService {
     return this.userRepository.findOne({
       where: { email: email.toLowerCase() },
     });
+  }
+
+  // ===========================================
+  // Two-Factor Authentication
+  // ===========================================
+
+  generateTwoFactorSecret(email: string): {
+    secret: string;
+    otpauthUrl: string;
+    qrCode: string;
+  } {
+    const secret = speakeasy.generateSecret({
+      name: `SmartProperty (${email})`,
+      issuer: 'SmartProperty',
+      length: 32,
+    });
+
+    return {
+      secret: secret.base32,
+      otpauthUrl: secret.otpauth_url!,
+      qrCode: '', // Will be generated separately
+    };
+  }
+
+  async generateTwoFactorQRCode(otpauthUrl: string): Promise<string> {
+    return QRCode.toDataURL(otpauthUrl);
+  }
+
+  verifyTwoFactorCode(secret: string, code: string): boolean {
+    return speakeasy.totp.verify({
+      secret,
+      encoding: 'base32',
+      token: code,
+      window: 2, // Allow 2 time steps before/after for clock drift
+    });
+  }
+
+  async enableTwoFactor(userId: string, code: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) as any },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException(
+        'Two-factor authentication is already enabled',
+      );
+    }
+
+    if (!user.twoFactorSecret) {
+      throw new BadRequestException(
+        'Two-factor secret not found. Please setup 2FA first',
+      );
+    }
+
+    // Verify the code
+    const isValid = this.verifyTwoFactorCode(user.twoFactorSecret, code);
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    // Enable 2FA
+    user.twoFactorEnabled = true;
+    await this.userRepository.save(user);
+
+    return user;
+  }
+
+  async disableTwoFactor(userId: string, password: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) as any },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new BadRequestException('Two-factor authentication is not enabled');
+    }
+
+    // Verify password
+    const isPasswordValid = await user.validatePassword(password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    // Disable 2FA
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = undefined;
+    await this.userRepository.save(user);
+
+    return user;
+  }
+
+  async setupTwoFactor(userId: string): Promise<{
+    secret: string;
+    qrCode: string;
+    otpauthUrl: string;
+  }> {
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) as any },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException(
+        'Two-factor authentication is already enabled. Disable it first to set up again.',
+      );
+    }
+
+    // Generate secret
+    const { secret, otpauthUrl } = this.generateTwoFactorSecret(user.email);
+
+    // Generate QR code
+    const qrCode = await this.generateTwoFactorQRCode(otpauthUrl);
+
+    // Save secret (but don't enable yet)
+    user.twoFactorSecret = secret;
+    await this.userRepository.save(user);
+
+    return {
+      secret,
+      qrCode,
+      otpauthUrl,
+    };
   }
 }

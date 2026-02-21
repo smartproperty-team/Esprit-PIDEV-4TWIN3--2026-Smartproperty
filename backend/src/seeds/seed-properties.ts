@@ -4,9 +4,9 @@
 
 import { DataSource } from 'typeorm';
 import {
-  Property,
-  PropertyStatus,
-  PropertyType,
+    Property,
+    PropertyStatus,
+    PropertyType,
 } from '../modules/properties/entities/property.entity';
 import { User, UserRole } from '../modules/users/entities/user.entity';
 
@@ -149,4 +149,4 @@ async function seedProperties() {
   }
 }
 
-seedProperties();
+void seedProperties();

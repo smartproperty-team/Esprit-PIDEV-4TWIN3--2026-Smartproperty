@@ -8,8 +8,8 @@
 
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import { Client } from 'minio';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface UploadedFile {
   originalName: string;
@@ -102,7 +102,7 @@ export class MinioService implements OnModuleInit {
   ): Promise<UploadedFile> {
     const folder = options.folder || 'uploads';
     const extension = this.getFileExtension(file.originalname);
-    const fileName = options.fileName || `${uuidv4()}${extension}`;
+    const fileName = options.fileName || `${randomUUID()}${extension}`;
     const key = `${folder}/${fileName}`;
 
     const metadata: Record<string, string> = {
@@ -147,8 +147,8 @@ export class MinioService implements OnModuleInit {
   }
 
   async deleteFiles(keys: string[]): Promise<void> {
-    const objectsList = keys.map((key) => ({ name: key }));
-    await this.minioClient.removeObjects(this.bucketName, objectsList);
+    // `removeObjects` expects an array of object names (string[])
+    await this.minioClient.removeObjects(this.bucketName, keys);
     this.logger.log(`${keys.length} files deleted`);
   }
 

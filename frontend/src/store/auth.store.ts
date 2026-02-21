@@ -16,6 +16,7 @@ interface AuthState {
 
   // User Actions
   setUser: (user: User | null) => void;
+  updateUser: (updates: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -25,6 +26,8 @@ interface AuthState {
     email: string,
     password: string,
     captchaToken?: string,
+    twoFactorCode?: string,
+    reactivateAccount?: boolean,
   ) => Promise<void>;
   register: (data: {
     email: string;
@@ -77,6 +80,11 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
 
+      updateUser: (updates) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : null,
+        })),
+
       setLoading: (isLoading) => set({ isLoading }),
 
       setError: (error) => set({ error }),
@@ -89,13 +97,21 @@ export const useAuthStore = create<AuthState>()(
       // Authentication Methods
       // ===========================================
 
-      login: async (email, password, captchaToken) => {
+      login: async (
+        email,
+        password,
+        captchaToken,
+        twoFactorCode,
+        reactivateAccount,
+      ) => {
         set({ isLoading: true, error: null });
         try {
           const response = await authService.login({
             email,
             password,
             captchaToken,
+            twoFactorCode,
+            reactivateAccount,
           });
           set({
             user: response.user,
@@ -104,11 +120,15 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: unknown) {
+          const apiError = error as {
+            response?: { data?: { message?: string | string[] } };
+            message?: string;
+          };
+          const backendMessage = apiError?.response?.data?.message;
           const message =
-            error instanceof Error
-              ? error.message
-              : (error as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message || "Login failed";
+            (Array.isArray(backendMessage)
+              ? backendMessage.join(", ")
+              : backendMessage || apiError?.message) ?? "Login failed";
           set({ isLoading: false, error: message });
           throw error;
         }
