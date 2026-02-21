@@ -9,7 +9,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface UploadedFile {
   originalName: string;
@@ -105,7 +105,7 @@ export class MinioService implements OnModuleInit {
   ): Promise<UploadedFile> {
     const folder = options.folder || 'uploads';
     const extension = this.getFileExtension(file.originalname);
-    const fileName = options.fileName || `${uuidv4()}${extension}`;
+    const fileName = options.fileName || `${randomUUID()}${extension}`;
     const key = `${folder}/${fileName}`;
 
     const metadata: Record<string, string> = {
