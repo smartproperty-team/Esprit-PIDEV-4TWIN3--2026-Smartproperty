@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { HomeFooter, Navbar } from "../../components/layout";
 import { propertyService } from "../../services/property.service";
 import type {
   CreatePropertyDto,
@@ -370,7 +370,7 @@ export default function PropertyFormPage() {
   if (loadingProperty) {
     return (
       <div className="property-form-page">
-        <HomeNavbar />
+        <Navbar />
         <main className="property-form-container">
           <div className="loading-state">
             <div className="loading-spinner" />
@@ -384,7 +384,7 @@ export default function PropertyFormPage() {
 
   return (
     <div className="property-form-page">
-      <HomeNavbar />
+      <Navbar />
 
       <main className="property-form-container">
         {/* Header */}

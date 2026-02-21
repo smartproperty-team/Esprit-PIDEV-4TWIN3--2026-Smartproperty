@@ -14,12 +14,13 @@ import {
   Monitor,
   Settings,
   Shield,
+  ShieldCheck,
   User,
   Users,
-} from "lucide-react";
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { HomeFooter, HomeNavbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -28,9 +29,10 @@ import {
   CardHeader,
   CardTitle,
   Input,
-} from "../../components/ui";
-import { authService } from "../../services";
-import { useAuthStore } from "../../store";
+} from '../../components/ui';
+import { authService, verificationService } from '../../services';
+import { useAuthStore } from '../../store';
+import { VerificationStatus } from '../../types/verification';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -52,22 +54,29 @@ export default function DashboardPage() {
   });
   const [newEmail, setNewEmail] = useState(user?.email || "");
   const [emailMessage, setEmailMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const [verificationStatus, setVerificationStatus] =
+    useState<VerificationStatus | null>(null);
   const [emailChangeMessage, setEmailChangeMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
   const [profileMessage, setProfileMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
+  // Fetch verification status for tenants
+  useEffect(() => {
+    if (user?.role === 'tenant') {
+      verificationService
+        .getVerificationStatus()
+        .then((data) => setVerificationStatus(data.overallStatus))
+        .catch(() => setVerificationStatus(VerificationStatus.NOT_SUBMITTED));
+    }
+  }, [user?.role]);
 
   const handleResendVerification = async () => {
     if (!user?.email) return;
@@ -75,13 +84,13 @@ export default function DashboardPage() {
     try {
       await authService.resendVerification(user.email);
       setEmailMessage({
-        type: "success",
-        text: "Verification email sent! Check your inbox or MailHog at localhost:8025",
+        type: 'success',
+        text: 'Verification email sent! Check your inbox or MailHog at localhost:8025',
       });
     } catch {
       setEmailMessage({
-        type: "error",
-        text: "Failed to send verification email. Please try again.",
+        type: 'error',
+        text: 'Failed to send verification email. Please try again.',
       });
     } finally {
       setResendingEmail(false);
@@ -251,23 +260,23 @@ export default function DashboardPage() {
 
   const getRoleBadgeColor = (role: string) => {
     const colors: Record<string, string> = {
-      admin: "bg-red-100 text-red-800",
-      owner: "bg-blue-100 text-blue-800",
-      tenant: "bg-green-100 text-green-800",
-      manager: "bg-purple-100 text-purple-800",
-      agent: "bg-yellow-100 text-yellow-800",
+      admin: 'bg-red-100 text-red-800',
+      owner: 'bg-blue-100 text-blue-800',
+      tenant: 'bg-green-100 text-green-800',
+      manager: 'bg-purple-100 text-purple-800',
+      agent: 'bg-yellow-100 text-yellow-800',
     };
-    return colors[role] || "bg-gray-100 text-gray-800";
+    return colors[role] || 'bg-gray-100 text-gray-800';
   };
 
   const getStatusBadgeColor = (status: string) => {
     const colors: Record<string, string> = {
-      active: "bg-green-100 text-green-800",
-      inactive: "bg-gray-100 text-gray-800",
-      suspended: "bg-red-100 text-red-800",
-      pending_verification: "bg-yellow-100 text-yellow-800",
+      active: 'bg-green-100 text-green-800',
+      inactive: 'bg-gray-100 text-gray-800',
+      suspended: 'bg-red-100 text-red-800',
+      pending_verification: 'bg-yellow-100 text-yellow-800',
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -336,7 +345,7 @@ export default function DashboardPage() {
                   </button>
                   <div className="border-t border-gray-100">
                     <button
-                      onClick={handleLogout}
+                      onClick={() => { logout(); navigate('/login'); }}
                       disabled={isLoading}
                       className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
@@ -673,6 +682,75 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          {/* Verify Me CTA - Show for tenants (hide if verified or rejected) */}
+          {user?.role === 'tenant' &&
+            verificationStatus !== VerificationStatus.VERIFIED &&
+            verificationStatus !== VerificationStatus.REJECTED && (
+              <div className="mb-8">
+                <div className="relative overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 p-6 shadow-lg">
+                  <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
+                  <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
+                  <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                        <ShieldCheck className="h-7 w-7 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">
+                          Get Verified
+                        </h3>
+                        <p className="text-sm text-indigo-100">
+                          Upload your documents to build trust with landlords and
+                          speed up your applications.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => navigate('/verification')}
+                      className="shrink-0 bg-white text-indigo-600 shadow-md hover:bg-indigo-50 focus-visible:ring-white"
+                      size="lg"
+                    >
+                      <ShieldCheck className="mr-2 h-5 w-5" />
+                      Verify Me
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* Admin: Review Verifications CTA */}
+          {user?.role === 'admin' && (
+            <div className="mb-8">
+              <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6 shadow-lg">
+                <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
+                <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
+                <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                      <Shield className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        Tenant Verifications
+                      </h3>
+                      <p className="text-sm text-amber-100">
+                        Review and approve tenant identity & income documents.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/admin/verifications')}
+                    className="shrink-0 bg-white text-amber-600 shadow-md hover:bg-amber-50 focus-visible:ring-white"
+                    size="lg"
+                  >
+                    <Shield className="mr-2 h-5 w-5" />
+                    Review Verifications
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats */}
           <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -811,6 +889,17 @@ export default function DashboardPage() {
                 Yes, Deactivate
               </Button>
             </div>
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeactivateAccount}
+                isLoading={isDeactivatingAccount}
+              >
+                Yes, Deactivate
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -828,7 +917,7 @@ export default function DashboardPage() {
             </p>
             <div className="mt-4 rounded-lg bg-red-50 p-3">
               <p className="text-sm font-medium text-red-800">
-                ⚠️ Warning: This is permanent and irreversible.
+                Warning: This is permanent and irreversible.
               </p>
             </div>
             <div className="mt-6 flex justify-end gap-3">

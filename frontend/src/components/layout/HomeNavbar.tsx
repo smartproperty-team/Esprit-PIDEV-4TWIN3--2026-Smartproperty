@@ -2,43 +2,88 @@
 // SmartProperty - Home Navbar Component
 // ===========================================
 
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import "../../pages/home/home3.css";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import '../../pages/home/home3.css';
+import { notificationService } from '../../services';
+import type { Notification } from '../../services/notification.service';
+import { useAuthStore } from '../../store';
 
 const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/properties", label: "Listings" },
-  { to: "/members", label: "Members" },
-  { to: "/blog", label: "Blog" },
-  { to: "/pages", label: "Pages" },
-  { to: "/contact", label: "Contact" },
+  { to: '/', label: 'Home' },
+  { to: '/properties', label: 'Listings' },
+  { to: '/members', label: 'Members' },
+  { to: '/blog', label: 'Blog' },
+  { to: '/pages', label: 'Pages' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 export default function HomeNavbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const notifPanelRef = useRef<HTMLDivElement>(null);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const [allNotifs, count] = await Promise.all([
+        notificationService.getAll(),
+        notificationService.getUnreadCount(),
+      ]);
+      setNotifications(allNotifs);
+      setUnreadCount(count);
+    } catch {
+      // silently fail
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        notifPanelRef.current &&
+        !notifPanelRef.current.contains(e.target as Node)
+      ) {
+        setShowNotifPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setMobileMenuOpen(false);
       }
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
     if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-      mobileMenuRef.current?.querySelector("a")?.focus();
+      document.body.style.overflow = 'hidden';
+      mobileMenuRef.current?.querySelector('a')?.focus();
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
 
@@ -51,9 +96,9 @@ export default function HomeNavbar() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
-            <span className={`hamburger ${mobileMenuOpen ? "active" : ""}`}>
+            <span className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}>
               <span></span>
               <span></span>
               <span></span>
@@ -67,9 +112,9 @@ export default function HomeNavbar() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`nav-link ${isActive ? "active" : ""}`}
+                  className={`nav-link ${isActive ? 'active' : ''}`}
                   role="menuitem"
-                  aria-current={isActive ? "page" : undefined}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   {link.label}
                 </Link>
@@ -118,9 +163,13 @@ export default function HomeNavbar() {
               <span>+68 685 88666</span>
             </a>
             <Link
-              to="/login"
+              to={user ? '/dashboard' : '/login'}
               className="navbar-user-btn"
-              aria-label="User account"
+              aria-label={
+                user
+                  ? `Account: ${user.fullName || user.firstName}`
+                  : 'User account'
+              }
             >
               <svg
                 width="20"
@@ -134,7 +183,147 @@ export default function HomeNavbar() {
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
+              {user && (
+                <span className="user-name">
+                  {user.fullName || user.firstName}
+                </span>
+              )}
             </Link>
+            {user && (
+              <div className="navbar-notif-wrapper" ref={notifPanelRef}>
+                <button
+                  className="navbar-notif-btn"
+                  aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                  title="Notifications"
+                  onClick={() => setShowNotifPanel(!showNotifPanel)}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="notif-badge">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifPanel && (
+                  <div className="notif-panel">
+                    <div className="notif-panel-header">
+                      <h3>Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          className="notif-mark-all"
+                          onClick={async () => {
+                            await notificationService.markAllAsRead();
+                            await fetchNotifications();
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="notif-panel-list">
+                      {notifications.length === 0 ? (
+                        <div className="notif-empty">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            aria-hidden="true"
+                          >
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                          </svg>
+                          <p>No notifications yet</p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`notif-item ${!n.isRead ? 'notif-unread' : ''}`}
+                            onClick={async () => {
+                              if (!n.isRead) {
+                                await notificationService.markAsRead(n.id);
+                                await fetchNotifications();
+                              }
+                              if (n.link) {
+                                navigate(n.link);
+                                setShowNotifPanel(false);
+                              }
+                            }}
+                          >
+                            <div className="notif-icon">
+                              {n.type === 'verification_approved'
+                                ? '✅'
+                                : n.type === 'verification_rejected'
+                                  ? '❌'
+                                  : '🔔'}
+                            </div>
+                            <div className="notif-content">
+                              <p className="notif-title">{n.title}</p>
+                              <p className="notif-message">{n.message}</p>
+                              <span className="notif-time">
+                                {new Date(n.createdAt).toLocaleDateString(
+                                  'en-US',
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  },
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {user && (
+              <button
+                className="navbar-logout-btn"
+                aria-label="Sign out"
+                title="Sign out"
+                onClick={async () => {
+                  await logout();
+                  navigate('/login');
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            )}
             <Link to="/properties/new" className="btn-add-property">
               <span className="btn-text">Add Property</span>
               <svg
@@ -156,7 +345,7 @@ export default function HomeNavbar() {
         <div
           id="mobile-menu"
           ref={mobileMenuRef}
-          className={`mobile-menu ${mobileMenuOpen ? "open" : ""}`}
+          className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}
           aria-hidden={!mobileMenuOpen}
         >
           <div className="mobile-menu-content">

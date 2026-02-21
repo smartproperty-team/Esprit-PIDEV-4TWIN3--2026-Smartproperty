@@ -2,10 +2,10 @@
 // SmartProperty - Main App Component
 // ===========================================
 
-import { useEffect } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import "./App.css";
-import { ProtectedRoute } from "./components/auth";
+import { useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import './App.css';
+import { ProtectedRoute } from './components/auth';
 import {
   FacebookCallbackPage,
   ForgotPasswordPage,
@@ -14,16 +14,21 @@ import {
   RegisterPage,
   ResetPasswordPage,
   VerifyEmailPage,
-} from "./pages/auth";
-import { DashboardPage, SessionsPage } from "./pages/dashboard";
-import { HomePage } from "./pages/home";
+} from './pages/auth';
+import {
+  AdminVerificationPage,
+  DashboardPage,
+  SessionsPage,
+  VerificationPage,
+} from './pages/dashboard';
+import { HomePage } from './pages/home';
 import {
   PropertiesPage,
   PropertyDetailPage,
   PropertyFormPage,
-} from "./pages/properties";
-import TwoFactorPage from "./pages/security/TwoFactorPage";
-import { useAuthStore } from "./store";
+} from './pages/properties';
+import TwoFactorPage from './pages/security/TwoFactorPage';
+import { useAuthStore } from './store';
 
 function App() {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -76,6 +81,22 @@ function App() {
         element={
           <ProtectedRoute>
             <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/verification"
+        element={
+          <ProtectedRoute>
+            <VerificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/verifications"
+        element={
+          <ProtectedRoute>
+            <AdminVerificationPage />
           </ProtectedRoute>
         }
       />

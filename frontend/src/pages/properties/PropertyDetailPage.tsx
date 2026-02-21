@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { HomeFooter, Navbar } from "../../components/layout";
 import { propertyService } from "../../services/property.service";
 import type { Property, PropertyImage } from "../../types/property";
 import "./properties.css";
@@ -314,7 +314,7 @@ export default function PropertyDetailPage() {
   if (loading) {
     return (
       <div className="property-detail-page">
-        <HomeNavbar />
+        <Navbar />
         <main className="property-detail-container">
           <div className="loading-state">
             <div className="loading-spinner" />
@@ -329,7 +329,7 @@ export default function PropertyDetailPage() {
   if (error || !property) {
     return (
       <div className="property-detail-page">
-        <HomeNavbar />
+        <Navbar />
         <main className="property-detail-container">
           <div className="empty-state">
             <h3>Propriété non trouvée</h3>
@@ -346,7 +346,7 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="property-detail-page">
-      <HomeNavbar />
+      <Navbar />
 
       <main className="property-detail-container">
         {/* Back Button */}
