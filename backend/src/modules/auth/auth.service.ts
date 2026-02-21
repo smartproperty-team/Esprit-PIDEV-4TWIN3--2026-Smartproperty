@@ -5,12 +5,12 @@
 
 import { MailerService } from '@nestjs-modules/mailer';
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -18,25 +18,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import * as speakeasy from 'speakeasy';
-import * as QRCode from 'qrcode';
 import { ObjectId } from 'mongodb';
+import * as QRCode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
 
 import {
-  AuthProvider,
-  User,
-  UserRole,
-  UserStatus,
+    AuthProvider,
+    User,
+    UserRole,
+    UserStatus,
 } from '../users/entities/user.entity';
 import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  LoginDto,
-  RegisterDto,
-  RequestEmailChangeDto,
-  ResetPasswordDto,
-  VerifyEmailDto,
+    ChangePasswordDto,
+    ForgotPasswordDto,
+    LoginDto,
+    RegisterDto,
+    RequestEmailChangeDto,
+    ResetPasswordDto,
+    VerifyEmailDto,
 } from './dto/auth.dto';
 import { Session } from './entities/session.entity';
 import { DeviceInfo, SessionService } from './session.service';

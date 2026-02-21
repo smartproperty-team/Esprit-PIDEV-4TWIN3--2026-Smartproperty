@@ -194,18 +194,18 @@ export class UsersService {
     user.firstName = `[Deleted User]`;
     user.lastName = `${new Date().getTime()}`;
     user.email = `deleted-${user._id.toHexString()}@smartproperty.local`;
-    user.phone = null;
-    user.avatar = null;
-    user.address = null;
+    user.phone = undefined;
+    user.avatar = undefined;
+    user.address = undefined;
 
     // Clear all sensitive data
-    user.password = null;
-    user.refreshToken = null;
-    user.emailVerificationToken = null;
-    user.passwordResetToken = null;
-    user.twoFactorSecret = null;
+    user.password = undefined;
+    user.refreshToken = undefined;
+    user.emailVerificationToken = undefined;
+    user.passwordResetToken = undefined;
+    user.twoFactorSecret = undefined;
     user.previousPasswords = [];
-    user.pendingEmail = null;
+    user.pendingEmail = undefined;
 
     // Mark as permanently deleted (cannot be restored or logged into)
     user.permanentlyDeleted = true;
@@ -214,7 +214,7 @@ export class UsersService {
     user.isEmailVerified = false;
     user.twoFactorEnabled = false;
     user.loginAttempts = 0;
-    user.lockUntil = null;
+    user.lockUntil = undefined;
 
     // Clear preferences
     if (user.preferences) {

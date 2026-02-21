@@ -150,8 +150,8 @@ export class MinioService implements OnModuleInit {
   }
 
   async deleteFiles(keys: string[]): Promise<void> {
-    const objectsList = keys.map((key) => ({ name: key }));
-    await this.minioClient.removeObjects(this.bucketName, objectsList);
+    // `removeObjects` accepts an array of object names (string[]), ensure we pass string[]
+    await this.minioClient.removeObjects(this.bucketName, keys);
     this.logger.log(`${keys.length} files deleted`);
   }
 

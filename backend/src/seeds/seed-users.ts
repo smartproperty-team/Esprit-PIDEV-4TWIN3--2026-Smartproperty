@@ -6,9 +6,9 @@ import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'mongodb';
 import { DataSource } from 'typeorm';
 import {
-  User,
-  UserRole,
-  UserStatus,
+    User,
+    UserRole,
+    UserStatus,
 } from '../modules/users/entities/user.entity';
 
 async function seedUsers() {
