@@ -21,6 +21,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 dir('backend') {
+                    // Clean any stale install artifacts to avoid npm rename/ENOTEMPTY errors
+                    sh 'rm -rf node_modules || true'
+                    sh 'npm cache clean --force || true'
                     // Verify Node/npm versions, then install dependencies
                     sh 'node -v && npm -v'
                     // Use legacy peer deps to avoid ERESOLVE failures in CI
