@@ -5,6 +5,7 @@
 import {
   Bell,
   Building2,
+  Calendar,
   ChevronDown,
   FileText,
   Home,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HomeFooter, HomeNavbar } from '../../components/layout';
+import { HomeFooter, HomeNavbar } from '@/components/layout';
 import {
   Alert,
   Button,
@@ -28,15 +29,16 @@ import {
   CardHeader,
   CardTitle,
   Input,
-} from '../../components/ui';
-import { authService, verificationService } from '../../services';
-import { useAuthStore } from '../../store';
-import { VerificationStatus } from '../../types/verification';
+} from '@/components/ui';
+import { authService, verificationService } from '@/services';
+import { useAuthStore } from '@/store';
+import { VerificationStatus } from '@/types/verification';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, logout, isLoading } = useAuthStore();
+  const { user, logout, isLoading, setUser } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const accountInfoRef = useRef<HTMLDivElement>(null);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -286,7 +288,7 @@ export default function DashboardPage() {
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-r from-indigo-600 to-purple-600">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900">
@@ -321,10 +323,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
                   <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate("/profile");
-                    }}
+                    onClick={handleOpenProfileEditor}
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <User className="mr-3 h-4 w-4" />
@@ -697,7 +696,7 @@ export default function DashboardPage() {
             verificationStatus !== VerificationStatus.VERIFIED &&
             verificationStatus !== VerificationStatus.REJECTED && (
               <div className="mb-8">
-                <div className="relative overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 p-6 shadow-lg">
+                  <div className="relative overflow-hidden rounded-xl border border-indigo-200 bg-linear-to-r from-indigo-500 via-purple-500 to-indigo-600 p-6 shadow-lg">
                   <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
                   <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
                   <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -731,7 +730,7 @@ export default function DashboardPage() {
           {/* Admin: Review Verifications CTA */}
           {user?.role === 'admin' && (
             <div className="mb-8">
-              <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6 shadow-lg">
+                  <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-linear-to-r from-amber-500 via-orange-500 to-red-500 p-6 shadow-lg">
                 <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
                 <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/10" />
                 <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -871,9 +870,10 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </main>
+      </div>
 
       {showDeactivateModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-gray-900">
               Deactivate your account?
@@ -903,7 +903,7 @@ export default function DashboardPage() {
       )}
 
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-red-900">
               Permanently delete your account?
