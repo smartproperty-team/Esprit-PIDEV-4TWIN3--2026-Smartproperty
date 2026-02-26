@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { HomeFooter, Navbar } from "../../components/layout";
 import { propertyService } from "../../services/property.service";
 import type {
   Property,
@@ -315,7 +315,7 @@ export default function PropertiesPage() {
 
   return (
     <div className="properties-page">
-      <HomeNavbar />
+      <Navbar />
 
       <main className="properties-container" id="main-content">
         {/* Header */}

@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'Node20'
+        // Use the currently installed NodeJS tool. Change to 'Node22' once configured in Jenkins.
+        nodejs 'Node22'
     }
 
     environment {
@@ -20,6 +21,11 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 dir('backend') {
+                    // Clean any stale install artifacts to avoid npm rename/ENOTEMPTY errors
+                    sh 'rm -rf node_modules || true'
+                    sh 'npm cache clean --force || true'
+                    // Verify Node/npm versions, then install dependencies
+                    sh 'node -v && npm -v'
                     // Use legacy peer deps to avoid ERESOLVE failures in CI
                     sh 'npm install --legacy-peer-deps'
                 }

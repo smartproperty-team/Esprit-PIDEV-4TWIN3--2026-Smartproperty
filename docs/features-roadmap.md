@@ -1,4 +1,4 @@
-# SmartProperty Features Roadmap
+# verifimaSmartProperty Features Roadmap
 
 ## Project Implementation Phases
 
@@ -108,10 +108,11 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 ### Document Management
 
-- [ ]  Upload identity documents
-- [ ]  Upload proof of income
-- [ ]  Document verification status
-- [ ]  Secure document storage (AWS S3)
+- [X]  Upload identity documents
+- [X]  Upload proof of income
+- [X]  Document verification status
+- [X]  Secure document storage (AWS S3)
+- [ ]  email me when get verified or rejected
 
 ### Admin User Management
 

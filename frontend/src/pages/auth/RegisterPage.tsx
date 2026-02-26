@@ -2,14 +2,14 @@
 // SmartProperty - Register Page
 // ===========================================
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Lock, Mail, Phone, User } from "lucide-react";
-import { useState } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { HomeFooter, HomeNavbar } from "../../components/layout";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Building2, Lock, Mail, Phone, User } from 'lucide-react';
+import { useState } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { HomeFooter, Navbar } from '../../components/layout';
 import {
   Alert,
   Button,
@@ -20,9 +20,9 @@ import {
   CardHeader,
   CardTitle,
   Input,
-} from "../../components/ui";
-import { authService } from "../../services";
-import { useAuthStore } from "../../store";
+} from '../../components/ui';
+import { authService } from '../../services';
+import { useAuthStore } from '../../store';
 
 // Google Icon SVG Component
 const GoogleIcon = () => (
@@ -55,23 +55,23 @@ const FacebookIcon = () => (
 
 const registerSchema = z
   .object({
-    firstName: z.string().min(2, "First name must be at least 2 characters"),
-    lastName: z.string().min(2, "Last name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
+    firstName: z.string().min(2, 'First name must be at least 2 characters'),
+    lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+    email: z.string().email('Please enter a valid email address'),
     phone: z.string().optional(),
-    role: z.enum(["tenant", "owner", "manager", "agent"]).default("tenant"),
+    role: z.enum(['tenant', 'owner', 'manager', 'agent']).default('tenant'),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
+      .min(8, 'Password must be at least 8 characters')
       .regex(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-        "Password must contain uppercase, lowercase, number, and special character",
+        'Password must contain uppercase, lowercase, number, and special character',
       ),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ["confirmPassword"],
+    path: ['confirmPassword'],
   });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -84,7 +84,6 @@ export default function RegisterPage() {
     error,
     clearError,
   } = useAuthStore();
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
 
@@ -102,7 +101,7 @@ export default function RegisterPage() {
     try {
       clearError();
       if (!captchaToken) {
-        setCaptchaError("Please complete the CAPTCHA.");
+        setCaptchaError('Please complete the CAPTCHA.');
         return;
       }
       setCaptchaError(null);
@@ -116,12 +115,9 @@ export default function RegisterPage() {
         role: data.role,
         captchaToken,
       });
-      setSuccessMessage(
-        "Registration successful! Please check your email to verify your account.",
-      );
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
+      // Registration successful - store sets isAuthenticated=true
+      // The route guard in App.tsx will auto-redirect to /dashboard
+      navigate('/dashboard');
     } catch {
       // Error is handled by the store
     }
@@ -137,7 +133,7 @@ export default function RegisterPage() {
 
   return (
     <div className="home-page">
-      <HomeNavbar />
+      <Navbar />
       <main className="min-h-screen bg-gradient-to-br from-home-primary-light via-home-background to-home-background-alt px-4 py-12 pt-28 flex items-center justify-center">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
@@ -166,10 +162,6 @@ export default function RegisterPage() {
                   <Alert type="error" message={error} onClose={clearError} />
                 )}
 
-                {successMessage && (
-                  <Alert type="success" message={successMessage} />
-                )}
-
                 {captchaError && <Alert type="error" message={captchaError} />}
 
                 <div className="grid grid-cols-2 gap-4">
@@ -178,14 +170,14 @@ export default function RegisterPage() {
                     placeholder="John"
                     icon={<User className="h-5 w-5" />}
                     error={errors.firstName?.message}
-                    {...register("firstName")}
+                    {...register('firstName')}
                   />
 
                   <Input
                     label="Last Name"
                     placeholder="Doe"
                     error={errors.lastName?.message}
-                    {...register("lastName")}
+                    {...register('lastName')}
                   />
                 </div>
 
@@ -195,7 +187,7 @@ export default function RegisterPage() {
                   placeholder="you@example.com"
                   icon={<Mail className="h-5 w-5" />}
                   error={errors.email?.message}
-                  {...register("email")}
+                  {...register('email')}
                 />
 
                 <Input
@@ -204,7 +196,7 @@ export default function RegisterPage() {
                   placeholder="+1 (555) 123-4567"
                   icon={<Phone className="h-5 w-5" />}
                   error={errors.phone?.message}
-                  {...register("phone")}
+                  {...register('phone')}
                 />
 
                 <div className="space-y-2">
@@ -212,7 +204,7 @@ export default function RegisterPage() {
                     Account Type
                   </label>
                   <select
-                    {...register("role")}
+                    {...register('role')}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="tenant">Tenant - Looking to rent</option>
@@ -237,7 +229,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
                   error={errors.password?.message}
-                  {...register("password")}
+                  {...register('password')}
                 />
 
                 <Input
@@ -246,7 +238,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
                   error={errors.confirmPassword?.message}
-                  {...register("confirmPassword")}
+                  {...register('confirmPassword')}
                 />
 
                 <div className="text-xs text-home-muted">
@@ -264,7 +256,7 @@ export default function RegisterPage() {
                   {siteKey ? (
                     <ReCAPTCHA
                       sitekey={siteKey}
-                      onChange={(token) => {
+                      onChange={(token: string | null) => {
                         setCaptchaToken(token);
                         setCaptchaError(null);
                       }}
@@ -322,7 +314,7 @@ export default function RegisterPage() {
                 </Button>
 
                 <p className="text-center text-sm text-home-muted">
-                  Already have an account?{" "}
+                  Already have an account?{' '}
                   <Link
                     to="/login"
                     className="font-medium text-home-primary hover:text-home-primary-dark"
@@ -337,7 +329,7 @@ export default function RegisterPage() {
           <div className="mt-6 rounded-lg border border-home-border bg-white/70 p-4 backdrop-blur">
             <p className="text-center text-sm text-home-muted">
               <span className="font-medium">Testing?</span> Register a new
-              account or use the API docs at{" "}
+              account or use the API docs at{' '}
               <a
                 href="http://localhost:3000/api/docs"
                 target="_blank"

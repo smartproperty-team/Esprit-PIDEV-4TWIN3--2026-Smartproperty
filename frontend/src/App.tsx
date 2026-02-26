@@ -2,10 +2,10 @@
 // SmartProperty - Main App Component
 // ===========================================
 
-import { useEffect, useRef } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import "./App.css";
-import { ProtectedRoute } from "./components/auth";
+import { useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import './App.css';
+import { ProtectedRoute } from './components/auth';
 import {
   FacebookCallbackPage,
   ForgotPasswordPage,
@@ -14,20 +14,21 @@ import {
   RegisterPage,
   ResetPasswordPage,
   VerifyEmailPage,
-} from "./pages/auth";
-import { DashboardPage, SessionsPage } from "./pages/dashboard";
-import { HomePage } from "./pages/home";
-import { PreferencesOnboardingModal } from "./pages/onboarding";
-import { ProfilePage } from "./pages/profile";
+} from './pages/auth';
+import {
+  AdminVerificationPage,
+  DashboardPage,
+  SessionsPage,
+  VerificationPage,
+} from './pages/dashboard';
+import { HomePage } from './pages/home';
 import {
   PropertiesPage,
   PropertyDetailPage,
   PropertyFormPage,
-} from "./pages/properties";
-import TwoFactorPage from "./pages/security/TwoFactorPage";
-import { SettingsPage } from "./pages/settings";
-import { authService } from "./services";
-import { useAuthStore, usePreferencesStore } from "./store";
+} from './pages/properties';
+import TwoFactorPage from './pages/security/TwoFactorPage';
+import { useAuthStore } from './store';
 
 function App() {
   const { checkAuth, isAuthenticated, user } = useAuthStore();
@@ -40,25 +41,94 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user) {
-      promptedUserRef.current = null;
-      return;
-    }
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<HomePage />} />
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <RegisterPage />
+          )
+        }
+      />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+      <Route
+        path="/auth/facebook/callback"
+        element={<FacebookCallbackPage />}
+      />
 
-    if (promptedUserRef.current === user.id) {
-      return;
-    }
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sessions"
+        element={
+          <ProtectedRoute>
+            <SessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/verification"
+        element={
+          <ProtectedRoute>
+            <VerificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/verifications"
+        element={
+          <ProtectedRoute>
+            <AdminVerificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/security/2fa"
+        element={
+          <ProtectedRoute>
+            <TwoFactorPage />
+          </ProtectedRoute>
+        }
+      />
 
-    let isCancelled = false;
-
-    const bootstrapPreferences = async () => {
-      let resolvedPreferences = getUserPreferences(user.id);
-
-      try {
-        const serverPreferences = await authService.getPreferences();
-        if (isCancelled) {
-          return;
+      {/* Properties Routes */}
+      <Route path="/properties" element={<PropertiesPage />} />
+      <Route path="/properties/:id" element={<PropertyDetailPage />} />
+      <Route
+        path="/properties/new"
+        element={
+          <ProtectedRoute>
+            <PropertyFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/properties/:id/edit"
+        element={
+          <ProtectedRoute>
+            <PropertyFormPage />
+          </ProtectedRoute>
         }
         setUserPreferences(user.id, serverPreferences);
         resolvedPreferences = serverPreferences;
