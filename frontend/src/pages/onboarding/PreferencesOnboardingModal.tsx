@@ -1,5 +1,6 @@
 import * as Slider from "@radix-ui/react-slider";
 import { useEffect, useMemo, useState } from "react";
+import LocationPreferenceMap from "../../components/settings/LocationPreferenceMap";
 import {
   Alert,
   Button,
@@ -7,7 +8,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input,
 } from "../../components/ui";
 import { authService } from "../../services";
 import { useAuthStore, usePreferencesStore } from "../../store";
@@ -207,9 +207,7 @@ export default function PreferencesOnboardingModal() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>
-                Question {currentStep} of 4
-              </span>
+              <span>Question {currentStep} of 4</span>
               <span>{stepTitle}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-gray-200">
@@ -286,11 +284,10 @@ export default function PreferencesOnboardingModal() {
               <h3 className="text-sm font-semibold text-gray-900">
                 Which locations are you interested in?
               </h3>
-              <Input
-                label="Preferred locations"
-                placeholder="Example: Casablanca, Rabat, Marrakech"
+              <LocationPreferenceMap
                 value={locations}
-                onChange={(event) => setLocations(event.target.value)}
+                onChange={setLocations}
+                disabled={isSaving}
               />
             </section>
           )}
@@ -347,19 +344,11 @@ export default function PreferencesOnboardingModal() {
             )}
 
             {currentStep < 4 ? (
-              <Button
-                type="button"
-                onClick={goToNextStep}
-                disabled={isSaving}
-              >
+              <Button type="button" onClick={goToNextStep} disabled={isSaving}>
                 Validate & Next
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                isLoading={isSaving}
-              >
+              <Button type="button" onClick={handleSubmit} isLoading={isSaving}>
                 Save preferences
               </Button>
             )}

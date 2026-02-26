@@ -2,10 +2,12 @@
 // SmartProperty - Settings Page
 // ===========================================
 
+import * as Slider from "@radix-ui/react-slider";
 import { Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HomeFooter, HomeNavbar } from "../../components/layout";
+import LocationPreferenceMap from "../../components/settings/LocationPreferenceMap";
 import {
   Alert,
   Button,
@@ -13,7 +15,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input,
 } from "../../components/ui";
 import { authService } from "../../services";
 import { useAuthStore, usePreferencesStore } from "../../store";
@@ -112,6 +113,14 @@ export default function SettingsPage() {
       ...currentNotifications,
       [notificationType]: !currentNotifications[notificationType],
     }));
+  };
+
+  const handleBudgetRangeChange = (value: number[]) => {
+    if (value.length !== 2) {
+      return;
+    }
+    setMinBudget(Math.min(value[0], value[1]));
+    setMaxBudget(Math.max(value[0], value[1]));
   };
 
   const handleSavePreferences = async () => {
@@ -259,43 +268,25 @@ export default function SettingsPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-3 rounded-lg border border-gray-200 p-4">
-                    <div>
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                        Minimum budget
-                      </label>
-                      <input
-                        type="range"
-                        min={500}
-                        max={10000}
-                        step={100}
-                        value={minBudget}
-                        onChange={(event) =>
-                          setMinBudget(
-                            Math.min(Number(event.target.value), maxBudget),
-                          )
-                        }
-                        className="w-full accent-home-primary"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                        Maximum budget
-                      </label>
-                      <input
-                        type="range"
-                        min={500}
-                        max={10000}
-                        step={100}
-                        value={maxBudget}
-                        onChange={(event) =>
-                          setMaxBudget(
-                            Math.max(Number(event.target.value), minBudget),
-                          )
-                        }
-                        className="w-full accent-home-primary"
-                      />
+                  <div className="rounded-lg border border-gray-200 p-5">
+                    <Slider.Root
+                      className="relative flex h-6 w-full touch-none select-none items-center"
+                      min={500}
+                      max={10000}
+                      step={100}
+                      minStepsBetweenThumbs={1}
+                      value={[minBudget, maxBudget]}
+                      onValueChange={handleBudgetRangeChange}
+                    >
+                      <Slider.Track className="relative h-2 grow rounded-full bg-gray-200">
+                        <Slider.Range className="absolute h-full rounded-full bg-home-primary" />
+                      </Slider.Track>
+                      <Slider.Thumb className="block h-5 w-5 rounded-full border border-home-primary bg-white shadow focus:outline-none focus:ring-2 focus:ring-home-primary" />
+                      <Slider.Thumb className="block h-5 w-5 rounded-full border border-home-primary bg-white shadow focus:outline-none focus:ring-2 focus:ring-home-primary" />
+                    </Slider.Root>
+                    <div className="mt-3 flex justify-between text-xs text-gray-500">
+                      <span>$500</span>
+                      <span>$10,000</span>
                     </div>
                   </div>
                 </section>
@@ -304,11 +295,10 @@ export default function SettingsPage() {
                   <h3 className="text-sm font-semibold text-gray-900">
                     Location preferences
                   </h3>
-                  <Input
-                    label="Preferred locations"
-                    placeholder="Example: Casablanca, Rabat, Marrakech"
+                  <LocationPreferenceMap
                     value={locations}
-                    onChange={(event) => setLocations(event.target.value)}
+                    onChange={setLocations}
+                    disabled={isLoadingPreferences || isSavingPreferences}
                   />
                 </section>
 
