@@ -23,8 +23,17 @@ async function bootstrap() {
         crossOriginEmbedderPolicy: false,
     }));
     app.use(compression());
+    const rawOrigin = configService.get('app.corsOrigin') || 'http://localhost:5173';
+    const allowedOrigins = rawOrigin.split(',').map((o) => o.trim());
     app.enableCors({
-        origin: configService.get('app.corsOrigin') || 'http://localhost:5173',
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error(`CORS: origin ${origin} not allowed`));
+            }
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
