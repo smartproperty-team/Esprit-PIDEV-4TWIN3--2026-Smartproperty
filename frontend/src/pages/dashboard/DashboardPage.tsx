@@ -5,7 +5,6 @@
 import {
   Bell,
   Building2,
-  Calendar,
   ChevronDown,
   FileText,
   Home,
@@ -36,9 +35,8 @@ import { VerificationStatus } from '../../types/verification';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, logout, isLoading, setUser } = useAuthStore();
+  const { user, logout, isLoading } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const accountInfoRef = useRef<HTMLDivElement>(null);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -323,7 +321,10 @@ export default function DashboardPage() {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
                   <button
-                    onClick={handleOpenProfileEditor}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate("/profile");
+                    }}
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <User className="mr-3 h-4 w-4" />
@@ -339,7 +340,13 @@ export default function DashboardPage() {
                     <Monitor className="mr-3 h-4 w-4" />
                     Active Sessions
                   </button>
-                  <button className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate("/settings");
+                    }}
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
                     <Settings className="mr-3 h-4 w-4" />
                     Settings
                   </button>
@@ -864,7 +871,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </main>
-      </div>
 
       {showDeactivateModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">

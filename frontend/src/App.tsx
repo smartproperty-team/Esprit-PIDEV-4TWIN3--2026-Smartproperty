@@ -31,7 +31,10 @@ import TwoFactorPage from './pages/security/TwoFactorPage';
 import { useAuthStore } from './store';
 
 function App() {
-  const { checkAuth, isAuthenticated } = useAuthStore();
+  const { checkAuth, isAuthenticated, user } = useAuthStore();
+  const { openOnboarding, getUserPreferences, setUserPreferences } =
+    usePreferencesStore();
+  const promptedUserRef = useRef<string | null>(null);
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -127,11 +130,133 @@ function App() {
             <PropertyFormPage />
           </ProtectedRoute>
         }
-      />
+        setUserPreferences(user.id, serverPreferences);
+        resolvedPreferences = serverPreferences;
+      } catch {
+        // Keep local persisted fallback if backend is temporarily unavailable
+      }
 
-      {/* 404 - Redirect to home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      if (!resolvedPreferences.completed && !isCancelled) {
+        openOnboarding();
+      }
+
+      promptedUserRef.current = user.id;
+    };
+
+    void bootstrapPreferences();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    getUserPreferences,
+    isAuthenticated,
+    openOnboarding,
+    setUserPreferences,
+    user,
+  ]);
+
+  return (
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <LoginPage />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <RegisterPage />
+            )
+          }
+        />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route
+          path="/auth/facebook/callback"
+          element={<FacebookCallbackPage />}
+        />
+
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sessions"
+          element={
+            <ProtectedRoute>
+              <SessionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/security/2fa"
+          element={
+            <ProtectedRoute>
+              <TwoFactorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Properties Routes */}
+        <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/properties/:id" element={<PropertyDetailPage />} />
+        <Route
+          path="/properties/new"
+          element={
+            <ProtectedRoute>
+              <PropertyFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/properties/:id/edit"
+          element={
+            <ProtectedRoute>
+              <PropertyFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 - Redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <PreferencesOnboardingModal />
+    </>
   );
 }
 

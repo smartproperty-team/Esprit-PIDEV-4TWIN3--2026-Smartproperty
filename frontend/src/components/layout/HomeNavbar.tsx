@@ -65,6 +65,14 @@ export default function HomeNavbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const userPreferences = user ? getUserPreferences(user.id) : null;
+  const showPreferencesReminder =
+    !!isAuthenticated &&
+    !!user &&
+    !!userPreferences &&
+    !userPreferences.completed &&
+    userPreferences.skipped;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -89,6 +97,16 @@ export default function HomeNavbar() {
 
   return (
     <header>
+      {showPreferencesReminder && (
+        <button
+          type="button"
+          onClick={openOnboarding}
+          className="fixed right-6 top-20 z-[90] flex animate-bounce items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-700"
+        >
+          <BellRing className="h-4 w-4" />
+          Complete your questions
+        </button>
+      )}
       <nav className="navbar" aria-label="Main navigation">
         <div className="navbar-container">
           <button
