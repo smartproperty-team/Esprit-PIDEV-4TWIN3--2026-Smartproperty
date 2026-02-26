@@ -31,8 +31,8 @@ import {
 } from './pages/properties';
 import { SettingsPage } from './pages/settings';
 import TwoFactorPage from './pages/security/TwoFactorPage';
-import { useAuthStore } from './store';
-import { usePreferencesStore } from './store';
+import { useAuthStore, usePreferencesStore } from './store';
+import { canManageProperties } from './utils';
 
 function App() {
   const { checkAuth, isAuthenticated, user } = useAuthStore();
@@ -186,7 +186,11 @@ function App() {
           path="/properties/new"
           element={
             <ProtectedRoute>
-              <PropertyFormPage />
+              {canManageProperties(user) ? (
+                <PropertyFormPage />
+              ) : (
+                <Navigate to="/properties" replace />
+              )}
             </ProtectedRoute>
           }
         />
@@ -194,7 +198,11 @@ function App() {
           path="/properties/:id/edit"
           element={
             <ProtectedRoute>
-              <PropertyFormPage />
+              {canManageProperties(user) ? (
+                <PropertyFormPage />
+              ) : (
+                <Navigate to="/properties" replace />
+              )}
             </ProtectedRoute>
           }
         />

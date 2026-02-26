@@ -6,16 +6,12 @@ import {
   Bell,
   Building2,
   Calendar,
-  ChevronDown,
   FileText,
   Home,
-  LogOut,
   Mail,
-  Monitor,
-  Settings,
+  Pencil,
   Shield,
   ShieldCheck,
-  User,
   Users,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -33,11 +29,12 @@ import {
 import { authService, verificationService } from '@/services';
 import { useAuthStore } from '@/store';
 import { VerificationStatus } from '@/types/verification';
+import { canManageProperties } from '@/utils';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout, isLoading, setUser } = useAuthStore();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const canManage = canManageProperties(user);
   const accountInfoRef = useRef<HTMLDivElement>(null);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -98,7 +95,6 @@ export default function DashboardPage() {
   };
 
   const handleOpenProfileEditor = () => {
-    setShowDropdown(false);
     setProfileMessage(null);
     setProfileForm({
       firstName: user?.firstName || '',
@@ -283,90 +279,7 @@ export default function DashboardPage() {
     <>
       <HomeNavbar />
       <div className="min-h-screen bg-gray-50 pt-24">
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-r from-indigo-600 to-purple-600">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                SmartProperty
-              </span>
-            </div>
 
-            {/* User menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-3 rounded-lg px-3 py-2 hover:bg-gray-100"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                  <User className="h-5 w-5" />
-                </div>
-                <div className="hidden text-left sm:block">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.fullName || user?.firstName}
-                  </p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-                  <div className="border-b border-gray-100 px-4 py-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.fullName}
-                    </p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                  <button
-                    onClick={handleOpenProfileEditor}
-                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <User className="mr-3 h-4 w-4" />
-                    Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate('/sessions');
-                    }}
-                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Monitor className="mr-3 h-4 w-4" />
-                    Active Sessions
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate("/settings");
-                    }}
-                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Settings className="mr-3 h-4 w-4" />
-                    Settings
-                  </button>
-                  <div className="border-t border-gray-100">
-                    <button
-                      onClick={() => {
-                        logout();
-                        navigate('/login');
-                      }}
-                      disabled={isLoading}
-                      className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="mr-3 h-4 w-4" />
-                      {isLoading ? 'Signing out...' : 'Sign Out'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
 
         {/* Main Content */}
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -414,7 +327,9 @@ export default function DashboardPage() {
               Welcome back, {user?.firstName}! 👋
             </h1>
             <p className="mt-2 text-gray-600">
-              Here's what's happening with your properties today.
+              {canManage
+                ? "Here's what's happening with your properties today."
+                : "Browse available properties and manage your applications."}
             </p>
           </div>
 
@@ -426,7 +341,7 @@ export default function DashboardPage() {
                   <Shield className="mr-2 h-5 w-5 text-indigo-600" />
                   Your Account Information
                 </CardTitle>
-                {isEditingProfile && (
+                {isEditingProfile ? (
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -445,6 +360,15 @@ export default function DashboardPage() {
                       Save Changes
                     </Button>
                   </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenProfileEditor}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit Profile
+                  </Button>
                 )}
               </CardHeader>
               <CardContent>
@@ -769,7 +693,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-gray-500">Properties</p>
+                  <p className="text-sm text-gray-500">
+                    {canManage ? 'Properties' : 'Browsed'}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -781,7 +707,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-gray-500">Tenants</p>
+                  <p className="text-sm text-gray-500">
+                    {canManage ? 'Tenants' : 'Applications'}
+                  </p>
                 </div>
               </CardContent>
             </Card>
