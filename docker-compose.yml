@@ -164,9 +164,9 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-placeholder}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-placeholder}
       GOOGLE_CALLBACK_URL: http://localhost:3000/api/auth/google/callback
-      GOOGLE_FRONTEND_CALLBACK_URL: http://localhost:5173/auth/google/callback
+      GOOGLE_FRONTEND_CALLBACK_URL: http://localhost:5174/auth/google/callback
       # reCAPTCHA
-      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-placeholder}
+      RECAPTCHA_SECRET_KEY: ""
       # MinIO (S3-compatible storage)
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
