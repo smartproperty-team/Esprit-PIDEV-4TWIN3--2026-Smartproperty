@@ -5,6 +5,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { HomeFooter, Navbar } from "../../components/layout";
+import AddressInput, {
+  type AddressData,
+} from "../../components/properties/AddressInputOSM";
 import { propertyService } from "../../services/property.service";
 import type {
   CreatePropertyDto,
@@ -99,11 +102,7 @@ interface FormData {
   status: PropertyStatus;
   price: string;
   currency: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  address: AddressData;
   bedrooms: string;
   bathrooms: string;
   area: string;
@@ -120,11 +119,13 @@ const initialFormData: FormData = {
   status: "available",
   price: "",
   currency: "TND",
-  street: "",
-  city: "",
-  state: "",
-  zipCode: "",
-  country: "Tunisie",
+  address: {
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "Tunisie",
+  },
   bedrooms: "",
   bathrooms: "",
   area: "",
@@ -150,9 +151,13 @@ export default function PropertyFormPage() {
   >([]);
   const [loading, setLoading] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(isEditing);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
-    {},
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormData, string>> & {
+      street?: string;
+      city?: string;
+      country?: string;
+    }
+  >({});
 
   // Load existing property for editing
   const loadProperty = useCallback(async () => {
@@ -168,11 +173,14 @@ export default function PropertyFormPage() {
         status: property.status,
         price: property.price.toString(),
         currency: property.currency,
-        street: property.address.street,
-        city: property.address.city,
-        state: property.address.state,
-        zipCode: property.address.zipCode,
-        country: property.address.country,
+        address: {
+          street: property.address.street,
+          city: property.address.city,
+          state: property.address.state,
+          zipCode: property.address.zipCode,
+          country: property.address.country,
+          coordinates: property.address.coordinates,
+        },
         bedrooms: property.features?.bedrooms?.toString() || "",
         bathrooms: property.features?.bathrooms?.toString() || "",
         area: property.features?.area?.toString() || "",
@@ -274,7 +282,11 @@ export default function PropertyFormPage() {
 
   // Validate form
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {};
+    const newErrors: Partial<Record<keyof FormData, string>> & {
+      street?: string;
+      city?: string;
+      country?: string;
+    } = {};
 
     if (!formData.title.trim()) {
       newErrors.title = "Le titre est requis";
@@ -282,13 +294,13 @@ export default function PropertyFormPage() {
     if (!formData.price || parseFloat(formData.price) <= 0) {
       newErrors.price = "Le prix doit être supérieur à 0";
     }
-    if (!formData.street.trim()) {
+    if (!formData.address.street.trim()) {
       newErrors.street = "La rue est requise";
     }
-    if (!formData.city.trim()) {
+    if (!formData.address.city.trim()) {
       newErrors.city = "La ville est requise";
     }
-    if (!formData.country.trim()) {
+    if (!formData.address.country.trim()) {
       newErrors.country = "Le pays est requis";
     }
 
@@ -313,11 +325,12 @@ export default function PropertyFormPage() {
         price: parseFloat(formData.price),
         currency: formData.currency,
         address: {
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          country: formData.country,
+          street: formData.address.street,
+          city: formData.address.city,
+          state: formData.address.state,
+          zipCode: formData.address.zipCode,
+          country: formData.address.country,
+          coordinates: formData.address.coordinates,
         },
         features: {
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
@@ -511,85 +524,16 @@ export default function PropertyFormPage() {
               <LocationIcon />
               Adresse
             </h3>
-            <div className="form-grid">
-              <div className="form-group full-width">
-                <label htmlFor="street">
-                  Rue <span className="required">*</span>
-                </label>
-                <input
-                  id="street"
-                  name="street"
-                  type="text"
-                  value={formData.street}
-                  onChange={handleChange}
-                  placeholder="Numéro et nom de rue"
-                  className={errors.street ? "error" : ""}
-                />
-                {errors.street && (
-                  <span className="error-message">{errors.street}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="city">
-                  Ville <span className="required">*</span>
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Ville"
-                  className={errors.city ? "error" : ""}
-                />
-                {errors.city && (
-                  <span className="error-message">{errors.city}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="state">Région / État</label>
-                <input
-                  id="state"
-                  name="state"
-                  type="text"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="Région"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="zipCode">Code postal</label>
-                <input
-                  id="zipCode"
-                  name="zipCode"
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={handleChange}
-                  placeholder="Code postal"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="country">
-                  Pays <span className="required">*</span>
-                </label>
-                <input
-                  id="country"
-                  name="country"
-                  type="text"
-                  value={formData.country}
-                  onChange={handleChange}
-                  placeholder="Pays"
-                  className={errors.country ? "error" : ""}
-                />
-                {errors.country && (
-                  <span className="error-message">{errors.country}</span>
-                )}
-              </div>
-            </div>
+            <AddressInput
+              value={formData.address}
+              onChange={(address) => setFormData({ ...formData, address })}
+              errors={{
+                street: errors.street,
+                city: errors.city,
+                country: errors.country,
+              }}
+              disabled={loading}
+            />
           </div>
 
           {/* Features */}
