@@ -12,8 +12,9 @@ import {
   CardTitle,
   Input,
 } from "@/components/ui";
-import { authService, verificationService } from "@/services";
+import { authService, propertyService, verificationService } from "@/services";
 import { useAuthStore } from "@/store";
+import type { Property } from "@/types/property";
 import { VerificationStatus } from "@/types/verification";
 import { canManageProperties } from "@/utils";
 import {
@@ -63,6 +64,9 @@ export default function DashboardPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
+  const [isLoadingOwnerProperties, setIsLoadingOwnerProperties] =
+    useState(false);
 
   // Fetch verification status for tenants
   useEffect(() => {
@@ -73,6 +77,31 @@ export default function DashboardPage() {
         .catch(() => setVerificationStatus(VerificationStatus.NOT_SUBMITTED));
     }
   }, [user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== "owner" || !user.id) {
+      setOwnerProperties([]);
+      return;
+    }
+
+    const loadOwnerProperties = async () => {
+      setIsLoadingOwnerProperties(true);
+      try {
+        const response = await propertyService.getProperties({
+          ownerId: user.id,
+          page: 1,
+          limit: 6,
+        });
+        setOwnerProperties(response.properties);
+      } catch {
+        setOwnerProperties([]);
+      } finally {
+        setIsLoadingOwnerProperties(false);
+      }
+    };
+
+    void loadOwnerProperties();
+  }, [user?.id, user?.role]);
 
   const handleResendVerification = async () => {
     if (!user?.email) return;
@@ -691,6 +720,104 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {user?.role === "owner" && (
+            <Card className="mb-8">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center">
+                  <Home className="mr-2 h-5 w-5 text-indigo-600" />
+                  My Listed Properties
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/properties")}
+                >
+                  View All
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingOwnerProperties ? (
+                  <p className="text-sm text-gray-600">
+                    Loading your properties...
+                  </p>
+                ) : ownerProperties.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600">
+                    You have no listed properties yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {ownerProperties.map((property) => {
+                      const propertyId = property.id || property._id;
+                      const primaryImage =
+                        property.images?.find((img) => img.isPrimary) ||
+                        property.images?.[0];
+                      const imageUrl =
+                        primaryImage?.url || "/placeholder-property.svg";
+
+                      return (
+                        <div
+                          key={propertyId}
+                          className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={imageUrl}
+                              alt={property.title}
+                              className="h-16 w-24 rounded-md object-cover"
+                              onError={(event) => {
+                                (event.currentTarget as HTMLImageElement).src =
+                                  "/placeholder-property.svg";
+                              }}
+                            />
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {property.title}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {property.address.city},{" "}
+                                {property.address.country}
+                              </p>
+                              <p className="mt-1 text-sm text-indigo-600">
+                                {property.price.toLocaleString()}{" "}
+                                {property.currency}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium capitalize text-gray-700">
+                              {property.status.replace("_", " ")}
+                            </span>
+                            {propertyId && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    navigate(`/properties/${propertyId}`)
+                                  }
+                                >
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    navigate(`/properties/${propertyId}/edit`)
+                                  }
+                                >
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* API Testing Info */}
           <Card>

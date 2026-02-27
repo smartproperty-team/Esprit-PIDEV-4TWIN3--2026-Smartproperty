@@ -4,132 +4,52 @@
 // WCAG 2.1 AA Compliant
 // ===========================================
 
-import { useCallback, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { HomeFooter, Navbar } from '../../components/layout';
-
-// Property type for cards
-interface Property {
-  id: number;
-  title: string;
-  address: string;
-  beds: number;
-  baths: number;
-  sqft: number;
-  price: string;
-  priceUnit?: string;
-  type: 'sale' | 'rent';
-  featured?: boolean;
-  image: string;
-}
-
-// Sample property data
-const properties: Property[] = [
-  {
-    id: 1,
-    title: 'Luxurious Sea View Apartment',
-    address: 'La Marsa, Tunis',
-    beds: 4,
-    baths: 2,
-    sqft: 450,
-    price: '850,000 TND',
-    type: 'sale',
-    featured: false,
-    image: '/tq_0gdp_lwjwx-pmhk-1500h.png',
-  },
-  {
-    id: 2,
-    title: 'Modern Lac 2 Residence',
-    address: 'Les Berges du Lac, Tunis',
-    beds: 4,
-    baths: 2,
-    sqft: 400,
-    price: '2,500 TND',
-    priceUnit: '/month',
-    type: 'rent',
-    featured: true,
-    image: '/tq_1s1jvryd0n-ta2j-1500h.png',
-  },
-  {
-    id: 3,
-    title: 'Carthage Heritage Penthouse',
-    address: 'Carthage, Tunis',
-    beds: 4,
-    baths: 2,
-    sqft: 450,
-    price: '1,200,000 TND',
-    type: 'sale',
-    featured: true,
-    image: '/tq_4mbtfjfs1k-qkmj-1500h.png',
-  },
-  {
-    id: 4,
-    title: 'Villa Kantaoui With Pool',
-    address: 'Port El Kantaoui, Sousse',
-    beds: 3,
-    baths: 2,
-    sqft: 350,
-    price: '3,500 TND',
-    priceUnit: '/month',
-    type: 'rent',
-    featured: true,
-    image: '/tq_7wibftipib-omw-1500h.png',
-  },
-  {
-    id: 5,
-    title: 'Sidi Bou Said Apartment',
-    address: 'Sidi Bou Said, Tunis',
-    beds: 4,
-    baths: 3,
-    sqft: 500,
-    price: '920,000 TND',
-    type: 'sale',
-    featured: true,
-    image: '/tq_a7h2f2xeaz-7bp-1500h.png',
-  },
-  {
-    id: 6,
-    title: 'Hammamet Beach Villa',
-    address: 'Yasmine Hammamet, Nabeul',
-    beds: 3,
-    baths: 2,
-    sqft: 450,
-    price: '680,000 TND',
-    type: 'sale',
-    featured: true,
-    image: '/tq_b4rcqm58py-gcw-1500h.png',
-  },
-];
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { HomeFooter, Navbar } from "../../components/layout";
+import { propertyService } from "../../services/property.service";
+import type { Property } from "../../types/property";
 
 // City data - Famous cities in Tunisia
 const cities = [
-  { name: 'Tunis', properties: 245, image: '/tq_bdn30ebwk5-m0bm-1500h.png' },
-  { name: 'Sousse', properties: 178, image: '/tq_brzn8uwaca-vatm-1500h.png' },
-  { name: 'Sfax', properties: 156, image: '/tq_eg61ro6xoc-8z2e-1500h.png' },
-  { name: 'Hammamet', properties: 134, image: '/tq_ev3u-afbuo-tv-1500h.png' },
-  { name: 'Djerba', properties: 98, image: '/tq_fqz__chb9i-7br-1500h.png' },
+  { name: "Tunis", properties: 245, image: "/tq_bdn30ebwk5-m0bm-1500h.png" },
+  { name: "Sousse", properties: 178, image: "/tq_brzn8uwaca-vatm-1500h.png" },
+  { name: "Sfax", properties: 156, image: "/tq_eg61ro6xoc-8z2e-1500h.png" },
+  { name: "Hammamet", properties: 134, image: "/tq_ev3u-afbuo-tv-1500h.png" },
+  { name: "Djerba", properties: 98, image: "/tq_fqz__chb9i-7br-1500h.png" },
 ];
 
 // Property Card Component - Accessible
 function PropertyCard({ property }: { property: Property }) {
+  const propertyId = property.id || property._id || "";
+  const primaryImage =
+    property.images?.find((img) => img.isPrimary) || property.images?.[0];
+  const imageUrl = primaryImage?.url || "/placeholder-property.svg";
+  const listingType = property.status === "rented" ? "rent" : "sale";
+  const formattedPrice = `${property.price.toLocaleString()} ${property.currency}`;
+  const showMonthly = listingType === "rent";
+
   return (
     <article
       className="property-card"
-      aria-label={`${property.title} - ${property.price}${property.priceUnit || ''}`}
+      aria-label={`${property.title} - ${formattedPrice}${showMonthly ? "/month" : ""}`}
     >
       <div className="property-card-image">
         <img
-          src={property.image}
-          alt={`${property.title} at ${property.address}`}
+          src={imageUrl}
+          alt={`${property.title} at ${property.address.city}, ${property.address.country}`}
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
+          }}
         />
         <span
-          className={`property-badge ${property.type}`}
-          aria-label={`Property for ${property.type === 'sale' ? 'sale' : 'rent'}`}
+          className={`property-badge ${listingType}`}
+          aria-label={`Property for ${listingType === "sale" ? "sale" : "rent"}`}
         >
-          For {property.type === 'sale' ? 'Sale' : 'Rent'}
+          For {listingType === "sale" ? "Sale" : "Rent"}
         </span>
-        {property.featured && (
+        {property.status === "available" && (
           <span className="property-featured" aria-label="Featured property">
             Featured
           </span>
@@ -151,7 +71,7 @@ function PropertyCard({ property }: { property: Property }) {
             <circle cx="12" cy="10" r="3" />
           </svg>
           <span className="sr-only">Location: </span>
-          {property.address}
+          {property.address.city}, {property.address.country}
         </p>
         <dl className="property-meta" aria-label="Property details">
           <div className="meta-item">
@@ -169,7 +89,7 @@ function PropertyCard({ property }: { property: Property }) {
                 <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
                 <path d="M21 7H3l2-4h14l2 4z" />
               </svg>
-              {property.beds} Beds
+              {property.features?.bedrooms ?? 0} Beds
             </dd>
           </div>
           <div className="meta-item">
@@ -187,7 +107,7 @@ function PropertyCard({ property }: { property: Property }) {
                 <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
                 <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
               </svg>
-              {property.baths} Baths
+              {property.features?.bathrooms ?? 0} Baths
             </dd>
           </div>
           <div className="meta-item">
@@ -206,20 +126,18 @@ function PropertyCard({ property }: { property: Property }) {
                 <path d="M3 9h18" />
                 <path d="M9 21V9" />
               </svg>
-              {property.sqft} sqft
+              {property.features?.area ?? 0} sqft
             </dd>
           </div>
         </dl>
         <div className="property-price">
           <span className="price" aria-label="Price">
-            {property.price}
+            {formattedPrice}
           </span>
-          {property.priceUnit && (
-            <span className="price-unit">{property.priceUnit}</span>
-          )}
+          {showMonthly && <span className="price-unit">/month</span>}
         </div>
         <Link
-          to={`/properties/${property.id}`}
+          to={`/properties/${propertyId}`}
           className="property-link"
           aria-label={`View details for ${property.title}`}
         >
@@ -246,7 +164,7 @@ function PropertyCard({ property }: { property: Property }) {
 function CityCard({ city }: { city: (typeof cities)[0] }) {
   return (
     <Link
-      to={`/properties?city=${city.name.toLowerCase().replace(' ', '-')}`}
+      to={`/properties?city=${city.name.toLowerCase().replace(" ", "-")}`}
       className="city-card"
       aria-label={`Browse ${city.properties} properties in ${city.name}`}
     >
@@ -260,10 +178,30 @@ function CityCard({ city }: { city: (typeof cities)[0] }) {
 }
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent'>('sale');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [propertyType, setPropertyType] = useState('');
+  const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [properties, setProperties] = useState<Property[]>([]);
   const mainContentRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const loadHomeProperties = async () => {
+      try {
+        const response = await propertyService.getProperties({
+          page: 1,
+          limit: 12,
+        });
+        setProperties(response.properties);
+      } catch {
+        setProperties([]);
+      }
+    };
+
+    void loadHomeProperties();
+  }, []);
+
+  const bestDealProperties = properties.slice(0, 4);
+  const recentRentProperties = properties.filter((p) => p.status === "rented");
 
   // Handle search form submission
   const handleSearch = useCallback(
@@ -278,7 +216,7 @@ export default function HomePage() {
   // Skip to main content
   const skipToMain = useCallback(() => {
     mainContentRef.current?.focus();
-    mainContentRef.current?.scrollIntoView({ behavior: 'smooth' });
+    mainContentRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   return (
@@ -315,20 +253,20 @@ export default function HomePage() {
             aria-label="Property type"
           >
             <button
-              className={`search-tab-btn ${activeTab === 'sale' ? 'active' : ''}`}
-              onClick={() => setActiveTab('sale')}
+              className={`search-tab-btn ${activeTab === "sale" ? "active" : ""}`}
+              onClick={() => setActiveTab("sale")}
               role="tab"
-              aria-selected={activeTab === 'sale'}
+              aria-selected={activeTab === "sale"}
               aria-controls="search-panel"
               id="tab-sale"
             >
               Sale
             </button>
             <button
-              className={`search-tab-btn ${activeTab === 'rent' ? 'active' : ''}`}
-              onClick={() => setActiveTab('rent')}
+              className={`search-tab-btn ${activeTab === "rent" ? "active" : ""}`}
+              onClick={() => setActiveTab("rent")}
               role="tab"
-              aria-selected={activeTab === 'rent'}
+              aria-selected={activeTab === "rent"}
               aria-controls="search-panel"
               id="tab-rent"
             >
@@ -418,7 +356,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main id="main-content" ref={mainContentRef} tabIndex={-1}>
-        {' '}
+        {" "}
         {/* Best Deals Section */}
         <section className="properties-section" aria-labelledby="deals-title">
           <div className="section-container">
@@ -431,11 +369,17 @@ export default function HomePage() {
                 Featured properties handpicked for you
               </p>
             </header>
-            <div className="properties-grid" role="list">
-              {properties.slice(0, 4).map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
+            {bestDealProperties.length > 0 ? (
+              <div className="properties-grid" role="list">
+                {bestDealProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            ) : (
+              <p className="section-subtitle">
+                No properties available yet. Check back soon.
+              </p>
+            )}
             <div className="section-cta">
               <Link to="/properties" className="view-all-btn">
                 View All Properties
@@ -489,13 +433,17 @@ export default function HomePage() {
                 Find your perfect rental home today
               </p>
             </header>
-            <div className="properties-grid" role="list">
-              {properties
-                .filter((p) => p.type === 'rent')
-                .map((property) => (
+            {recentRentProperties.length > 0 ? (
+              <div className="properties-grid" role="list">
+                {recentRentProperties.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
-            </div>
+              </div>
+            ) : (
+              <p className="section-subtitle">
+                No rental properties available right now.
+              </p>
+            )}
           </div>
         </section>
         {/* How It Works */}

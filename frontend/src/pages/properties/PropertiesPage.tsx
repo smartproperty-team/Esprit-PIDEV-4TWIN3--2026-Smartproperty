@@ -245,8 +245,11 @@ export default function PropertiesPage() {
   const { user } = useAuthStore();
   const canManage = canManageProperties(user);
   const canAddProperty = isOwner(user);
+  const isOwnerUser = isOwner(user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [myProperties, setMyProperties] = useState<Property[]>([]);
+  const [myPropertiesLoading, setMyPropertiesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -282,6 +285,47 @@ export default function PropertiesPage() {
     loadProperties();
   }, [loadProperties]);
 
+  const loadMyProperties = useCallback(async () => {
+    if (!isOwnerUser || !user?.id) {
+      setMyProperties([]);
+      return;
+    }
+
+    setMyPropertiesLoading(true);
+
+    try {
+      const response = await propertyService.getProperties({
+        page: 1,
+        limit: 100,
+        ownerId: user.id,
+      });
+      setMyProperties(response.properties);
+    } catch {
+      setMyProperties([]);
+    } finally {
+      setMyPropertiesLoading(false);
+    }
+  }, [isOwnerUser, user?.id]);
+
+  useEffect(() => {
+    void loadMyProperties();
+  }, [loadMyProperties]);
+
+  const canManageProperty = useCallback(
+    (property: Property) => {
+      if (!user) return false;
+
+      if (user.role === "admin") return true;
+      if (user.role === "owner") return property.ownerId === user.id;
+      if (user.role === "manager") {
+        return property.managerId === user.id || property.ownerId === user.id;
+      }
+
+      return false;
+    },
+    [user],
+  );
+
   // Handle filter changes
   const handleFilterChange = (key: keyof PropertyFilters, value: string) => {
     const newFilters = { ...filters, [key]: value || undefined, page: 1 };
@@ -313,6 +357,7 @@ export default function PropertiesPage() {
     try {
       await propertyService.deleteProperty(id);
       setProperties(properties.filter((p) => (p.id || p._id) !== id));
+      setMyProperties(myProperties.filter((p) => (p.id || p._id) !== id));
       setTotal(total - 1);
     } catch (err) {
       console.error("Failed to delete property:", err);
@@ -350,6 +395,50 @@ export default function PropertiesPage() {
             )}
           </div>
         </div>
+
+        {isOwnerUser && (
+          <section
+            className="properties-header"
+            aria-labelledby="my-properties-title"
+          >
+            <div className="header-actions">
+              <div>
+                <h2 id="my-properties-title">Mes propriétés</h2>
+                <p>
+                  Propriétés qui vous appartiennent et que vous pouvez modifier.
+                </p>
+              </div>
+            </div>
+
+            {myPropertiesLoading ? (
+              <div className="loading-state">
+                <div className="loading-spinner" />
+                <p>Chargement de vos propriétés...</p>
+              </div>
+            ) : myProperties.length === 0 ? (
+              <div className="empty-state">
+                <p>Vous n'avez pas encore de propriétés.</p>
+                {canAddProperty && (
+                  <Link to="/properties/new" className="btn-add-property">
+                    <PlusIcon />
+                    Ajouter une propriété
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="properties-grid">
+                {myProperties.map((property) => (
+                  <PropertyCard
+                    key={`my-${property.id || property._id}`}
+                    property={property}
+                    onDelete={handleDelete}
+                    canManage
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Filters */}
         <form className="properties-filters" onSubmit={handleSearch}>
@@ -463,8 +552,10 @@ export default function PropertiesPage() {
                 <PropertyCard
                   key={property.id || property._id}
                   property={property}
-                  onDelete={canManage ? handleDelete : undefined}
-                  canManage={canManage}
+                  onDelete={
+                    canManageProperty(property) ? handleDelete : undefined
+                  }
+                  canManage={canManageProperty(property)}
                 />
               ))}
             </div>
