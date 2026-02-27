@@ -120,7 +120,7 @@ export default function Navbar() {
           <NavLink to="/" hasDropdown>
             Home
           </NavLink>
-          <NavLink to="/listings" hasDropdown>
+          <NavLink to="/properties" hasDropdown>
             Listings
           </NavLink>
           <NavLink to="/members" hasDropdown>
@@ -302,7 +302,7 @@ export default function Navbar() {
         <div className="lg:hidden mt-2 bg-white rounded-3xl shadow-lg p-4">
           <div className="flex flex-col gap-2">
             <NavLink to="/">Home</NavLink>
-            <NavLink to="/listings">Listings</NavLink>
+            <NavLink to="/properties">Listings</NavLink>
             <NavLink to="/members">Members</NavLink>
             <NavLink to="/blog">Blog</NavLink>
             <NavLink to="/pages">Pages</NavLink>
