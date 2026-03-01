@@ -255,8 +255,7 @@ function PropertyMap({ address, title }: PropertyMapProps) {
   const accuracyColor =
     accuracyKey === "approximate" ? "#f59e0b" : "#10b981";
 
-  const accuracyColor =
-    accuracyKey === "approximate" ? "#f59e0b" : "#10b981";
+
 
   return (
     <div className="property-description" style={{ marginTop: "1.5rem" }}>
@@ -664,7 +663,7 @@ function ImageGallery({ images }: ImageGalleryProps) {
                   {t.propertyDetail.morePhotos.replace("{{count}}", String(images.length - 3))}
                 </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
       )}
