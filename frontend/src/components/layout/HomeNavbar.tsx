@@ -208,7 +208,7 @@ export default function HomeNavbar() {
                     {user.avatar ? (
                       <img
                         src={user.avatar}
-                        alt={user.firstName}
+                        alt={user.fullName || user.firstName || "User avatar"}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -245,7 +245,9 @@ export default function HomeNavbar() {
                         {user.avatar ? (
                           <img
                             src={user.avatar}
-                            alt={user.firstName}
+                            alt={
+                              user.fullName || user.firstName || "User avatar"
+                            }
                             className="h-full w-full object-cover"
                           />
                         ) : (

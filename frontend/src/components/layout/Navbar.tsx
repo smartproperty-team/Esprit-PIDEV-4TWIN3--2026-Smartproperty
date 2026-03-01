@@ -263,7 +263,7 @@ export default function Navbar() {
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.firstName}
+                  alt={user?.fullName || user?.firstName || "User avatar"}
                   className="w-7 h-7 rounded-full object-cover"
                 />
               ) : (
@@ -277,6 +277,7 @@ export default function Navbar() {
             <Link
               to="/login"
               className="w-10 h-10 rounded-full border border-gray-900 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Sign in"
             >
               <User className="w-4 h-4" />
             </Link>
@@ -353,6 +354,7 @@ export default function Navbar() {
                   <button
                     onClick={handleLogout}
                     className="py-2.5 px-4 rounded-full border border-red-300 text-red-600 font-medium hover:bg-red-50 transition-colors"
+                    aria-label="Sign out"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>

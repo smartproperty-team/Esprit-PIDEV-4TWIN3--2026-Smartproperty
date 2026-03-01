@@ -251,7 +251,7 @@ export default function TwoFactorPage() {
                 <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4 flex justify-center">
                   <img
                     src={setupData.qrCode}
-                    alt="QR Code"
+                    alt="Two-factor authentication setup QR code"
                     className="w-64 h-64"
                   />
                 </div>

@@ -249,6 +249,8 @@ function DropZone({
                         handleDelete(doc.id);
                       }}
                       disabled={deletingId === doc.id}
+                      aria-label={`Delete ${doc.fileName}`}
+                      title={`Delete ${doc.fileName}`}
                       className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
                     >
                       {deletingId === doc.id ? (

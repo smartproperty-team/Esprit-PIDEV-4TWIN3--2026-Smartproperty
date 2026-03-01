@@ -215,6 +215,7 @@ export const SessionsPage = () => {
               <button
                 onClick={clearError}
                 className="text-red-500 hover:text-red-700"
+                aria-label="Dismiss error"
               >
                 <svg
                   className="w-5 h-5"

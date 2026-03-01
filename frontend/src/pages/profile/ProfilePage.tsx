@@ -339,6 +339,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => handleStartFieldEdit("avatar")}
                       disabled={isSavingProfile || isUploadingAvatar}
+                      aria-label="Edit profile picture"
                       className="text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Pencil className="h-4 w-4" />
@@ -428,6 +429,7 @@ export default function ProfilePage() {
                         type="button"
                         onClick={() => handleStartFieldEdit("name")}
                         disabled={isSavingProfile || isUploadingAvatar}
+                        aria-label="Edit full name"
                         className="text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Pencil className="h-4 w-4" />
@@ -492,6 +494,7 @@ export default function ProfilePage() {
                         type="button"
                         onClick={() => handleStartFieldEdit("email")}
                         disabled={isSavingProfile || isUploadingAvatar}
+                        aria-label="Edit email"
                         className="text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Pencil className="h-4 w-4" />
@@ -561,6 +564,7 @@ export default function ProfilePage() {
                         type="button"
                         onClick={() => handleStartFieldEdit("phone")}
                         disabled={isSavingProfile || isUploadingAvatar}
+                        aria-label="Edit phone"
                         className="text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Pencil className="h-4 w-4" />
