@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../../pages/home/home3.css";
+import ReadAloudWidget from "../accessibility/ReadAloudWidget";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -192,6 +193,8 @@ export default function HomeNavbar() {
           </Link>
 
           <div className="navbar-actions">
+            <ReadAloudWidget mode="inline" showLabel={false} />
+
             {/* User menu */}
             {user ? (
               <div className="relative" ref={userDropdownRef}>

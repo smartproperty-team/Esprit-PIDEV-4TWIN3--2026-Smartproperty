@@ -10,6 +10,7 @@ import { notificationService } from "../../services";
 import type { Notification } from "../../services/notification.service";
 import { useAuthStore } from "../../store";
 import { isOwner } from "../../utils";
+import ReadAloudWidget from "../accessibility/ReadAloudWidget";
 
 // Logo Component
 const Logo = () => (
@@ -149,6 +150,8 @@ export default function Navbar() {
 
         {/* Right Side Actions */}
         <div className="hidden lg:flex items-center gap-3">
+          <ReadAloudWidget mode="inline" showLabel={false} />
+
           {/* Notification Bell (authenticated only) */}
           {isAuthenticated && (
             <div className="relative" ref={notifPanelRef}>
@@ -342,6 +345,10 @@ export default function Navbar() {
           <hr className="my-4" />
 
           <div className="flex flex-col gap-3">
+            <div className="flex justify-center">
+              <ReadAloudWidget mode="inline" showLabel />
+            </div>
+
             <div className="flex gap-3">
               {isAuthenticated ? (
                 <>
