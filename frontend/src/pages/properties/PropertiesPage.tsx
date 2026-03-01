@@ -331,6 +331,20 @@ export default function PropertiesPage() {
     [user],
   );
 
+  const getPropertyId = (property: Property) => property.id || property._id;
+
+  const myPropertyIds = new Set(
+    myProperties.map((property) => getPropertyId(property)).filter(Boolean),
+  );
+
+  const visibleProperties = isOwnerUser
+    ? properties.filter((property) => {
+        const propertyId = getPropertyId(property);
+        if (!propertyId) return true;
+        return !myPropertyIds.has(propertyId);
+      })
+    : properties;
+
   // Handle filter changes
   const handleFilterChange = (key: keyof PropertyFilters, value: string) => {
     const newFilters = { ...filters, [key]: value || undefined, page: 1 };
@@ -380,7 +394,6 @@ export default function PropertiesPage() {
   return (
     <div className="properties-page">
       <Navbar />
-
 
       <main className="properties-container" id="main-content">
         {/* Header */}
@@ -550,7 +563,7 @@ export default function PropertiesPage() {
           <>
             {/* Properties Grid */}
             <div className="properties-grid">
-              {properties.map((property) => (
+              {visibleProperties.map((property) => (
                 <PropertyCard
                   key={property.id || property._id}
                   property={property}

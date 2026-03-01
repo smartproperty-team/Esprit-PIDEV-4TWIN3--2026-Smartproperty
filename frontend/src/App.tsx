@@ -3,8 +3,9 @@
 // ===========================================
 
 import { useEffect, useRef } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
+import ReadAloudWidget from "./components/accessibility/ReadAloudWidget";
 import { ProtectedRoute } from "./components/auth";
 import {
   FacebookCallbackPage,
@@ -36,10 +37,17 @@ import { useAuthStore, usePreferencesStore } from "./store";
 import { canManageProperties, isOwner } from "./utils";
 
 function App() {
+  const location = useLocation();
   const { checkAuth, isAuthenticated, user } = useAuthStore();
   const { openOnboarding, getUserPreferences, setUserPreferences } =
     usePreferencesStore();
   const promptedUserRef = useRef<string | null>(null);
+  const showFloatingReadAloud =
+    /^\/(login|register|forgot-password|reset-password|verify-email)$/.test(
+      location.pathname,
+    ) ||
+    location.pathname === "/auth/google/callback" ||
+    location.pathname === "/auth/facebook/callback";
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -224,6 +232,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <PreferencesOnboardingModal />
+      {showFloatingReadAloud && <ReadAloudWidget mode="floating" />}
     </>
   );
 }

@@ -19,6 +19,16 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../../pages/home/home3.css";
+import ReadAloudWidget from "../accessibility/ReadAloudWidget";
+
+const navLinks = [
+  { to: "/", label: "Home" },
+  { to: "/properties", label: "Listings" },
+  { to: "/members", label: "Members" },
+  { to: "/blog", label: "Blog" },
+  { to: "/pages", label: "Pages" },
+  { to: "/contact", label: "Contact" },
+];
 
 export default function HomeNavbar() {
   const location = useLocation();
@@ -106,6 +116,8 @@ export default function HomeNavbar() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setMobileMenuOpen(false);
+        setShowNotifPanel(false);
+        setShowUserDropdown(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -139,6 +151,7 @@ export default function HomeNavbar() {
       <nav className="navbar" aria-label="Main navigation">
         <div className="navbar-container">
           <button
+            type="button"
             className="mobile-menu-btn"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
@@ -191,20 +204,25 @@ export default function HomeNavbar() {
           </Link>
 
           <div className="navbar-actions">
+            <ReadAloudWidget mode="inline" showLabel={false} />
+
             {/* User menu */}
             {user ? (
               <div className="relative" ref={userDropdownRef}>
                 <button
+                  type="button"
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
                   className="navbar-user-btn flex items-center space-x-2"
                   aria-label={`Account: ${user.fullName || user.firstName}`}
                   aria-expanded={showUserDropdown}
+                  aria-haspopup="menu"
+                  aria-controls="user-menu"
                 >
                   <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600">
                     {user.avatar ? (
                       <img
                         src={user.avatar}
-                        alt={user.firstName}
+                        alt={user.fullName || user.firstName || "User avatar"}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -218,7 +236,11 @@ export default function HomeNavbar() {
                 </button>
 
                 {showUserDropdown && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <div
+                    id="user-menu"
+                    role="menu"
+                    className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                  >
                     <div className="border-b border-gray-100 px-4 py-3">
                       <p className="text-sm font-medium text-gray-900">
                         {user.fullName || user.firstName}
@@ -226,6 +248,7 @@ export default function HomeNavbar() {
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         navigate("/profile");
@@ -236,7 +259,9 @@ export default function HomeNavbar() {
                         {user.avatar ? (
                           <img
                             src={user.avatar}
-                            alt={user.firstName}
+                            alt={
+                              user.fullName || user.firstName || "User avatar"
+                            }
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -246,6 +271,7 @@ export default function HomeNavbar() {
                       {t.nav.profile}
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         navigate("/dashboard");
@@ -256,16 +282,7 @@ export default function HomeNavbar() {
                       {t.nav.dashboard}
                     </button>
                     <button
-                      onClick={() => {
-                        setShowUserDropdown(false);
-                        navigate("/sessions");
-                      }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <Monitor className="mr-3 h-4 w-4" />
-                      {t.nav.activeSessions}
-                    </button>
-                    <button
+                      type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         navigate("/settings");
@@ -277,6 +294,7 @@ export default function HomeNavbar() {
                     </button>
                     <div className="border-t border-gray-100">
                       <button
+                        type="button"
                         onClick={async () => {
                           setShowUserDropdown(false);
                           await logout();
@@ -314,10 +332,14 @@ export default function HomeNavbar() {
             {user && (
               <div className="navbar-notif-wrapper" ref={notifPanelRef}>
                 <button
+                  type="button"
                   className="navbar-notif-btn"
                   aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
                   title="Notifications"
                   onClick={() => setShowNotifPanel(!showNotifPanel)}
+                  aria-expanded={showNotifPanel}
+                  aria-controls="notifications-panel"
+                  aria-haspopup="dialog"
                 >
                   <svg
                     width="20"
@@ -341,11 +363,12 @@ export default function HomeNavbar() {
                 </button>
 
                 {showNotifPanel && (
-                  <div className="notif-panel">
+                  <div id="notifications-panel" className="notif-panel">
                     <div className="notif-panel-header">
                       <h3>{t.nav.notifications}</h3>
                       {unreadCount > 0 && (
                         <button
+                          type="button"
                           className="notif-mark-all"
                           onClick={async () => {
                             await notificationService.markAllAsRead();
@@ -375,7 +398,8 @@ export default function HomeNavbar() {
                         </div>
                       ) : (
                         notifications.map((n) => (
-                          <div
+                          <button
+                            type="button"
                             key={n.id}
                             className={`notif-item ${!n.isRead ? "notif-unread" : ""}`}
                             onClick={async () => {
@@ -388,6 +412,7 @@ export default function HomeNavbar() {
                                 setShowNotifPanel(false);
                               }
                             }}
+                            aria-label={`Notification: ${n.title}`}
                           >
                             <div className="notif-icon">
                               {n.type === "verification_approved"
@@ -411,7 +436,7 @@ export default function HomeNavbar() {
                                 )}
                               </span>
                             </div>
-                          </div>
+                          </button>
                         ))
                       )}
                     </div>

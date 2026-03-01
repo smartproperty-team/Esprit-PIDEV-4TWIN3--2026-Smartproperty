@@ -12,6 +12,7 @@ import { useAuthStore } from "@/store";
 import { isOwner } from "@/utils";
 import { useTranslation } from "@/i18n";
 import LanguageToggle from "@/components/ui/LanguageToggle";
+import ReadAloudWidget from "../accessibility/ReadAloudWidget";
 
 // Logo Component
 const Logo = () => (
@@ -105,6 +106,18 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowNotifPanel(false);
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleLogout = async () => {
     await logout();
     navigate("/login");
@@ -133,13 +146,19 @@ export default function Navbar() {
           {/* Language Toggle */}
           <LanguageToggle variant="pill" />
 
+          <ReadAloudWidget mode="inline" showLabel={false} />
+
           {/* Notification Bell (authenticated only) */}
           {isAuthenticated && (
             <div className="relative" ref={notifPanelRef}>
               <button
+                type="button"
                 onClick={() => setShowNotifPanel(!showNotifPanel)}
                 className="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
                 aria-label={`${t.nav.notifications}${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
+                aria-expanded={showNotifPanel}
+                aria-controls="navbar-notifications-panel"
+                aria-haspopup="dialog"
               >
                 <Bell className="w-5 h-5 text-gray-700" />
                 {unreadCount > 0 && (
@@ -151,13 +170,17 @@ export default function Navbar() {
 
               {/* Notification Panel */}
               {showNotifPanel && (
-                <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                <div
+                  id="navbar-notifications-panel"
+                  className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900">
                       {t.nav.notifications}
                     </h3>
                     {unreadCount > 0 && (
                       <button
+                        type="button"
                         className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                         onClick={async () => {
                           await notificationService.markAllAsRead();
@@ -176,9 +199,10 @@ export default function Navbar() {
                       </div>
                     ) : (
                       notifications.map((n) => (
-                        <div
+                        <button
+                          type="button"
                           key={n.id}
-                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${!n.isRead ? "bg-indigo-50/50" : ""}`}
+                          className={`flex w-full items-start gap-3 border-0 bg-transparent px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!n.isRead ? "bg-indigo-50/50" : ""}`}
                           onClick={async () => {
                             if (!n.isRead) {
                               await notificationService.markAsRead(n.id);
@@ -189,6 +213,7 @@ export default function Navbar() {
                               setShowNotifPanel(false);
                             }
                           }}
+                          aria-label={`Notification: ${n.title}`}
                         >
                           <span className="text-lg mt-0.5">
                             {n.type === "verification_approved"
@@ -204,7 +229,7 @@ export default function Navbar() {
                             <p className="text-xs text-gray-500 line-clamp-2">
                               {n.message}
                             </p>
-                            <span className="text-[11px] text-gray-400 mt-1 block">
+                            <span className="text-[11px] text-gray-500 mt-1 block">
                               {new Date(n.createdAt).toLocaleDateString(
                                 "en-US",
                                 {
@@ -219,7 +244,7 @@ export default function Navbar() {
                           {!n.isRead && (
                             <span className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0" />
                           )}
-                        </div>
+                        </button>
                       ))
                     )}
                   </div>
@@ -237,7 +262,7 @@ export default function Navbar() {
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.firstName}
+                  alt={user?.fullName || user?.firstName || "User avatar"}
                   className="w-7 h-7 rounded-full object-cover"
                 />
               ) : (
@@ -283,8 +308,12 @@ export default function Navbar() {
 
         {/* Mobile Menu Button */}
         <button
+          type="button"
           className="lg:hidden p-2 rounded-full hover:bg-gray-100"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="navbar-mobile-menu"
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {isMobileMenuOpen ? (
             <X className="w-6 h-6" />
@@ -296,7 +325,10 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden mt-2 bg-white rounded-3xl shadow-lg p-4">
+        <div
+          id="navbar-mobile-menu"
+          className="lg:hidden mt-2 bg-white rounded-3xl shadow-lg p-4"
+        >
           <div className="flex flex-col gap-2">
             <NavLink to="/">{t.nav.home}</NavLink>
             <NavLink to="/properties">{t.nav.listings}</NavLink>
@@ -309,6 +341,10 @@ export default function Navbar() {
           <hr className="my-4" />
 
           <div className="flex flex-col gap-3">
+            <div className="flex justify-center">
+              <ReadAloudWidget mode="inline" showLabel />
+            </div>
+
             <div className="flex gap-3 flex-wrap">
               {/* Language toggle in mobile */}
               <LanguageToggle variant="pill" className="shrink-0" />
@@ -323,6 +359,7 @@ export default function Navbar() {
                   <button
                     onClick={handleLogout}
                     className="py-2.5 px-4 rounded-full border border-red-300 text-red-600 font-medium hover:bg-red-50 transition-colors"
+                    aria-label="Sign out"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
