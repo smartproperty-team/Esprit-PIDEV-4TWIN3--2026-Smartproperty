@@ -3,7 +3,6 @@
 // ===========================================
 
 import { HomeFooter, Navbar } from "@/components/layout";
-import { useTranslation } from "@/i18n";
 import { propertyService } from "@/services/property.service";
 import { useAuthStore } from "@/store";
 import type {
@@ -12,7 +11,7 @@ import type {
   PropertyStatus,
   PropertyType,
 } from "@/types/property";
-import { isOwner } from "@/utils";
+import { canManageProperties, isOwner } from "@/utils";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import "./properties.css";
@@ -127,14 +126,12 @@ interface PropertyCardProps {
   property: Property;
   onDelete?: (id: string) => void;
   canManage?: boolean;
-  t: ReturnType<typeof import("@/i18n").useTranslation>;
 }
 
 function PropertyCard({
   property,
   onDelete,
   canManage = true,
-  t,
 }: PropertyCardProps) {
   const propertyId = property.id || property._id || "";
   const primaryImage =
@@ -142,34 +139,14 @@ function PropertyCard({
   const imageUrl = primaryImage?.url || "/placeholder-property.svg";
 
   const handleDelete = () => {
-    if (window.confirm(t.properties.deleteConfirm)) {
+    if (
+      window.confirm("Êtes-vous sûr de vouloir supprimer cette propriété ?")
+    ) {
       if (propertyId) {
         onDelete?.(propertyId);
       }
     }
   };
-
-  const statusLabel =
-    property.status === "available"
-      ? t.properties.available
-      : property.status === "rented"
-        ? t.properties.rented
-        : property.status === "maintenance"
-          ? t.properties.maintenance
-          : t.properties.unlisted;
-
-  const typeLabel =
-    property.type === "apartment"
-      ? t.properties.typeApartment
-      : property.type === "house"
-        ? t.properties.typeHouse
-        : property.type === "villa"
-          ? t.properties.typeVilla
-          : property.type === "studio"
-            ? t.properties.typeStudio
-            : property.type === "condo"
-              ? t.properties.typeCondo
-              : t.properties.typeLand;
 
   return (
     <article className="property-card" aria-label={property.title}>
@@ -183,9 +160,27 @@ function PropertyCard({
           }}
         />
         <span className={`property-badge ${property.status}`}>
-          {statusLabel}
+          {property.status === "available"
+            ? "Disponible"
+            : property.status === "rented"
+              ? "Loué"
+              : property.status === "maintenance"
+                ? "Maintenance"
+                : "Non listé"}
         </span>
-        <span className="property-type-badge">{typeLabel}</span>
+        <span className="property-type-badge">
+          {property.type === "apartment"
+            ? "Appartement"
+            : property.type === "house"
+              ? "Maison"
+              : property.type === "villa"
+                ? "Villa"
+                : property.type === "studio"
+                  ? "Studio"
+                  : property.type === "condo"
+                    ? "Condo"
+                    : "Terrain"}
+        </span>
       </div>
 
       <div className="property-card-content">
@@ -200,13 +195,13 @@ function PropertyCard({
           {property.features?.bedrooms !== undefined && (
             <div className="meta-item">
               <BedIcon />
-              <dd>{property.features.bedrooms} {t.properties.beds}</dd>
+              <dd>{property.features.bedrooms} Ch.</dd>
             </div>
           )}
           {property.features?.bathrooms !== undefined && (
             <div className="meta-item">
               <BathIcon />
-              <dd>{property.features.bathrooms} {t.properties.baths}</dd>
+              <dd>{property.features.bathrooms} SdB</dd>
             </div>
           )}
           {property.features?.area !== undefined && (
@@ -224,15 +219,15 @@ function PropertyCard({
 
         <div className="property-card-actions">
           <Link to={`/properties/${propertyId}`} className="btn-view">
-            {t.properties.viewBtn}
+            Voir
           </Link>
           {canManage && (
             <>
               <Link to={`/properties/${propertyId}/edit`} className="btn-edit">
-                {t.properties.editBtn}
+                Modifier
               </Link>
               <button className="btn-delete" onClick={handleDelete}>
-                {t.properties.deleteBtn}
+                Supprimer
               </button>
             </>
           )}
@@ -248,7 +243,7 @@ function PropertyCard({
 
 export default function PropertiesPage() {
   const { user } = useAuthStore();
-  const t = useTranslation();
+  const canManage = canManageProperties(user);
   const canAddProperty = isOwner(user);
   const isOwnerUser = isOwner(user);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -256,7 +251,7 @@ export default function PropertiesPage() {
   const [myProperties, setMyProperties] = useState<Property[]>([]);
   const [myPropertiesLoading, setMyPropertiesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<"load" | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<PropertyFilters>({
@@ -280,7 +275,7 @@ export default function PropertiesPage() {
       setCurrentPage(response.page);
     } catch (err) {
       console.error("Failed to load properties:", err);
-      setError("load");
+      setError("Impossible de charger les propriétés. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -380,7 +375,7 @@ export default function PropertiesPage() {
       setTotal(total - 1);
     } catch (err) {
       console.error("Failed to delete property:", err);
-      alert(t.properties.deleteError);
+      alert("Impossible de supprimer la propriété. Veuillez réessayer.");
     }
   };
 
@@ -400,96 +395,90 @@ export default function PropertiesPage() {
         <div className="properties-header">
           <div className="header-actions">
             <div>
-              <h1>{t.properties.title}</h1>
+              <h1>Propriétés</h1>
               <p>
-                {total} {t.properties.title.toLowerCase()} {t.properties.found}
+                {total} propriété{total > 1 ? "s" : ""} trouvée
+                {total > 1 ? "s" : ""}
               </p>
             </div>
             {canAddProperty && (
               <Link to="/properties/new" className="btn-add-property">
                 <PlusIcon />
-                {t.properties.addProperty}
+                Ajouter une propriété
               </Link>
             )}
             {/* Filters */}
             <form className="properties-filters" onSubmit={handleSearch}>
               <div className="filters-row">
                 <div className="filter-group">
-                  <label htmlFor="filter-search">{t.properties.search}</label>
+                  <label htmlFor="filter-search">Recherche</label>
                   <input
-                      id="filter-search"
-                      type="text"
-                      placeholder="Titre, description..."
-                      value={filters.search || ""}
-                      onChange={(e) => handleFilterChange("search", e.target.value)}
+                    id="filter-search"
+                    type="text"
+                    placeholder="Titre, description..."
+                    value={filters.search || ""}
+                    onChange={(e) =>
+                      handleFilterChange("search", e.target.value)
+                    }
                   />
                 </div>
 
                 <div className="filter-group">
-                  <label htmlFor="filter-type">{t.properties.typeLabel}</label>
+                  <label htmlFor="filter-type">Type</label>
                   <select
                     id="filter-type"
                     value={filters.type || ""}
                     onChange={(e) => handleFilterChange("type", e.target.value)}
-                    id="filter-type"
-                    value={filters.type || ""}
-                    onChange={(e) => handleFilterChange("type", e.target.value)}
                   >
-                    <option value="">{t.properties.allTypes}</option>
-                    <option value="apartment">{t.properties.typeApartment}</option>
-                    <option value="house">{t.properties.typeHouse}</option>
-                    <option value="villa">{t.properties.typeVilla}</option>
-                    <option value="studio">{t.properties.typeStudio}</option>
-                    <option value="condo">{t.properties.typeCondo}</option>
-                    <option value="land">{t.properties.typeLand}</option>
+                    <option value="">Tous les types</option>
+                    <option value="apartment">Appartement</option>
+                    <option value="house">Maison</option>
+                    <option value="villa">Villa</option>
+                    <option value="studio">Studio</option>
+                    <option value="condo">Condo</option>
+                    <option value="land">Terrain</option>
                   </select>
                 </div>
 
                 <div className="filter-group">
-                  <label htmlFor="filter-status">{t.properties.statusLabel}</label>
+                  <label htmlFor="filter-status">Statut</label>
                   <select
                     id="filter-status"
                     value={filters.status || ""}
                     onChange={(e) =>
                       handleFilterChange("status", e.target.value)
                     }
-                    id="filter-status"
-                    value={filters.status || ""}
-                    onChange={(e) => handleFilterChange("status", e.target.value)}
                   >
-                    <option value="">{t.properties.allStatuses}</option>
-                    <option value="available">{t.properties.available}</option>
-                    <option value="rented">{t.properties.rented}</option>
-                    <option value="maintenance">{t.properties.maintenance}</option>
-                    <option value="unlisted">{t.properties.unlisted}</option>
+                    <option value="">Tous les statuts</option>
+                    <option value="available">Disponible</option>
+                    <option value="rented">Loué</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="unlisted">Non listé</option>
                   </select>
                 </div>
 
                 <div className="filter-group">
-                  <label htmlFor="filter-city">{t.properties.cityLabel}</label>
+                  <label htmlFor="filter-city">Ville</label>
                   <input
-                      id="filter-city"
-                      type="text"
-                      placeholder="Ville..."
-                      value={filters.city || ""}
-                      onChange={(e) => handleFilterChange("city", e.target.value)}
+                    id="filter-city"
+                    type="text"
+                    placeholder="Ville..."
+                    value={filters.city || ""}
+                    onChange={(e) => handleFilterChange("city", e.target.value)}
                   />
                 </div>
 
                 <div className="filter-actions">
                   <button type="submit" className="btn-filter primary">
                     <SearchIcon />
-                    {t.properties.searchBtn}
+                    Rechercher
                   </button>
                   <button
                     type="button"
                     className="btn-filter secondary"
                     onClick={handleResetFilters}
-                    type="button"
-                    className="btn-filter secondary"
-                    onClick={handleResetFilters}
                   >
-                    {t.properties.reset}
+                    Réinitialiser
                   </button>
                 </div>
               </div>
@@ -504,23 +493,25 @@ export default function PropertiesPage() {
           >
             <div className="header-actions">
               <div>
-                <h2 id="my-properties-title">{t.properties.myProperties}</h2>
-                <p>{t.properties.myPropertiesDesc}</p>
+                <h2 id="my-properties-title">Mes propriétés</h2>
+                <p>
+                  Propriétés qui vous appartiennent et que vous pouvez modifier.
+                </p>
               </div>
             </div>
 
             {myPropertiesLoading ? (
               <div className="loading-state">
                 <div className="loading-spinner" />
-                <p>{t.properties.loading}</p>
+                <p>Chargement de vos propriétés...</p>
               </div>
             ) : myProperties.length === 0 ? (
               <div className="empty-state">
-                <p>{t.properties.noMyProperties}</p>
+                <p>Vous n'avez pas encore de propriétés.</p>
                 {canAddProperty && (
                   <Link to="/properties/new" className="btn-add-property">
                     <PlusIcon />
-                    {t.properties.addProperty}
+                    Ajouter une propriété
                   </Link>
                 )}
               </div>
@@ -532,7 +523,6 @@ export default function PropertiesPage() {
                     property={property}
                     onDelete={handleDelete}
                     canManage
-                    t={t}
                   />
                 ))}
               </div>
@@ -543,13 +533,13 @@ export default function PropertiesPage() {
         {loading ? (
           <div className="loading-state">
             <div className="loading-spinner" />
-            <p>{t.properties.loading}</p>
+            <p>Chargement des propriétés...</p>
           </div>
         ) : error ? (
           <div className="empty-state">
-            <p style={{ color: "#ef4444" }}>{t.common.error}</p>
+            <p style={{ color: "#ef4444" }}>{error}</p>
             <button className="btn-filter primary" onClick={loadProperties}>
-              {t.properties.retry}
+              Réessayer
             </button>
           </div>
         ) : visibleProperties.length === 0 ? (
@@ -587,7 +577,6 @@ export default function PropertiesPage() {
                     canManageProperty(property) ? handleDelete : undefined
                   }
                   canManage={canManageProperty(property)}
-                  t={t}
                 />
               ))}
             </div>
@@ -600,7 +589,7 @@ export default function PropertiesPage() {
                   disabled={currentPage === 1}
                   onClick={() => handlePageChange(currentPage - 1)}
                 >
-                  {t.properties.previous}
+                  Précédent
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -632,7 +621,7 @@ export default function PropertiesPage() {
                   disabled={currentPage === totalPages}
                   onClick={() => handlePageChange(currentPage + 1)}
                 >
-                  {t.properties.next}
+                  Suivant
                 </button>
               </nav>
             )}

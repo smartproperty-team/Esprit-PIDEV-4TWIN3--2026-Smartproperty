@@ -2,8 +2,6 @@
 // SmartProperty - Home Navbar Component
 // ===========================================
 
-import { LanguageToggle } from "@/components/ui";
-import { useTranslation } from "@/i18n";
 import { notificationService } from "@/services";
 import type { Notification } from "@/services/notification.service";
 import { useAuthStore, usePreferencesStore } from "@/store";
@@ -35,15 +33,6 @@ export default function HomeNavbar() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuthStore();
   const { getUserPreferences, openOnboarding } = usePreferencesStore();
-  const t = useTranslation();
-  const navLinks = [
-    { to: "/", label: t.nav.home },
-    { to: "/properties", label: t.nav.listings },
-    { to: "/members", label: t.nav.members },
-    { to: "/blog", label: t.nav.blog },
-    { to: "/pages", label: t.nav.pages },
-    { to: "/contact", label: t.nav.contact },
-  ];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -145,7 +134,7 @@ export default function HomeNavbar() {
           className="fixed right-6 top-20 z-90 flex animate-bounce items-center gap-2 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-700"
         >
           <BellRing className="h-4 w-4" />
-          {t.nav.completeQuestions}
+          Complete your questions
         </button>
       )}
       <nav className="navbar" aria-label="Main navigation">
@@ -268,7 +257,7 @@ export default function HomeNavbar() {
                           <User className="h-3 w-3" />
                         )}
                       </span>
-                      {t.nav.profile}
+                      Profile
                     </button>
                     <button
                       type="button"
@@ -279,19 +268,10 @@ export default function HomeNavbar() {
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Monitor className="mr-3 h-4 w-4" />
-                      {t.nav.dashboard}
+                      Dashboard
                     </button>
                     <button
-                      onClick={() => {
-                        setShowUserDropdown(false);
-                        navigate("/sessions");
-                      }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <Monitor className="mr-3 h-4 w-4" />
-                      {t.nav.activeSessions}
-                    </button>
-                    <button
+                      type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         navigate("/settings");
@@ -299,7 +279,7 @@ export default function HomeNavbar() {
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Settings className="mr-3 h-4 w-4" />
-                      {t.nav.settings}
+                      Settings
                     </button>
                     <div className="border-t border-gray-100">
                       <button
@@ -312,7 +292,7 @@ export default function HomeNavbar() {
                         className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
                         <LogOut className="mr-3 h-4 w-4" />
-                        {t.nav.signOut}
+                        Sign Out
                       </button>
                     </div>
                   </div>
@@ -374,7 +354,7 @@ export default function HomeNavbar() {
                 {showNotifPanel && (
                   <div id="notifications-panel" className="notif-panel">
                     <div className="notif-panel-header">
-                      <h3>{t.nav.notifications}</h3>
+                      <h3>Notifications</h3>
                       {unreadCount > 0 && (
                         <button
                           type="button"
@@ -384,7 +364,7 @@ export default function HomeNavbar() {
                             await fetchNotifications();
                           }}
                         >
-                          {t.nav.markAllRead}
+                          Mark all read
                         </button>
                       )}
                     </div>
@@ -403,7 +383,7 @@ export default function HomeNavbar() {
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                           </svg>
-                          <p>{t.nav.noNotifications}</p>
+                          <p>No notifications yet</p>
                         </div>
                       ) : (
                         notifications.map((n) => (
@@ -455,7 +435,7 @@ export default function HomeNavbar() {
             )}
             {isOwner(user) && (
               <Link to="/properties/new" className="btn-add-property">
-                <span className="btn-text">{t.nav.addProperty}</span>
+                <span className="btn-text">Add Property</span>
                 <svg
                   className="btn-icon"
                   width="16"
@@ -470,7 +450,6 @@ export default function HomeNavbar() {
                 </svg>
               </Link>
             )}
-            <LanguageToggle variant="pill" />
           </div>
         </div>
 

@@ -6,10 +6,102 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HomeFooter, Navbar } from '@/components/layout';
-import { useTranslation } from '@/i18n';
-import { propertyService } from '@/services/property.service';
-import type { Property as BackendProperty } from '@/types/property';
+import { HomeFooter, Navbar } from '../../components/layout';
+import { propertyService } from '../../services/property.service';
+import type { Property as BackendProperty } from '../../types/property';
+
+// Property type for cards
+interface Property {
+  id: number;
+  title: string;
+  address: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  price: string;
+  priceUnit?: string;
+  type: 'sale' | 'rent';
+  featured?: boolean;
+  image: string;
+}
+
+// Sample property data
+const properties: Property[] = [
+  {
+    id: 1,
+    title: 'Luxurious Sea View Apartment',
+    address: 'La Marsa, Tunis',
+    beds: 4,
+    baths: 2,
+    sqft: 450,
+    price: '850,000 TND',
+    type: 'sale',
+    featured: false,
+    image: '/tq_0gdp_lwjwx-pmhk-1500h.png',
+  },
+  {
+    id: 2,
+    title: 'Modern Lac 2 Residence',
+    address: 'Les Berges du Lac, Tunis',
+    beds: 4,
+    baths: 2,
+    sqft: 400,
+    price: '2,500 TND',
+    priceUnit: '/month',
+    type: 'rent',
+    featured: true,
+    image: '/tq_1s1jvryd0n-ta2j-1500h.png',
+  },
+  {
+    id: 3,
+    title: 'Carthage Heritage Penthouse',
+    address: 'Carthage, Tunis',
+    beds: 4,
+    baths: 2,
+    sqft: 450,
+    price: '1,200,000 TND',
+    type: 'sale',
+    featured: true,
+    image: '/tq_4mbtfjfs1k-qkmj-1500h.png',
+  },
+  {
+    id: 4,
+    title: 'Villa Kantaoui With Pool',
+    address: 'Port El Kantaoui, Sousse',
+    beds: 3,
+    baths: 2,
+    sqft: 350,
+    price: '3,500 TND',
+    priceUnit: '/month',
+    type: 'rent',
+    featured: true,
+    image: '/tq_7wibftipib-omw-1500h.png',
+  },
+  {
+    id: 5,
+    title: 'Sidi Bou Said Apartment',
+    address: 'Sidi Bou Said, Tunis',
+    beds: 4,
+    baths: 3,
+    sqft: 500,
+    price: '920,000 TND',
+    type: 'sale',
+    featured: true,
+    image: '/tq_a7h2f2xeaz-7bp-1500h.png',
+  },
+  {
+    id: 6,
+    title: 'Hammamet Beach Villa',
+    address: 'Yasmine Hammamet, Nabeul',
+    beds: 3,
+    baths: 2,
+    sqft: 450,
+    price: '680,000 TND',
+    type: 'sale',
+    featured: true,
+    image: '/tq_b4rcqm58py-gcw-1500h.png',
+  },
+];
 
 // City data - Famous cities in Tunisia
 const cities = [
@@ -21,20 +113,19 @@ const cities = [
 ];
 
 // Property Card Component - Accessible
-function PropertyCard({ property }: { property: BackendProperty }) {
-  const t = useTranslation();
-  const propertyId = property.id || property._id || '';
+function PropertyCard({ property }: { property: Property }) {
+  const propertyId = property.id || property._id || "";
   const primaryImage =
     property.images?.find((img) => img.isPrimary) || property.images?.[0];
-  const imageUrl = primaryImage?.url || '/placeholder-property.svg';
-  const listingType = property.status === 'rented' ? 'rent' : 'sale';
+  const imageUrl = primaryImage?.url || "/placeholder-property.svg";
+  const listingType = property.status === "rented" ? "rent" : "sale";
   const formattedPrice = `${property.price.toLocaleString()} ${property.currency}`;
-  const showMonthly = listingType === 'rent';
+  const showMonthly = listingType === "rent";
 
   return (
     <article
       className="property-card"
-      aria-label={`${property.title} - ${formattedPrice}${showMonthly ? `/${t.home.month}` : ''}`}
+      aria-label={`${property.title} - ${formattedPrice}${showMonthly ? "/month" : ""}`}
     >
       <div className="property-card-image">
         <img
@@ -42,18 +133,18 @@ function PropertyCard({ property }: { property: BackendProperty }) {
           alt={`${property.title} at ${property.address.city}, ${property.address.country}`}
           loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder-property.svg';
+            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
           }}
         />
         <span
           className={`property-badge ${listingType}`}
-          aria-label={listingType === 'sale' ? t.home.forSale : t.home.forRent}
+          aria-label={`Property for ${listingType === "sale" ? "sale" : "rent"}`}
         >
-          {listingType === 'sale' ? t.home.forSale : t.home.forRent}
+          For {listingType === "sale" ? "Sale" : "Rent"}
         </span>
-        {property.status === 'available' && (
-          <span className="property-featured" aria-label={t.home.featured}>
-            {t.home.featured}
+        {property.status === "available" && (
+          <span className="property-featured" aria-label="Featured property">
+            Featured
           </span>
         )}
       </div>
@@ -77,7 +168,7 @@ function PropertyCard({ property }: { property: BackendProperty }) {
         </p>
         <dl className="property-meta" aria-label="Property details">
           <div className="meta-item">
-            <dt className="sr-only">{t.home.beds}</dt>
+            <dt className="sr-only">Bedrooms</dt>
             <dd>
               <svg
                 width="16"
@@ -91,11 +182,11 @@ function PropertyCard({ property }: { property: BackendProperty }) {
                 <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
                 <path d="M21 7H3l2-4h14l2 4z" />
               </svg>
-              {property.features?.bedrooms ?? 0} {t.home.beds}
+              {property.features?.bedrooms ?? 0} Beds
             </dd>
           </div>
           <div className="meta-item">
-            <dt className="sr-only">{t.home.baths}</dt>
+            <dt className="sr-only">Bathrooms</dt>
             <dd>
               <svg
                 width="16"
@@ -109,11 +200,11 @@ function PropertyCard({ property }: { property: BackendProperty }) {
                 <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
                 <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
               </svg>
-              {property.features?.bathrooms ?? 0} {t.home.baths}
+              {property.features?.bathrooms ?? 0} Baths
             </dd>
           </div>
           <div className="meta-item">
-            <dt className="sr-only">{t.home.sqft}</dt>
+            <dt className="sr-only">Square feet</dt>
             <dd>
               <svg
                 width="16"
@@ -128,7 +219,7 @@ function PropertyCard({ property }: { property: BackendProperty }) {
                 <path d="M3 9h18" />
                 <path d="M9 21V9" />
               </svg>
-              {property.features?.area ?? 0} {t.home.sqft}
+              {property.features?.area ?? 0} sqft
             </dd>
           </div>
         </dl>
@@ -136,14 +227,14 @@ function PropertyCard({ property }: { property: BackendProperty }) {
           <span className="price" aria-label="Price">
             {formattedPrice}
           </span>
-          {showMonthly && <span className="price-unit">/{t.home.month}</span>}
+          {showMonthly && <span className="price-unit">/month</span>}
         </div>
         <Link
           to={`/properties/${propertyId}`}
           className="property-link"
           aria-label={`View details for ${property.title}`}
         >
-          {t.home.viewDetails}
+          View Details
           <svg
             width="16"
             height="16"
@@ -181,7 +272,6 @@ function CityCard({ city }: { city: (typeof cities)[0] }) {
 
 // Rental Property Card (from backend data)
 function RentalPropertyCard({ property }: { property: BackendProperty }) {
-  const t = useTranslation();
   const address = property.address
     ? `${property.address.city}, ${property.address.country}`
     : 'Location unavailable';
@@ -207,8 +297,8 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
             (e.currentTarget as HTMLImageElement).src = '/tq_1s1jvryd0n-ta2j-1500h.png';
           }}
         />
-        <span className="property-badge rent" aria-label={t.home.forRent}>
-          {t.home.forRent}
+        <span className="property-badge rent" aria-label="Property for rent">
+          For Rent
         </span>
       </div>
       <div className="property-card-content">
@@ -223,35 +313,35 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
         </p>
         <dl className="property-meta" aria-label="Property details">
           <div className="meta-item">
-            <dt className="sr-only">{t.home.beds}</dt>
+            <dt className="sr-only">Bedrooms</dt>
             <dd>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
                 <path d="M21 7H3l2-4h14l2 4z" />
               </svg>
-              {beds} {t.home.beds}
+              {beds} Beds
             </dd>
           </div>
           <div className="meta-item">
-            <dt className="sr-only">{t.home.baths}</dt>
+            <dt className="sr-only">Bathrooms</dt>
             <dd>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
                 <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
               </svg>
-              {baths} {t.home.baths}
+              {baths} Baths
             </dd>
           </div>
           {sqft > 0 && (
             <div className="meta-item">
-              <dt className="sr-only">{t.home.sqft}</dt>
+              <dt className="sr-only">Square feet</dt>
               <dd>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M3 9h18" />
                   <path d="M9 21V9" />
                 </svg>
-                {sqft} {t.home.sqft}
+                {sqft} sqft
               </dd>
             </div>
           )}
@@ -265,7 +355,7 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
           className="property-link"
           aria-label={`View details for ${property.title}`}
         >
-          {t.home.viewDetails}
+          View Details
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
@@ -277,11 +367,10 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
 }
 
 export default function HomePage() {
-  const t = useTranslation();
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent'>('sale');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [properties, setProperties] = useState<BackendProperty[]>([]);
+  const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [properties, setProperties] = useState<Property[]>([]);
   const mainContentRef = useRef<HTMLElement>(null);
   const [rentalProperties, setRentalProperties] = useState<BackendProperty[]>([]);
   const [rentalLoading, setRentalLoading] = useState(true);
@@ -313,7 +402,7 @@ export default function HomePage() {
           page: 1,
           limit: 12,
         });
-        setProperties(response.properties ?? []);
+        setProperties(response.properties);
       } catch {
         setProperties([]);
       }
@@ -323,6 +412,7 @@ export default function HomePage() {
   }, []);
 
   const bestDealProperties = properties.slice(0, 4);
+  const recentRentProperties = properties.filter((p) => p.status === "rented");
 
   // Handle search form submission
   const handleSearch = useCallback(
@@ -360,10 +450,10 @@ export default function HomePage() {
       <section className="hero-section" aria-labelledby="hero-title">
         <div className="hero-content">
           <h1 id="hero-title" className="hero-title">
-            {t.home.heroTitle}
+            The <span className="highlight">#1</span> site real estate
             <br />
             <span className="hero-title-secondary">
-              {t.home.heroSubtitle}
+              professionals trust in Tunisia
             </span>
           </h1>
 
@@ -381,7 +471,7 @@ export default function HomePage() {
               aria-controls="search-panel"
               id="tab-sale"
             >
-              {t.home.sale}
+              Sale
             </button>
             <button
               className={`search-tab-btn ${activeTab === "rent" ? "active" : ""}`}
@@ -391,7 +481,7 @@ export default function HomePage() {
               aria-controls="search-panel"
               id="tab-rent"
             >
-              {t.home.rent}
+              Rent
             </button>
           </div>
 
@@ -414,11 +504,11 @@ export default function HomePage() {
                   onChange={(e) => setPropertyType(e.target.value)}
                   aria-label="Select property type"
                 >
-                  <option value="">{t.home.type}</option>
-                  <option value="apartment">{t.home.apartment}</option>
-                  <option value="house">{t.home.house}</option>
-                  <option value="villa">{t.home.villa}</option>
-                  <option value="office">{t.home.office}</option>
+                  <option value="">Type</option>
+                  <option value="apartment">Apartment</option>
+                  <option value="house">House</option>
+                  <option value="villa">Villa</option>
+                  <option value="office">Office</option>
                 </select>
               </div>
               <div className="search-field keyword-field">
@@ -428,7 +518,7 @@ export default function HomePage() {
                 <input
                   id="search-keywords"
                   type="text"
-                  placeholder={t.home.searchPlaceholder}
+                  placeholder="Enter Keywords"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   aria-label="Enter search keywords"
@@ -451,7 +541,7 @@ export default function HomePage() {
                 >
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
-                <span className="filter-text">{t.home.filters}</span>
+                <span className="filter-text">Filters</span>
               </button>
               <button type="submit" className="search-button">
                 <svg
@@ -467,7 +557,7 @@ export default function HomePage() {
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.35-4.35" />
                 </svg>
-                <span>{t.home.search}</span>
+                <span>Search</span>
               </button>
             </div>
           </form>
@@ -482,28 +572,28 @@ export default function HomePage() {
         <section className="properties-section" aria-labelledby="deals-title">
           <div className="section-container">
             <header className="section-header">
-              <span className="section-tag">{t.home.featured}</span>
+              <span className="section-tag">Featured</span>
               <h2 id="deals-title" className="section-title">
-                {t.home.bestDeals}
+                Our Best Deals
               </h2>
               <p className="section-subtitle">
-                {t.home.bestDealsSubtitle}
+                Featured properties handpicked for you
               </p>
             </header>
             {bestDealProperties.length > 0 ? (
               <div className="properties-grid" role="list">
                 {bestDealProperties.map((property) => (
-                  <PropertyCard key={property.id || property._id} property={property} />
+                  <PropertyCard key={property.id} property={property} />
                 ))}
               </div>
             ) : (
               <p className="section-subtitle">
-                {t.home.noProperties}
+                No properties available yet. Check back soon.
               </p>
             )}
             <div className="section-cta">
               <Link to="/properties" className="view-all-btn">
-                {t.home.viewAllProperties}
+                View All Properties
                 <svg
                   width="16"
                   height="16"
@@ -524,12 +614,12 @@ export default function HomePage() {
         <section className="cities-section" aria-labelledby="cities-title">
           <div className="section-container">
             <header className="section-header">
-              <span className="section-tag">{t.home.locations}</span>
+              <span className="section-tag">Locations</span>
               <h2 id="cities-title" className="section-title">
-                {t.home.exploreCities}
+                Explore Cities
               </h2>
               <p className="section-subtitle">
-                {t.home.exploreCitiesSubtitle}
+                Discover properties in top locations
               </p>
             </header>
             <div className="cities-grid" role="list">
@@ -546,19 +636,19 @@ export default function HomePage() {
         >
           <div className="section-container">
             <header className="section-header">
-              <span className="section-tag">{t.home.forRent}</span>
+              <span className="section-tag">For Rent</span>
               <h2 id="rent-title" className="section-title">
-                {t.home.recentRentTitle}
+                Recent Properties for Rent
               </h2>
               <p className="section-subtitle">
-                {t.home.recentRentSubtitle}
+                Find your perfect rental home today
               </p>
             </header>
             {rentalLoading ? (
               <div className="flex justify-center items-center py-16" aria-live="polite" aria-label="Loading rental properties">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-500 text-sm">{t.home.loadingProperties}</p>
+                  <p className="text-gray-500 text-sm">Loading properties...</p>
                 </div>
               </div>
             ) : rentalError ? (
@@ -570,14 +660,14 @@ export default function HomePage() {
                 </svg>
                 <p className="text-gray-500">{rentalError}</p>
                 <Link to="/properties" className="text-emerald-600 hover:underline text-sm font-medium">
-                  {t.home.browseAll}
+                  Browse all properties →
                 </Link>
               </div>
             ) : rentalProperties.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <p className="text-gray-500">{t.home.noRental}</p>
+                <p className="text-gray-500">No rental properties available right now.</p>
                 <Link to="/properties" className="text-emerald-600 hover:underline text-sm font-medium">
-                  {t.home.browseAll}
+                  Browse all properties →
                 </Link>
               </div>
             ) : (
@@ -589,7 +679,7 @@ export default function HomePage() {
                 </div>
                 <div className="section-cta">
                   <Link to="/properties" className="view-all-btn">
-                    {t.home.viewAllRentals}
+                    View All Rentals
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path d="M5 12h14" />
                       <path d="m12 5 7 7-7 7" />
@@ -604,43 +694,76 @@ export default function HomePage() {
         <section className="how-it-works-section" aria-labelledby="how-title">
           <div className="section-container">
             <header className="section-header">
-              <span className="section-tag">{t.home.process}</span>
+              <span className="section-tag">Process</span>
               <h2 id="how-title" className="section-title">
-                {t.home.howItWorks}
+                How It Works
               </h2>
               <p className="section-subtitle">
-                {t.home.howItWorksSubtitle}
+                Find your perfect home in 3 simple steps
               </p>
             </header>
             <ol className="steps-grid" role="list">
               <li className="step-card">
-                <div className="step-number" aria-hidden="true">01</div>
+                <div className="step-number" aria-hidden="true">
+                  01
+                </div>
                 <div className="step-icon" aria-hidden="true">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                   </svg>
                 </div>
-                <h3>{t.home.step1Title}</h3>
-                <p>{t.home.step1Desc}</p>
+                <h3>Find Real Estate</h3>
+                <p>
+                  Browse thousands of properties with our advanced search
+                  filters to find exactly what you need.
+                </p>
               </li>
               <li className="step-card">
-                <div className="step-number" aria-hidden="true">02</div>
+                <div className="step-number" aria-hidden="true">
+                  02
+                </div>
                 <div className="step-icon" aria-hidden="true">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                 </div>
-                <h3>{t.home.step2Title}</h3>
-                <p>{t.home.step2Desc}</p>
+                <h3>Meet Realtor</h3>
+                <p>
+                  Connect with our professional realtors who will guide you
+                  through the process.
+                </p>
               </li>
               <li className="step-card">
-                <div className="step-number" aria-hidden="true">03</div>
+                <div className="step-number" aria-hidden="true">
+                  03
+                </div>
                 <div className="step-icon" aria-hidden="true">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="m15 5 4 4" />
                     <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13" />
                     <path d="m8 6 2-2" />
@@ -649,8 +772,11 @@ export default function HomePage() {
                     <path d="M15 18 3 6" />
                   </svg>
                 </div>
-                <h3>{t.home.step3Title}</h3>
-                <p>{t.home.step3Desc}</p>
+                <h3>Take The Keys</h3>
+                <p>
+                  Complete the paperwork and get the keys to your new dream
+                  home.
+                </p>
               </li>
             </ol>
           </div>
@@ -658,10 +784,13 @@ export default function HomePage() {
         {/* CTA Section */}
         <section className="cta-section" aria-labelledby="cta-title">
           <div className="cta-content">
-            <h2 id="cta-title">{t.home.discoverPlace}</h2>
-            <p>{t.home.discoverDesc}</p>
+            <h2 id="cta-title">Discover a place you'll love to live</h2>
+            <p>
+              Find your dream home from our curated selection of premium
+              properties.
+            </p>
             <Link to="/properties" className="cta-button">
-              {t.home.viewProperties}
+              View Properties
               <svg
                 width="20"
                 height="20"
@@ -681,39 +810,60 @@ export default function HomePage() {
         <section className="why-us-section" aria-labelledby="why-title">
           <div className="section-container">
             <div className="why-us-content">
-              <span className="section-tag">{t.home.whyUs}</span>
-              <h2 id="why-title">{t.home.whyUsTitle}</h2>
+              <span className="section-tag">Why Us</span>
+              <h2 id="why-title">Why You Should Work With Us</h2>
               <p className="why-us-description">
-                {t.home.whyUsDesc}
+                With years of experience in the real estate industry, we provide
+                top-notch service to help you find your perfect property.
               </p>
               <ul className="why-us-features" role="list">
                 <li className="feature">
                   <div className="feature-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                       <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
                   </div>
                   <div>
-                    <h4>{t.home.buyOrRent}</h4>
-                    <p>{t.home.buyOrRentDesc}</p>
+                    <h4>Buy or Rent Homes</h4>
+                    <p>
+                      We sell your home at the best market price quickly and
+                      efficiently.
+                    </p>
                   </div>
                 </li>
                 <li className="feature">
                   <div className="feature-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                       <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
                   </div>
                   <div>
-                    <h4>{t.home.trustedTitle}</h4>
-                    <p>{t.home.trustedDesc}</p>
+                    <h4>Trusted by Thousands</h4>
+                    <p>
+                      We offer free consultancy to help you secure financing for
+                      your new home.
+                    </p>
                   </div>
                 </li>
               </ul>
               <Link to="/about" className="learn-more-btn">
-                {t.home.learnMore}
+                Learn More
                 <svg
                   width="16"
                   height="16"
@@ -745,24 +895,24 @@ export default function HomePage() {
         aria-labelledby="newsletter-title"
       >
         <div className="newsletter-container">
-          <h3 id="newsletter-title">{t.home.newsletter}</h3>
-          <p>{t.home.newsletterDesc}</p>
+          <h3 id="newsletter-title">Subscribe To Our Newsletter</h3>
+          <p>Get the latest updates on new properties and exclusive offers</p>
           <form
             className="newsletter-form"
             onSubmit={(e) => e.preventDefault()}
             aria-label="Newsletter subscription"
           >
             <label htmlFor="newsletter-email" className="sr-only">
-              {t.home.emailPlaceholder}
+              Email address
             </label>
             <input
               id="newsletter-email"
               type="email"
-              placeholder={t.home.emailPlaceholder}
+              placeholder="Your Email Address"
               required
               aria-required="true"
             />
-            <button type="submit">{t.home.subscribe}</button>
+            <button type="submit">Subscribe</button>
           </form>
         </div>
       </section>
