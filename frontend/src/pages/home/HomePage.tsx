@@ -166,7 +166,7 @@ function PropertyCard({ property }: { property: BackendProperty }) {
 function CityCard({ city }: { city: (typeof cities)[0] }) {
   return (
     <Link
-      to={`/properties?city=${city.name.toLowerCase().replace(" ", "-")}`}
+      to={`/properties?city=${encodeURIComponent(city.name)}`}
       className="city-card"
       aria-label={`Browse ${city.properties} properties in ${city.name}`}
     >
@@ -329,7 +329,10 @@ export default function HomePage() {
     (e: React.FormEvent) => {
       e.preventDefault();
       // Navigate to search results
-      window.location.href = `/properties?type=${propertyType}&query=${encodeURIComponent(searchQuery)}&for=${activeTab}`;
+      const params = new URLSearchParams();
+      if (propertyType) params.set("type", propertyType);
+      if (searchQuery) params.set("search", searchQuery);
+      window.location.href = `/properties?${params.toString()}`;
     },
     [propertyType, searchQuery, activeTab],
   );

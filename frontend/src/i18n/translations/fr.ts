@@ -132,6 +132,8 @@ export const fr: Translations = {
     beds: "Ch.",
     baths: "SdB",
     noMyProperties: "Vous n'avez pas encore de propriétés.",
+    showMyProperties: "Mes propriétés",
+    backToAll: "Retour à toutes les propriétés",
   },
 
   // ---- Property Detail Page ----

@@ -130,6 +130,8 @@ export const en = {
     beds: "Bed.",
     baths: "Bath.",
     noMyProperties: "You don't have any properties yet.",
+    showMyProperties: "My Properties",
+    backToAll: "Back to all properties",
   },
 
   // ---- Property Detail Page ----

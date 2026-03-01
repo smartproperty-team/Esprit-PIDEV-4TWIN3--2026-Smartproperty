@@ -27,6 +27,7 @@ import { HomePage } from "./pages/home";
 import { PreferencesOnboardingModal } from "./pages/onboarding";
 import { ProfilePage } from "./pages/profile";
 import {
+  MyPropertiesPage,
   PropertiesPage,
   PropertyDetailPage,
   PropertyFormPage,
@@ -202,7 +203,18 @@ function App() {
 
         {/* Properties Routes */}
         <Route path="/properties" element={<PropertiesPage />} />
-        <Route path="/properties/:id" element={<PropertyDetailPage />} />
+        <Route
+          path="/properties/mine"
+          element={
+            <ProtectedRoute>
+              {canManageProperties(user) ? (
+                <MyPropertiesPage />
+              ) : (
+                <Navigate to="/properties" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/properties/new"
           element={
@@ -215,6 +227,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/properties/:id" element={<PropertyDetailPage />} />
         <Route
           path="/properties/:id/edit"
           element={

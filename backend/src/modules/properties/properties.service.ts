@@ -50,6 +50,11 @@ export class PropertiesService {
   // Helpers
   // ===========================================
 
+  /** Escape special regex characters in user input */
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   private canManage(
     property: Property,
     userId: string,
@@ -156,7 +161,8 @@ export class PropertiesService {
     }
 
     if (options.city) {
-      where['address.city'] = options.city;
+      const safeCity = this.escapeRegex(options.city);
+      where['address.city'] = { $regex: `^${safeCity}$`, $options: 'i' };
     }
 
     const minPrice = parseNumber(options.minPrice);
@@ -170,9 +176,10 @@ export class PropertiesService {
     }
 
     if (options.search) {
+      const safeSearch = this.escapeRegex(options.search);
       where.$or = [
-        { title: { $regex: options.search, $options: 'i' } },
-        { description: { $regex: options.search, $options: 'i' } },
+        { title: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 

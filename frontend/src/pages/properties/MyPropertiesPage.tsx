@@ -1,5 +1,5 @@
 // ===========================================
-// SmartProperty - Properties List Page
+// SmartProperty - My Properties Page
 // ===========================================
 
 import { HomeFooter, Navbar } from "@/components/layout";
@@ -12,7 +12,7 @@ import type {
   PropertyStatus,
   PropertyType,
 } from "@/types/property";
-import { canManageProperties, isOwner } from "@/utils";
+import { canManageProperties } from "@/utils";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import "./properties.css";
@@ -22,56 +22,28 @@ import "./properties.css";
 // ===========================================
 
 const LocationIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const BedIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
     <path d="M21 7H3l2-4h14l2 4z" />
   </svg>
 );
 
 const BathIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
     <path d="M6 12V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7" />
   </svg>
 );
 
 const AreaIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <path d="M3 9h18" />
     <path d="M9 21V9" />
@@ -79,57 +51,29 @@ const AreaIcon = () => (
 );
 
 const PlusIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
 
 const SearchIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="8" />
     <path d="m21 21-4.35-4.35" />
   </svg>
 );
 
-const HomeIcon = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-  >
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    <polyline points="9,22 9,12 15,12 15,22" />
+const BackIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M19 12H5" />
+    <path d="m12 19-7-7 7-7" />
   </svg>
 );
 
-const MyPropertiesIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+const HomeIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9,22 9,12 15,12 15,22" />
   </svg>
 );
 
@@ -140,16 +84,10 @@ const MyPropertiesIcon = () => (
 interface PropertyCardProps {
   property: Property;
   onDelete?: (id: string) => void;
-  canManage?: boolean;
   t: ReturnType<typeof import("@/i18n").useTranslation>;
 }
 
-function PropertyCard({
-  property,
-  onDelete,
-  canManage = true,
-  t,
-}: PropertyCardProps) {
+function PropertyCard({ property, onDelete, t }: PropertyCardProps) {
   const propertyId = property.id || property._id || "";
   const primaryImage =
     property.images?.find((img) => img.isPrimary) || property.images?.[0];
@@ -240,16 +178,12 @@ function PropertyCard({
           <Link to={`/properties/${propertyId}`} className="btn-view">
             {t.properties.viewBtn}
           </Link>
-          {canManage && (
-            <>
-              <Link to={`/properties/${propertyId}/edit`} className="btn-edit">
-                {t.properties.editBtn}
-              </Link>
-              <button className="btn-delete" onClick={handleDelete}>
-                {t.properties.deleteBtn}
-              </button>
-            </>
-          )}
+          <Link to={`/properties/${propertyId}/edit`} className="btn-edit">
+            {t.properties.editBtn}
+          </Link>
+          <button className="btn-delete" onClick={handleDelete}>
+            {t.properties.deleteBtn}
+          </button>
         </div>
       </div>
     </article>
@@ -257,14 +191,13 @@ function PropertyCard({
 }
 
 // ===========================================
-// Main Properties Page
+// Main My Properties Page
 // ===========================================
 
-export default function PropertiesPage() {
+export default function MyPropertiesPage() {
   const { user } = useAuthStore();
   const t = useTranslation();
-  const canAddProperty = isOwner(user);
-  const canManage = canManageProperties(user);
+  const canAdd = canManageProperties(user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -276,86 +209,78 @@ export default function PropertiesPage() {
     limit: 12,
     type: (searchParams.get("type") as PropertyType) || undefined,
     status: (searchParams.get("status") as PropertyStatus) || undefined,
-    city: searchParams.get("city") || undefined,
     search: searchParams.get("search") || undefined,
   });
 
-  // Local state for text inputs (not linked to API calls until form submit)
+  // Local state for text input
   const [searchText, setSearchText] = useState(filters.search || "");
-  const [cityText, setCityText] = useState(filters.city || "");
 
-  // Load properties
+  // Load my properties
   const loadProperties = useCallback(async () => {
+    if (!user?.id) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await propertyService.getProperties(filters);
+      // Admin sees all properties, owner/manager see only their own
+      const queryFilters: PropertyFilters = { ...filters };
+      if (user.role === "admin") {
+        // Admin manages all — no ownerId filter
+      } else {
+        queryFilters.ownerId = user.id;
+      }
+
+      const response = await propertyService.getProperties(queryFilters);
       setProperties(response.properties);
       setTotal(response.total);
       setCurrentPage(response.page);
     } catch (err) {
-      console.error("Failed to load properties:", err);
+      console.error("Failed to load my properties:", err);
       setError("load");
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, user?.id, user?.role]);
 
   useEffect(() => {
     loadProperties();
   }, [loadProperties]);
 
-  const canManageProperty = useCallback(
-    (property: Property) => {
-      if (!user) return false;
-
-      if (user.role === "admin") return true;
-      if (user.role === "owner") return property.ownerId === user.id;
-      if (user.role === "manager") {
-        return property.managerId === user.id || property.ownerId === user.id;
-      }
-
-      return false;
+  // Sync URL params
+  const updateUrlParams = useCallback(
+    (f: PropertyFilters) => {
+      const params = new URLSearchParams();
+      if (f.type) params.set("type", f.type);
+      if (f.status) params.set("status", f.status);
+      if (f.search) params.set("search", f.search);
+      setSearchParams(params);
     },
-    [user],
+    [setSearchParams],
   );
 
-
-  // Sync URL params with current filters
-  const updateUrlParams = useCallback((f: PropertyFilters) => {
-    const params = new URLSearchParams();
-    if (f.type) params.set("type", f.type);
-    if (f.status) params.set("status", f.status);
-    if (f.city) params.set("city", f.city);
-    if (f.search) params.set("search", f.search);
-    setSearchParams(params);
-  }, [setSearchParams]);
-
-  // Handle dropdown filter changes (triggers API immediately)
+  // Dropdown filter change
   const handleFilterChange = (key: keyof PropertyFilters, value: string) => {
     const newFilters = { ...filters, [key]: value || undefined, page: 1 };
     setFilters(newFilters);
     updateUrlParams(newFilters);
   };
 
-  // Handle search form submit (applies text inputs and triggers API)
+  // Search form submit
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const newFilters = {
       ...filters,
       search: searchText || undefined,
-      city: cityText || undefined,
       page: 1,
     };
     setFilters(newFilters);
     updateUrlParams(newFilters);
   };
 
-  // Handle reset filters
+  // Reset filters
   const handleResetFilters = () => {
     setSearchText("");
-    setCityText("");
     setFilters({ page: 1, limit: 12 });
     setSearchParams({});
   };
@@ -388,96 +313,85 @@ export default function PropertiesPage() {
         <div className="properties-header">
           <div className="header-actions">
             <div>
-              <h1>{t.properties.title}</h1>
-              <p>
+              <Link to="/properties" className="btn-back-to-list">
+                <BackIcon />
+                {t.properties.backToAll}
+              </Link>
+              <h1>{t.properties.myProperties}</h1>
+              <p>{t.properties.myPropertiesDesc}</p>
+              <p className="my-properties-count">
                 {total} {t.properties.title.toLowerCase()} {t.properties.found}
               </p>
             </div>
-            {canAddProperty && (
+            {canAdd && (
               <Link to="/properties/new" className="btn-add-property">
                 <PlusIcon />
                 {t.properties.addProperty}
               </Link>
             )}
-            {canManage && (
-              <Link to="/properties/mine" className="btn-my-properties">
-                <MyPropertiesIcon />
-                {t.properties.showMyProperties}
-              </Link>
-            )}
-            {/* Filters */}
-            <form className="properties-filters" onSubmit={handleSearch}>
-              <div className="filters-row">
-                <div className="filter-group">
-                  <label htmlFor="filter-search">{t.properties.search}</label>
-                  <input
-                    id="filter-search"
-                    type="text"
-                    placeholder={t.properties.searchPlaceholder}
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                  />
-                </div>
-
-                <div className="filter-group">
-                  <label htmlFor="filter-type">{t.properties.typeLabel}</label>
-                  <select
-                    id="filter-type"
-                    value={filters.type || ""}
-                    onChange={(e) => handleFilterChange("type", e.target.value)}
-                  >
-                    <option value="">{t.properties.allTypes}</option>
-                    <option value="apartment">{t.properties.typeApartment}</option>
-                    <option value="house">{t.properties.typeHouse}</option>
-                    <option value="villa">{t.properties.typeVilla}</option>
-                    <option value="studio">{t.properties.typeStudio}</option>
-                    <option value="condo">{t.properties.typeCondo}</option>
-                    <option value="land">{t.properties.typeLand}</option>
-                  </select>
-                </div>
-
-                <div className="filter-group">
-                  <label htmlFor="filter-status">{t.properties.statusLabel}</label>
-                  <select
-                    id="filter-status"
-                    value={filters.status || ""}
-                    onChange={(e) => handleFilterChange("status", e.target.value)}
-                  >
-                    <option value="">{t.properties.allStatuses}</option>
-                    <option value="available">{t.properties.available}</option>
-                    <option value="rented">{t.properties.rented}</option>
-                    <option value="maintenance">{t.properties.maintenance}</option>
-                    <option value="unlisted">{t.properties.unlisted}</option>
-                  </select>
-                </div>
-
-                <div className="filter-group">
-                  <label htmlFor="filter-city">{t.properties.cityLabel}</label>
-                  <input
-                    id="filter-city"
-                    type="text"
-                    placeholder={t.properties.cityPlaceholder}
-                    value={cityText}
-                    onChange={(e) => setCityText(e.target.value)}
-                  />
-                </div>
-
-                <div className="filter-actions">
-                  <button type="submit" className="btn-filter primary">
-                    <SearchIcon />
-                    {t.properties.searchBtn}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-filter secondary"
-                    onClick={handleResetFilters}
-                  >
-                    {t.properties.reset}
-                  </button>
-                </div>
-              </div>
-            </form>
           </div>
+
+          {/* Filters */}
+          <form className="properties-filters" onSubmit={handleSearch}>
+            <div className="filters-row">
+              <div className="filter-group">
+                <label htmlFor="filter-search">{t.properties.search}</label>
+                <input
+                  id="filter-search"
+                  type="text"
+                  placeholder={t.properties.searchPlaceholder}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="filter-type">{t.properties.typeLabel}</label>
+                <select
+                  id="filter-type"
+                  value={filters.type || ""}
+                  onChange={(e) => handleFilterChange("type", e.target.value)}
+                >
+                  <option value="">{t.properties.allTypes}</option>
+                  <option value="apartment">{t.properties.typeApartment}</option>
+                  <option value="house">{t.properties.typeHouse}</option>
+                  <option value="villa">{t.properties.typeVilla}</option>
+                  <option value="studio">{t.properties.typeStudio}</option>
+                  <option value="condo">{t.properties.typeCondo}</option>
+                  <option value="land">{t.properties.typeLand}</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label htmlFor="filter-status">{t.properties.statusLabel}</label>
+                <select
+                  id="filter-status"
+                  value={filters.status || ""}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                >
+                  <option value="">{t.properties.allStatuses}</option>
+                  <option value="available">{t.properties.available}</option>
+                  <option value="rented">{t.properties.rented}</option>
+                  <option value="maintenance">{t.properties.maintenance}</option>
+                  <option value="unlisted">{t.properties.unlisted}</option>
+                </select>
+              </div>
+
+              <div className="filter-actions">
+                <button type="submit" className="btn-filter primary">
+                  <SearchIcon />
+                  {t.properties.searchBtn}
+                </button>
+                <button
+                  type="button"
+                  className="btn-filter secondary"
+                  onClick={handleResetFilters}
+                >
+                  {t.properties.reset}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
 
         {/* Content */}
@@ -496,15 +410,13 @@ export default function PropertiesPage() {
         ) : properties.length === 0 ? (
           <div className="empty-state">
             <HomeIcon />
-            <h3>{t.properties.noProperties}</h3>
+            <h3>{t.properties.noMyProperties}</h3>
             <p>
-              {filters.search || filters.type || filters.status || filters.city
+              {filters.search || filters.type || filters.status
                 ? t.properties.noPropertiesFiltered
-                : canAddProperty
-                  ? t.properties.noPropertiesAdd
-                  : t.properties.noPropertiesEmpty}
+                : t.properties.noPropertiesAdd}
             </p>
-            {canAddProperty && (
+            {canAdd && (
               <Link to="/properties/new" className="btn-add-property">
                 <PlusIcon />
                 {t.properties.addProperty}
@@ -519,10 +431,7 @@ export default function PropertiesPage() {
                 <PropertyCard
                   key={property.id || property._id}
                   property={property}
-                  onDelete={
-                    canManageProperty(property) ? handleDelete : undefined
-                  }
-                  canManage={canManageProperty(property)}
+                  onDelete={handleDelete}
                   t={t}
                 />
               ))}
@@ -580,3 +489,4 @@ export default function PropertiesPage() {
     </div>
   );
 }
+
