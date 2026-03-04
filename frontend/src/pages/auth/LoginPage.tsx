@@ -9,7 +9,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { HomeFooter, Navbar } from "../../components/layout";
 import {
   Alert,
   Button,
@@ -23,6 +22,7 @@ import {
 } from "../../components/ui";
 import { authService } from "../../services";
 import { useAuthStore } from "../../store";
+import "./auth.css";
 
 // Google Icon SVG Component
 const GoogleIcon = () => (
@@ -164,12 +164,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="home-page">
-      <Navbar />
-
-      <main className="min-h-screen bg-gradient-to-br from-home-primary-light via-home-background to-home-background-alt px-4 py-12 pt-28 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
+    <div className="auth-page auth-bg">
+      <main className="auth-main px-4 py-12">
+        <div className="w-full max-w-lg">
+          <div className="mb-8 text-center auth-brand">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
               <Building2 className="h-8 w-8 text-white" />
             </div>
@@ -181,11 +179,11 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <Card className="border-home-border/80 shadow-xl shadow-blue-100/40">
-            <CardHeader>
-              <CardTitle>Sign In</CardTitle>
+          <Card className="auth-card border-home-border/60 shadow-xl">
+            <CardHeader className="text-center">
+              <CardTitle>Welcome</CardTitle>
               <CardDescription>
-                Enter your credentials to access your account
+                We&apos;re happy to see you again
               </CardDescription>
             </CardHeader>
 
@@ -284,38 +282,27 @@ export default function LoginPage() {
                   Sign In
                 </Button>
 
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-home-border" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="bg-white/90 px-2 text-home-muted">
-                      Or continue with
-                    </span>
+                <div className="auth-social">
+                  <p className="auth-social-title">OR LOGIN WITH</p>
+                  <div className="auth-social-icons">
+                    <button
+                      type="button"
+                      className="auth-social-icon-btn"
+                      onClick={handleGoogleLogin}
+                      aria-label="Sign in with Google"
+                    >
+                      <GoogleIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-social-icon-btn"
+                      onClick={handleFacebookLogin}
+                      aria-label="Sign in with Facebook"
+                    >
+                      <FacebookIcon />
+                    </button>
                   </div>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="soft"
-                  className="w-full"
-                  size="lg"
-                  onClick={handleGoogleLogin}
-                >
-                  <GoogleIcon />
-                  <span className="ml-2">Sign in with Google</span>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="soft"
-                  className="w-full"
-                  size="lg"
-                  onClick={handleFacebookLogin}
-                >
-                  <FacebookIcon />
-                  <span className="ml-2">Sign in with Facebook</span>
-                </Button>
 
                 <p className="text-center text-sm text-home-muted">
                   Don't have an account?{" "}
@@ -330,7 +317,7 @@ export default function LoginPage() {
             </form>
           </Card>
 
-          <div className="mt-6 rounded-lg border border-home-border bg-white/70 p-4 backdrop-blur">
+          <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
             <p className="text-center text-sm text-home-muted">
               <span className="font-medium">Testing?</span> Register a new
               account or use the API docs at{" "}
@@ -346,8 +333,6 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
-
-      <HomeFooter />
 
       {showReactivateModal && (
         <div

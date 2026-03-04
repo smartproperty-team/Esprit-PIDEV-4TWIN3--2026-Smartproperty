@@ -9,7 +9,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { HomeFooter, Navbar } from "../../components/layout";
 import {
   Alert,
   Button,
@@ -23,6 +22,7 @@ import {
 } from "../../components/ui";
 import { authService } from "../../services";
 import { useAuthStore } from "../../store";
+import "./auth.css";
 
 // Google Icon SVG Component
 const GoogleIcon = () => (
@@ -74,7 +74,7 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterFormData = z.input<typeof registerSchema>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -112,7 +112,7 @@ export default function RegisterPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        role: data.role,
+        role: data.role ?? "tenant",
         captchaToken,
       });
       // Registration successful - store sets isAuthenticated=true
@@ -132,11 +132,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="home-page">
-      <Navbar />
-      <main className="min-h-screen bg-gradient-to-br from-home-primary-light via-home-background to-home-background-alt px-4 py-12 pt-28 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
+    <div className="auth-page auth-bg">
+      <main className="auth-main px-4 py-12">
+        <div className="w-full max-w-lg">
+          <div className="mb-8 text-center auth-brand">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
               <Building2 className="h-8 w-8 text-white" />
             </div>
@@ -148,8 +147,8 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <Card className="border-home-border/80 shadow-xl shadow-blue-100/40">
-            <CardHeader>
+          <Card className="auth-card border-home-border/60 shadow-xl">
+            <CardHeader className="text-center">
               <CardTitle>Create Account</CardTitle>
               <CardDescription>
                 Fill in your details to register
@@ -280,38 +279,27 @@ export default function RegisterPage() {
                   Create Account
                 </Button>
 
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-home-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white/90 px-2 text-home-muted">
-                      Or continue with
-                    </span>
+                <div className="auth-social">
+                  <p className="auth-social-title">OR SIGN UP WITH</p>
+                  <div className="auth-social-icons">
+                    <button
+                      type="button"
+                      className="auth-social-icon-btn"
+                      onClick={handleGoogleSignup}
+                      aria-label="Sign up with Google"
+                    >
+                      <GoogleIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-social-icon-btn"
+                      onClick={handleFacebookSignup}
+                      aria-label="Sign up with Facebook"
+                    >
+                      <FacebookIcon />
+                    </button>
                   </div>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                  onClick={handleGoogleSignup}
-                >
-                  <GoogleIcon />
-                  <span className="ml-2">Sign up with Google</span>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                  onClick={handleFacebookSignup}
-                >
-                  <FacebookIcon />
-                  <span className="ml-2">Sign up with Facebook</span>
-                </Button>
 
                 <p className="text-center text-sm text-home-muted">
                   Already have an account?{" "}
@@ -326,7 +314,7 @@ export default function RegisterPage() {
             </form>
           </Card>
 
-          <div className="mt-6 rounded-lg border border-home-border bg-white/70 p-4 backdrop-blur">
+          <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
             <p className="text-center text-sm text-home-muted">
               <span className="font-medium">Testing?</span> Register a new
               account or use the API docs at{" "}
@@ -342,7 +330,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
-      <HomeFooter />
     </div>
   );
 }
