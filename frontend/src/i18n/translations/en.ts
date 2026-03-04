@@ -28,9 +28,6 @@ export const en = {
   home: {
     heroTitle: "The #1 site real estate",
     heroSubtitle: "professionals trust in Tunisia",
-    heroKicker: "The Best Way To",
-    heroLine1: "Find Your",
-    heroLine2: "Perfect Home",
     sale: "Sale",
     rent: "Rent",
     forBuy: "For Buy",

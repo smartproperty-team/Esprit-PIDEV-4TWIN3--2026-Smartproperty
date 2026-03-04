@@ -30,9 +30,6 @@ export const fr: Translations = {
   home: {
     heroTitle: "Le site n°1 de l'immobilier",
     heroSubtitle: "en qui les professionnels ont confiance en Tunisie",
-    heroKicker: "Le meilleur moyen de",
-    heroLine1: "Trouver votre",
-    heroLine2: "Maison parfaite",
     sale: "Vente",
     rent: "Location",
     forBuy: "Acheter",

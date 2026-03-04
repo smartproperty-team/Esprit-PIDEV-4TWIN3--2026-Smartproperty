@@ -418,8 +418,8 @@ export default function HomePage() {
         <div className="hero-content">
           <p className="hero-kicker">{t.home.heroKicker}</p>
           <h1 id="hero-title" className="hero-title">
-            <span className="hero-title-line">{t.home.heroLine1}</span>
-            <span className="hero-title-secondary">{t.home.heroLine2}</span>
+            <span className="hero-title-line">{t.home.heroTitle}</span>
+            <span className="hero-title-secondary">{t.home.heroSubtitle}</span>
           </h1>
 
           {/* Search Tabs */}

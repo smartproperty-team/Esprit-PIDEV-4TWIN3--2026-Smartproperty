@@ -759,7 +759,8 @@ select:focus-visible {
   font-size: 2rem;
   font-weight: 500;
   color: #737373;
-  margin: 0 0 1rem;
+  margin: 0 auto 1rem;
+  text-align: center;
 }
 
 .hero-title {
@@ -767,9 +768,10 @@ select:focus-visible {
   font-weight: 700;
   color: #0f172a;
   line-height: 1.03;
-  margin: 0 0 2.25rem;
+  margin: 0 auto 2.25rem;
   letter-spacing: -0.02em;
-  max-width: 560px;
+  max-width: 700px;
+  text-align: center;
 }
 
 .hero-title .hero-title-line,
