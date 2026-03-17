@@ -4,6 +4,16 @@
 
 This document outlines all features to be implemented in the SmartProperty platform, organized by development phases.
 
+## Strategic Objectives Alignment (Spec v1.0)
+
+- [ ] Achieve valuation accuracy within +/-5% of market reference prices
+- [ ] Reduce vacancy time by 40% through intelligent matching workflows
+- [ ] Improve rental income by 8-12% with dynamic pricing recommendations
+- [ ] Provide tenant self-service portal with 24/7 automated responses
+- [ ] Reduce administrative workload by 50% via process automation
+- [ ] Reach 90% reliability target for AI non-payment risk scoring
+- [ ] Support multi-owner and multi-asset management in one SaaS platform
+
 ---
 
 ## Phase 1: Environment Setup ✅ COMPLETED
@@ -86,6 +96,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 - [x] User entity with TypeORM/MongoDB
 - [x] User roles (admin, owner, tenant, manager, agent)
+- [ ] Extended roles from product spec (super_admin, branch_manager, rental_manager, accountant_assistant, service_provider)
 - [x] User status (active, inactive, suspended, pending_verification)
 - [x] Full user profile fields (firstName, lastName, phone, avatar, etc.)
 - [ ] Avatar upload and storage
@@ -122,6 +133,14 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [x] Activate/deactivate users
 - [x] Change user roles
 
+### Multi-Tenant & Organization Management
+
+- [ ] Tenant/agency workspace isolation (multi-tenant SaaS)
+- [ ] Agency and branch hierarchy with scoped permissions
+- [ ] Branch manager dashboards (portfolio view, pricing/condition validation)
+- [ ] Accountant/admin assistant permissions (invoicing, reconciliation, tax reporting)
+- [ ] Service provider permissions (interventions, reports, invoicing)
+
 ---
 
 ## Phase 4: Properties Module 🔄 IN PROGRESS
@@ -142,6 +161,16 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [x] Delete property (soft delete)
 - [x] Get property by ID
 - [x] List owner's properties
+- [ ] Multi-step property creation wizard
+- [ ] Automatic geolocation with interactive map on listing form
+- [ ] Unique property identifier generation
+
+### Portfolio Management & Data Exchange
+
+- [ ] Property categorization (sale, rental, management)
+- [ ] Portfolio dashboard with KPI widgets
+- [ ] Import/export via Excel templates
+- [ ] Partner API connectors for listing synchronization
 
 ### Property Images
 
@@ -151,6 +180,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [x] Image reordering
 - [x] Image deletion
 - [x] AWS S3/MinIO storage integration
+- [ ] AI feature detection from uploaded photos
 
 ### Property Search
 
@@ -172,6 +202,14 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Property comparison
 - [ ] Share property link
 - [ ] QR code generation
+
+### Marketing & Distribution
+
+- [ ] AI-generated marketing descriptions (short/medium/long)
+- [ ] Tone presets (professional, warm, luxury)
+- [ ] Multilingual translation for generated descriptions
+- [ ] Multi-portal distribution (SeLoger, LeBonCoin, etc.)
+- [ ] Auto-generated property showcase landing page
 
 ---
 
@@ -227,6 +265,8 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Lease document upload
 - [ ] Digital signature integration
 - [ ] Lease activation
+- [ ] Electronic lease endorsements/annexes
+- [ ] Digital move-in/move-out inventory with photos
 
 ### Lease Lifecycle
 
@@ -271,6 +311,8 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Late fee calculation
 - [ ] Payment reminders
 - [ ] Overdue notifications
+- [ ] Rent and charges monitoring dashboard
+- [ ] Automatic unpaid rent reminder workflow
 
 ### Financial Reporting
 
@@ -306,6 +348,19 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Update status
 - [ ] Record costs
 - [ ] Close requests
+
+### Service Provider Operations
+
+- [ ] Service provider portal for assigned interventions
+- [ ] Intervention scheduling calendar
+- [ ] Photo/report upload after intervention
+- [ ] Vendor invoice submission and validation
+
+### Predictive Maintenance
+
+- [ ] Predictive maintenance scoring from history and incident patterns
+- [ ] Suggested preventive interventions by asset type
+- [ ] Local market benchmark for maintenance costs and SLA tracking
 
 ### Notifications
 
@@ -517,6 +572,13 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Search alerts
 - [ ] Recently viewed
 
+### Distribution & Marketplace
+
+- [ ] Cross-agency property marketplace
+- [ ] Lead sharing rules and partner agency permissions
+- [ ] Listing syndication monitoring and publication status
+- [ ] Agency-branded mini-sites for portfolio/property promotion
+
 ---
 
 ## Phase 14: AI Services (Future)
@@ -527,6 +589,9 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Collaborative filtering
 - [ ] Content-based recommendations
 - [ ] ML model training
+- [ ] Explicit + implicit criteria processing for matching
+- [ ] Daily top-3 match notifications (push/email)
+- [ ] Explainable compatibility score details (why this match)
 
 ### Price Prediction
 
@@ -534,6 +599,10 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Price prediction model
 - [ ] Rental price suggestions
 - [ ] Market trend analysis
+- [ ] Confidence interval output with min-max range
+- [ ] Comparative market analysis (similar sold/rented assets)
+- [ ] District price evolution graphs
+- [ ] Valuation report export to PDF
 
 ### Image Analysis
 
@@ -541,6 +610,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Quality scoring
 - [ ] Auto-tagging
 - [ ] Duplicate detection
+- [ ] 3D virtual tour generation support pipeline
 
 ### NLP Features
 
@@ -548,6 +618,28 @@ This document outlines all features to be implemented in the SmartProperty platf
 - [ ] Chatbot assistant
 - [ ] Automated responses
 - [ ] Sentiment analysis
+
+### AI Marketing Content Generation
+
+- [ ] One-click AI description generation from property data + images
+- [ ] Multi-variant copy generation with tone customization
+- [ ] Multilingual copy generation
+
+### Solvency & Risk Intelligence
+
+- [ ] OCR extraction from candidate supporting documents
+- [ ] Document authenticity/fraud detection
+- [ ] Debt ratio calculation (rent/income)
+- [ ] AI risk score (0-100) with confidence metadata
+- [ ] Recommendation output (Accept / Ask guarantees / Refuse)
+- [ ] GDPR-compliant non-discrimination guardrails for scoring
+
+### AI Platform Stack
+
+- [ ] FastAPI microservices for AI orchestration
+- [ ] OCR stack integration (Tesseract + PaddleOCR)
+- [ ] Vector database integration (Qdrant/Pinecone) for RAG
+- [ ] LangChain/LangGraph workflows for reasoning pipelines
 
 ---
 
@@ -585,6 +677,28 @@ This document outlines all features to be implemented in the SmartProperty platf
 
 ---
 
+## Phase 16: Compliance & Ecosystem Integrations (Future)
+
+### Regulatory Compliance
+
+- [ ] DPE workflow support and compliance checks
+- [ ] ALUR process support and legal checklist automation
+- [ ] Compliance audit trail for regulated actions
+
+### API Strategy
+
+- [ ] Dual API model (REST + GraphQL)
+- [ ] GraphQL schema for portfolio, pricing, and matching domains
+- [ ] External API rate plans for partner agencies
+
+### Planned Deferred Scope from Product Spec
+
+- [ ] Augmented reality for visits (targeted in enhancement phase)
+- [ ] IoT building automation integration (connected sensors)
+- [ ] Blockchain ownership registry exploration (long-term)
+
+---
+
 ## Priority Matrix
 
 ### High Priority (MVP)
@@ -610,6 +724,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 13. Phase 13: Advanced Features
 14. Phase 14: AI Services
 15. Phase 15: DevOps
+16. Phase 16: Compliance & Ecosystem Integrations
 
 ---
 
@@ -632,6 +747,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 | Phase 13 | 5-7 days           | Not Started |
 | Phase 14 | TBD                | Future      |
 | Phase 15 | Ongoing            | Not Started |
+| Phase 16 | TBD                | Future      |
 
 ---
 
@@ -645,6 +761,7 @@ This document outlines all features to be implemented in the SmartProperty platf
 - Passport.js + JWT
 - Swagger/OpenAPI
 - Socket.io
+- REST + GraphQL (Apollo Server)
 
 ### Frontend
 
@@ -655,6 +772,8 @@ This document outlines all features to be implemented in the SmartProperty platf
 - React Hook Form + Zod
 - Mapbox GL
 - React Three Fiber
+- Shadcn/ui + Radix UI
+- Framer Motion
 
 ### Infrastructure
 
@@ -663,6 +782,16 @@ This document outlines all features to be implemented in the SmartProperty platf
 - Docker & Docker Compose
 - AWS S3 (file storage)
 - Stripe (payments)
+
+### AI/ML Services
+
+- FastAPI (Python)
+- OpenCV + YOLOv8 + Stable Diffusion
+- Scikit-learn + XGBoost + LightGBM + CatBoost
+- OpenAI GPT models + Sentence Transformers
+- LangChain + LangGraph
+- Qdrant/Pinecone (vector store)
+- Tesseract + PaddleOCR
 
 ---
 
