@@ -3,7 +3,7 @@
 // ===========================================
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Lock, Mail, Phone, User } from "lucide-react";
+import { Building2, Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
 import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
@@ -86,6 +86,8 @@ export default function RegisterPage() {
   } = useAuthStore();
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
@@ -224,18 +226,42 @@ export default function RegisterPage() {
 
                 <Input
                   label="Password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
+                  rightIcon={
+                    showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )
+                  }
+                  onRightIconClick={() => setShowPassword((prev) => !prev)}
+                  rightIconAriaLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                   error={errors.password?.message}
                   {...register("password")}
                 />
 
                 <Input
                   label="Confirm Password"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
+                  rightIcon={
+                    showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )
+                  }
+                  onRightIconClick={() =>
+                    setShowConfirmPassword((prev) => !prev)
+                  }
+                  rightIconAriaLabel={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
                   error={errors.confirmPassword?.message}
                   {...register("confirmPassword")}
                 />

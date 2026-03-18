@@ -3,7 +3,7 @@
 // ===========================================
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Lock, Mail } from "lucide-react";
+import { Building2, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
@@ -68,6 +68,7 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
   const [show2FA, setShow2FA] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [showReactivateModal, setShowReactivateModal] = useState(false);
   const [pendingLoginData, setPendingLoginData] = useState<{
     email: string;
@@ -211,9 +212,20 @@ export default function LoginPage() {
 
                 <Input
                   label="Password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
+                  rightIcon={
+                    showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )
+                  }
+                  onRightIconClick={() => setShowPassword((prev) => !prev)}
+                  rightIconAriaLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                   error={errors.password?.message}
                   className="focus-visible:ring-home-primary"
                   {...register("password")}
