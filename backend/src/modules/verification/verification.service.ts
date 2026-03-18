@@ -232,9 +232,22 @@ export class VerificationService {
         where: { userId: v.userId },
       });
 
+      let tenantName: string | null = null;
+      let tenantAvatar: string | null = null;
+      try {
+        const user = await this.usersService.findById(v.userId);
+        tenantName = `${user.firstName} ${user.lastName}`.trim();
+        tenantAvatar = user.avatar ?? null;
+      } catch {
+        tenantName = null;
+        tenantAvatar = null;
+      }
+
       result.push({
         id: v._id?.toHexString() || v.id,
         userId: v.userId,
+        tenantName,
+        tenantAvatar,
         overallStatus: v.overallStatus,
         submittedAt: v.submittedAt?.toISOString(),
         verifiedAt: v.verifiedAt?.toISOString(),
