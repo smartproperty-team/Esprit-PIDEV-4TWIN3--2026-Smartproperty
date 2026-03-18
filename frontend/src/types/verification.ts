@@ -48,6 +48,8 @@ export interface UploadDocumentResponse {
 export interface AdminVerificationItem {
   id: string;
   userId: string;
+  tenantName?: string | null;
+  tenantAvatar?: string | null;
   overallStatus: VerificationStatus;
   submittedAt?: string;
   verifiedAt?: string;
