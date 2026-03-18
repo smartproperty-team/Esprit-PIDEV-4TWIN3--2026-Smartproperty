@@ -11,7 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { authService, propertyService, verificationService } from "@/services";
+import {
+  applicationService,
+  authService,
+  notificationService,
+  propertyService,
+  verificationService,
+} from "@/services";
 import { useAuthStore } from "@/store";
 import { UserRole } from "@/types/auth";
 import type { Property } from "@/types/property";
@@ -19,6 +25,7 @@ import { VerificationStatus } from "@/types/verification";
 import {
   canAccessAdminUsers,
   canManageProperties,
+  canReviewApplications,
   canReviewVerifications,
   isTenant,
 } from "@/utils";
@@ -49,6 +56,12 @@ export default function DashboardPage() {
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [isLoadingOwnerProperties, setIsLoadingOwnerProperties] =
     useState(false);
+  const [stats, setStats] = useState({
+    first: 0,
+    second: 0,
+    leases: 0,
+    notifications: 0,
+  });
 
   // Fetch verification status for tenants
   useEffect(() => {
@@ -85,6 +98,107 @@ export default function DashboardPage() {
     void loadOwnerProperties();
   }, [user?.id, user?.role]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setStats({ first: 0, second: 0, leases: 0, notifications: 0 });
+      return;
+    }
+
+    const loadStats = async () => {
+      let notificationCount = 0;
+      try {
+        notificationCount = await notificationService.getUnreadCount();
+      } catch {
+        notificationCount = 0;
+      }
+
+      if (isTenant(user)) {
+        let browsedCount = 0;
+        let applicationCount = 0;
+
+        try {
+          const properties = await propertyService.getProperties({
+            page: 1,
+            limit: 1,
+          });
+          browsedCount = properties.total;
+        } catch {
+          browsedCount = 0;
+        }
+
+        try {
+          const applications = await applicationService.getMyApplications({
+            page: 1,
+            limit: 1,
+          });
+          applicationCount = applications.total;
+        } catch {
+          applicationCount = 0;
+        }
+
+        setStats({
+          first: browsedCount,
+          second: applicationCount,
+          leases: 0,
+          notifications: notificationCount,
+        });
+        return;
+      }
+
+      if (canManageProperties(user)) {
+        let propertyCount = 0;
+        let tenantCount = 0;
+
+        try {
+          const properties = await propertyService.getProperties({
+            page: 1,
+            limit: 1,
+            ...(user.role === UserRole.OWNER
+              ? { ownerId: user.id }
+              : { managerId: user.id }),
+          });
+          propertyCount = properties.total;
+        } catch {
+          propertyCount = 0;
+        }
+
+        if (canReviewApplications(user)) {
+          try {
+            const received = await applicationService.getReceivedApplications({
+              page: 1,
+              limit: 100,
+            });
+
+            const uniqueTenants = new Set(
+              received.applications.map((application) => application.tenantId),
+            ).size;
+
+            tenantCount = uniqueTenants || received.total;
+          } catch {
+            tenantCount = 0;
+          }
+        }
+
+        setStats({
+          first: propertyCount,
+          second: tenantCount,
+          leases: 0,
+          notifications: notificationCount,
+        });
+        return;
+      }
+
+      setStats({
+        first: 0,
+        second: 0,
+        leases: 0,
+        notifications: notificationCount,
+      });
+    };
+
+    void loadStats();
+  }, [user]);
+
   const handleResendVerification = async () => {
     if (!user?.email) return;
     setResendingEmail(true);
@@ -101,6 +215,17 @@ export default function DashboardPage() {
       });
     } finally {
       setResendingEmail(false);
+    }
+  };
+
+  const handleApplicationsCardClick = () => {
+    if (canReviewApplications(user)) {
+      navigate("/applications/review");
+      return;
+    }
+
+    if (isTenant(user)) {
+      navigate("/applications");
     }
   };
 
@@ -251,7 +376,9 @@ export default function DashboardPage() {
                   <Home className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.first}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {canManage ? "Properties" : "Browsed"}
                   </p>
@@ -259,13 +386,22 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card
+              className={
+                (canReviewApplications(user) || isTenant(user))
+                  ? "cursor-pointer transition hover:shadow-md"
+                  : ""
+              }
+              onClick={handleApplicationsCardClick}
+            >
               <CardContent className="flex items-center p-6">
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                   <Users className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.second}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {canManage ? "Tenants" : "Applications"}
                   </p>
@@ -279,7 +415,9 @@ export default function DashboardPage() {
                   <FileText className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.leases}
+                  </p>
                   <p className="text-sm text-gray-500">Leases</p>
                 </div>
               </CardContent>
@@ -291,7 +429,9 @@ export default function DashboardPage() {
                   <Bell className="h-6 w-6 text-yellow-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.notifications}
+                  </p>
                   <p className="text-sm text-gray-500">Notifications</p>
                 </div>
               </CardContent>

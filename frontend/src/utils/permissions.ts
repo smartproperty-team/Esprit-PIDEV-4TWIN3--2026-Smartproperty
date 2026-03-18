@@ -45,6 +45,14 @@ const VERIFICATION_REVIEW_ROLES: UserRole[] = [
   UserRole.BRANCH_MANAGER,
 ];
 
+const APPLICATION_REVIEW_ROLES: UserRole[] = [
+  UserRole.SUPER_ADMIN,
+  UserRole.OWNER,
+  UserRole.BRANCH_MANAGER,
+  UserRole.REAL_ESTATE_AGENT,
+  UserRole.RENTAL_MANAGER,
+];
+
 function hasRole(
   user: User | null | undefined,
   allowedRoles: UserRole[],
@@ -104,6 +112,13 @@ export function canAccessAdminUsers(user: User | null | undefined): boolean {
  */
 export function canReviewVerifications(user: User | null | undefined): boolean {
   return hasRole(user, VERIFICATION_REVIEW_ROLES);
+}
+
+/**
+ * Can review and process rental applications.
+ */
+export function canReviewApplications(user: User | null | undefined): boolean {
+  return hasRole(user, APPLICATION_REVIEW_ROLES);
 }
 
 /**

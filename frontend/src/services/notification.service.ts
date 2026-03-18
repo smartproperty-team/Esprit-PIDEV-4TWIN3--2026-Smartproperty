@@ -2,14 +2,22 @@
 // SmartProperty - Notification Service
 // ===========================================
 
-import api from './api';
+import api from "./api";
 
 export interface Notification {
   id: string;
   userId: string;
   title: string;
   message: string;
-  type: 'verification_approved' | 'verification_rejected' | 'system' | 'info';
+  type:
+    | "verification_approved"
+    | "verification_rejected"
+    | "application_submitted"
+    | "application_status_changed"
+    | "application_document_requested"
+    | "application_deadline_reminder"
+    | "system"
+    | "info";
   isRead: boolean;
   link?: string;
   createdAt: string;
@@ -18,31 +26,29 @@ export interface Notification {
 export const notificationService = {
   // Get all notifications
   async getAll(): Promise<Notification[]> {
-    const response = await api.get<Notification[]>('/api/notifications');
+    const response = await api.get<Notification[]>("/notifications");
     return response.data;
   },
 
   // Get unread count
   async getUnreadCount(): Promise<number> {
-    const response = await api.get<{ count: number }>(
-      '/api/notifications/unread-count',
-    );
+    const response = await api.get<{ count: number }>("/notifications/unread-count");
     return response.data.count;
   },
 
   // Mark one as read
   async markAsRead(id: string): Promise<void> {
-    await api.patch(`/api/notifications/${id}/read`);
+    await api.patch(`/notifications/${id}/read`);
   },
 
   // Mark all as read
   async markAllAsRead(): Promise<void> {
-    await api.patch('/api/notifications/read-all');
+    await api.patch("/notifications/read-all");
   },
 
   // Delete a notification
   async delete(id: string): Promise<void> {
-    await api.delete(`/api/notifications/${id}`);
+    await api.delete(`/notifications/${id}`);
   },
 };
 

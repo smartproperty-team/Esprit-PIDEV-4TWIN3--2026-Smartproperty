@@ -14,6 +14,10 @@ import {
 export enum NotificationType {
   VERIFICATION_APPROVED = 'verification_approved',
   VERIFICATION_REJECTED = 'verification_rejected',
+  APPLICATION_SUBMITTED = 'application_submitted',
+  APPLICATION_STATUS_CHANGED = 'application_status_changed',
+  APPLICATION_DOCUMENT_REQUESTED = 'application_document_requested',
+  APPLICATION_DEADLINE_REMINDER = 'application_deadline_reminder',
   SYSTEM = 'system',
   INFO = 'info',
 }
