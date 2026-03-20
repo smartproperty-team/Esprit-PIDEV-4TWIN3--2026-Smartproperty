@@ -25,6 +25,45 @@ export class NotificationsService {
     private readonly notificationRepo: MongoRepository<Notification>,
   ) {}
 
+  private normalizeId(value: unknown): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (value instanceof ObjectId) {
+      return value.toHexString();
+    }
+
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'toHexString' in value &&
+      typeof (value as { toHexString?: unknown }).toHexString === 'function'
+    ) {
+      return (value as { toHexString: () => string }).toHexString();
+    }
+
+    return String(value);
+  }
+
+  private buildUserFilter(userId: string): Record<string, unknown> {
+    const variants: Array<string | ObjectId> = [userId];
+
+    if (ObjectId.isValid(userId)) {
+      variants.push(new ObjectId(userId));
+    }
+
+    return {
+      userId: {
+        $in: variants,
+      },
+    };
+  }
+
   // ─── Create a notification ─────────────────────────────
   async create(dto: CreateNotificationDto): Promise<Notification> {
     const notification = this.notificationRepo.create({
@@ -46,7 +85,7 @@ export class NotificationsService {
   // ─── Get all notifications for a user ──────────────────
   async findAllForUser(userId: string) {
     const notifications = await this.notificationRepo.find({
-      where: { userId },
+      where: this.buildUserFilter(userId),
       order: { createdAt: 'DESC' },
     });
 
@@ -65,7 +104,10 @@ export class NotificationsService {
   // ─── Get unread count ──────────────────────────────────
   async getUnreadCount(userId: string): Promise<number> {
     return this.notificationRepo.count({
-      where: { userId, isRead: false },
+      where: {
+        ...this.buildUserFilter(userId),
+        isRead: false,
+      },
     });
   }
 
@@ -75,7 +117,8 @@ export class NotificationsService {
       where: { _id: new ObjectId(notificationId) },
     });
 
-    if (!notification || notification.userId !== userId) {
+    const notificationUserId = this.normalizeId(notification?.userId);
+    if (!notification || notificationUserId !== userId) {
       throw new NotFoundException('Notification not found');
     }
 
@@ -87,7 +130,10 @@ export class NotificationsService {
   // ─── Mark all as read ──────────────────────────────────
   async markAllAsRead(userId: string) {
     const notifications = await this.notificationRepo.find({
-      where: { userId, isRead: false },
+      where: {
+        ...this.buildUserFilter(userId),
+        isRead: false,
+      },
     });
 
     for (const n of notifications) {
@@ -104,7 +150,8 @@ export class NotificationsService {
       where: { _id: new ObjectId(notificationId) },
     });
 
-    if (!notification || notification.userId !== userId) {
+    const notificationUserId = this.normalizeId(notification?.userId);
+    if (!notification || notificationUserId !== userId) {
       throw new NotFoundException('Notification not found');
     }
 

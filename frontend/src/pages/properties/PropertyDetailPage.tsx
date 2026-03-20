@@ -10,7 +10,7 @@ import {
 } from "@/services/property.service";
 import { useAuthStore } from "@/store";
 import type { Property, PropertyImage } from "@/types/property";
-import { canManageProperties } from "@/utils";
+import { canManageProperties, isTenant } from "@/utils";
 import L from "leaflet";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
@@ -1259,6 +1259,29 @@ export default function PropertyDetailPage() {
                 </div>
               )}
             </div>
+
+            {isTenant(user) && user && (
+              <div className="sidebar-card">
+                <h3>{t.propertyDetail.applyTitle || "Apply for Rental"}</h3>
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "var(--color-text-muted)",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  {t.propertyDetail.applyDescription ||
+                    "Submit your rental application for this property"}
+                </p>
+                <Link
+                  to={`/applications?propertyId=${property.id || property._id}`}
+                  className="btn-contact"
+                  style={{ textAlign: "center", width: "100%" }}
+                >
+                  {t.propertyDetail.applyButton || "Apply Now"}
+                </Link>
+              </div>
+            )}
 
             {canManage && (
               <div className="sidebar-card">

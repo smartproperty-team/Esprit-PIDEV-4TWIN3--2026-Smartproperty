@@ -1,7 +1,13 @@
 import { useAuthStore } from "@/store";
-import { canAccessAdminUsers, canReviewVerifications } from "@/utils";
+import {
+  canAccessAdminUsers,
+  canReviewApplications,
+  canReviewVerifications,
+  isTenant,
+} from "@/utils";
 import {
   ArrowLeft,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -33,6 +39,24 @@ export default function AppSidebar() {
   const links: SidebarLink[] = (() => {
     const baseLinks: SidebarLink[] = [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      ...(isTenant(user)
+        ? [
+            {
+              label: "My Applications",
+              to: "/applications",
+              icon: ClipboardList,
+            },
+          ]
+        : []),
+      ...(canReviewApplications(user)
+        ? [
+            {
+              label: "Review Applications",
+              to: "/applications/review",
+              icon: ClipboardList,
+            },
+          ]
+        : []),
       { label: "Profile", to: "/profile", icon: User },
       { label: "Settings", to: "/settings", icon: Settings },
       { label: "Verification", to: "/verification", icon: Shield },

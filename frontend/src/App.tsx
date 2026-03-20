@@ -8,6 +8,10 @@ import "./App.css";
 import ReadAloudWidget from "./components/accessibility/ReadAloudWidget";
 import { ProtectedRoute } from "./components/auth";
 import {
+  ApplicationsReviewPage,
+  TenantApplicationsPage,
+} from "./pages/applications";
+import {
   FacebookCallbackPage,
   ForgotPasswordPage,
   GoogleCallbackPage,
@@ -39,7 +43,9 @@ import {
   canAccessAdminUsers,
   canCreateProperties,
   canManageProperties,
+  canReviewApplications,
   canReviewVerifications,
+  isTenant,
 } from "./utils";
 
 function App() {
@@ -159,6 +165,30 @@ function App() {
           element={
             <ProtectedRoute>
               <VerificationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applications"
+          element={
+            <ProtectedRoute>
+              {isTenant(user) ? (
+                <TenantApplicationsPage />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applications/review"
+          element={
+            <ProtectedRoute>
+              {canReviewApplications(user) ? (
+                <ApplicationsReviewPage />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
             </ProtectedRoute>
           }
         />
