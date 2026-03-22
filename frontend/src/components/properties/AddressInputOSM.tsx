@@ -241,7 +241,9 @@ export default function AddressInput({
     <div className="address-input-container">
       {/* Search with OpenStreetMap */}
       <div className="form-group full-width">
-        <label htmlFor="address-search"></label>
+        <label htmlFor="address-search" className="sr-only">
+          {t.properties.form.addressHelper.searchPlaceholder}
+        </label>
 
         {/* Map Picker Button */}
         <button

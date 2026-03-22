@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-03-21T10:36:41.270Z",
+  "method": "Playwright tab sequence smoke test",
+  "results": [
+    {
+      "url": "http://localhost:5174/",
+      "focusableCount": 53,
+      "uniqueFocusTargets": 17,
+      "probableTrap": false,
+      "firstTargets": [
+        "a.skip-link",
+        "a.inline-flex shrink-0 items-center gap-2 text-white transition-colors hover:text-[#FFC570]",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors bg-[#FFC570] text-[#1A3263]",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "button.inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+      ]
+    },
+    {
+      "url": "http://localhost:5174/properties",
+      "focusableCount": 41,
+      "uniqueFocusTargets": 14,
+      "probableTrap": false,
+      "firstTargets": [
+        "a.inline-flex shrink-0 items-center gap-2 text-white transition-colors hover:text-[#FFC570]",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors bg-[#FFC570] text-[#1A3263]",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "a.inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors text-white/95 hover:bg-white/10 hover:text-white",
+        "button.inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
+        "button.inline-flex h-10 w-10 items-center justify-center rounded-full text-indigo-700 transition-colors hover:bg-indigo-100"
+      ]
+    },
+    {
+      "url": "http://localhost:5174/login",
+      "focusableCount": 12,
+      "uniqueFocusTargets": 12,
+      "probableTrap": false,
+      "firstTargets": [
+        "input#email-address.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input#password.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input.h-4 w-4 rounded border-home-border text-home-primary focus:ring-home-primary",
+        "a.text-sm font-medium text-home-primary hover:text-home-primary-dark",
+        "iframe",
+        "iframe",
+        "iframe",
+        "button.inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white h-11 rounded-lg px-8 w-full bg-home-secondary hover:bg-home-secondary-dark focus-visible:ring-home-primary"
+      ]
+    },
+    {
+      "url": "http://localhost:5174/register",
+      "focusableCount": 14,
+      "uniqueFocusTargets": 14,
+      "probableTrap": false,
+      "firstTargets": [
+        "input#first-name.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input#last-name.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-home-border focus-visible:ring-home-primary",
+        "input#email-address.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input#phone-number-(optional).flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input#password.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "input#confirm-password.flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-home-border focus-visible:ring-home-primary",
+        "iframe",
+        "iframe"
+      ]
+    }
+  ]
+}

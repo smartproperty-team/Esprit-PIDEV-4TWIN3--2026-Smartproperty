@@ -23,6 +23,13 @@ export const fr: Translations = {
     notifications: "Notifications",
     markAllRead: "Tout marquer comme lu",
     noNotifications: "Aucune notification",
+    pauseLiveUpdates: "Mettre en pause",
+    resumeLiveUpdates: "Reprendre les mises a jour",
+    sessionExpiringTitle: "Session bientot expiree",
+    sessionExpiringMessage:
+      "Votre session va bientot expirer. Prolongez-la maintenant pour eviter une interruption.",
+    staySignedIn: "Rester connecte",
+    dismiss: "Ignorer",
     completeQuestions: "Complétez vos questions",
   },
 

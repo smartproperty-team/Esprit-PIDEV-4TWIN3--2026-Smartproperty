@@ -134,7 +134,7 @@ export default function RegisterPage() {
       <main className="auth-main px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="mb-8 text-center auth-brand">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <h1 className="mt-4 text-3xl font-bold text-home-text">
@@ -167,6 +167,7 @@ export default function RegisterPage() {
                     placeholder="John"
                     icon={<User className="h-5 w-5" />}
                     error={errors.firstName?.message}
+                    required
                     {...register("firstName")}
                   />
 
@@ -174,6 +175,7 @@ export default function RegisterPage() {
                     label="Last Name"
                     placeholder="Doe"
                     error={errors.lastName?.message}
+                    required
                     {...register("lastName")}
                   />
                 </div>
@@ -184,6 +186,7 @@ export default function RegisterPage() {
                   placeholder="you@example.com"
                   icon={<Mail className="h-5 w-5" />}
                   error={errors.email?.message}
+                  required
                   {...register("email")}
                 />
 
@@ -202,6 +205,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
                   error={errors.password?.message}
+                  required
                   {...register("password")}
                 />
 
@@ -211,6 +215,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   icon={<Lock className="h-5 w-5" />}
                   error={errors.confirmPassword?.message}
+                  required
                   {...register("confirmPassword")}
                 />
 
@@ -296,6 +301,7 @@ export default function RegisterPage() {
                 href="http://localhost:3000/api/docs"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Open API docs (opens in new tab)"
                 className="text-home-primary hover:underline"
               >
                 localhost:3000/api/docs

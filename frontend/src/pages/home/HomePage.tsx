@@ -459,7 +459,8 @@ export default function HomePage() {
             aria-label="Property search"
             id="search-panel"
           >
-            <div className="search-box-inner">
+            <fieldset className="search-box-inner">
+              <legend className="sr-only">Property search filters</legend>
               <div className="search-field location-field">
                 <label htmlFor="search-location" className="sr-only">
                   Location
@@ -532,7 +533,7 @@ export default function HomePage() {
               <button type="submit" className="search-button">
                 <span>{t.home.searchNow}</span>
               </button>
-            </div>
+            </fieldset>
           </form>
         </div>
         <div className="hero-cityscape" aria-hidden="true"></div>
@@ -620,7 +621,7 @@ export default function HomePage() {
               >
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-600 text-sm">
                     {t.home.loadingProperties}
                   </p>
                 </div>
@@ -644,20 +645,20 @@ export default function HomePage() {
                   <path d="M12 8v4" />
                   <path d="M12 16h.01" />
                 </svg>
-                <p className="text-gray-500">{rentalError}</p>
+                <p className="text-gray-600">{rentalError}</p>
                 <Link
                   to="/properties"
-                  className="text-emerald-600 hover:underline text-sm font-medium"
+                  className="text-emerald-700 hover:underline text-sm font-medium"
                 >
                   {t.home.browseAll}
                 </Link>
               </div>
             ) : rentalProperties.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <p className="text-gray-500">{t.home.noRental}</p>
+                <p className="text-gray-600">{t.home.noRental}</p>
                 <Link
                   to="/properties"
-                  className="text-emerald-600 hover:underline text-sm font-medium"
+                  className="text-emerald-700 hover:underline text-sm font-medium"
                 >
                   {t.home.browseAll}
                 </Link>
@@ -703,7 +704,7 @@ export default function HomePage() {
               </h2>
               <p className="section-subtitle">{t.home.howItWorksSubtitle}</p>
             </header>
-            <ol className="steps-grid" role="list">
+            <ol className="steps-grid">
               <li className="step-card">
                 <div className="step-number" aria-hidden="true">
                   01
