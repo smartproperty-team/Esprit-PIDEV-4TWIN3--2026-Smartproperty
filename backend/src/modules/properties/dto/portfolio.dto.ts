@@ -5,8 +5,10 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -118,4 +120,34 @@ export class PortfolioImportCommitDto {
   @IsOptional()
   @IsBoolean()
   skipDuplicates?: boolean;
+}
+
+export enum PortfolioConnectorId {
+  SELOGER = 'seloger',
+  LEBONCOIN = 'leboncoin',
+  WEBHOOK = 'webhook',
+}
+
+export class PortfolioConnectorSyncDto extends PortfolioSummaryQueryDto {
+  @ApiPropertyOptional({ enum: PortfolioConnectorId, example: 'seloger' })
+  @IsEnum(PortfolioConnectorId)
+  connectorId!: PortfolioConnectorId;
+
+  @ApiPropertyOptional({
+    example: true,
+    description:
+      'When true, validates/mapping only. When false and connector supports push, dispatches payload.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  dryRun?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'https://partner.example.com/webhooks/listings',
+    description: 'Required for webhook connector when dryRun is false.',
+  })
+  @IsOptional()
+  @IsUrl()
+  @IsNotEmpty()
+  endpointUrl?: string;
 }

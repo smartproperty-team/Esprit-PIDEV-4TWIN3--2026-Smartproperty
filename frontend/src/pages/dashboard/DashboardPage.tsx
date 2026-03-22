@@ -21,6 +21,9 @@ import {
 import { useAuthStore } from "@/store";
 import { UserRole } from "@/types/auth";
 import type {
+  PortfolioConnectorDefinition,
+  PortfolioConnectorId,
+  PortfolioConnectorSyncResult,
   PortfolioImportPreview,
   PortfolioSummary,
   Property,
@@ -83,6 +86,19 @@ export default function DashboardPage() {
   const [isPreviewingImport, setIsPreviewingImport] = useState(false);
   const [isCommittingImport, setIsCommittingImport] = useState(false);
   const [portfolioImportMessage, setPortfolioImportMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [portfolioConnectors, setPortfolioConnectors] = useState<
+    PortfolioConnectorDefinition[]
+  >([]);
+  const [selectedConnectorId, setSelectedConnectorId] =
+    useState<PortfolioConnectorId>("seloger");
+  const [connectorEndpointUrl, setConnectorEndpointUrl] = useState("");
+  const [isSyncingConnector, setIsSyncingConnector] = useState(false);
+  const [connectorSyncResult, setConnectorSyncResult] =
+    useState<PortfolioConnectorSyncResult | null>(null);
+  const [connectorSyncMessage, setConnectorSyncMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
@@ -254,6 +270,28 @@ export default function DashboardPage() {
     void loadPortfolioSummary();
   }, [canAccessPortfolioDashboard, user?.role]);
 
+  useEffect(() => {
+    if (!canManageProperties(user)) {
+      setPortfolioConnectors([]);
+      return;
+    }
+
+    const loadConnectors = async () => {
+      try {
+        const connectors = await propertyService.getPortfolioConnectors();
+        setPortfolioConnectors(connectors);
+
+        if (connectors.length > 0) {
+          setSelectedConnectorId(connectors[0].id);
+        }
+      } catch {
+        setPortfolioConnectors([]);
+      }
+    };
+
+    void loadConnectors();
+  }, [user]);
+
   const handleExportPortfolio = async () => {
     setIsExportingPortfolio(true);
     try {
@@ -402,6 +440,60 @@ export default function DashboardPage() {
       });
     } finally {
       setIsCommittingImport(false);
+    }
+  };
+
+  const handleSyncConnector = async () => {
+    if (!canManageProperties(user)) {
+      return;
+    }
+
+    const selectedConnector = portfolioConnectors.find(
+      (connector) => connector.id === selectedConnectorId,
+    );
+
+    const isWebhookConnector = selectedConnector?.id === "webhook";
+    const endpointUrl = connectorEndpointUrl.trim();
+
+    if (isWebhookConnector && !endpointUrl) {
+      setConnectorSyncMessage({
+        type: "error",
+        text: "Webhook connector requires an endpoint URL.",
+      });
+      return;
+    }
+
+    setIsSyncingConnector(true);
+    setConnectorSyncMessage(null);
+    setConnectorSyncResult(null);
+
+    try {
+      const scope =
+        user?.role === UserRole.OWNER
+          ? "owner"
+          : user?.role === UserRole.SUPER_ADMIN
+            ? "all"
+            : "manager";
+
+      const result = await propertyService.syncPortfolioConnector({
+        connectorId: selectedConnectorId,
+        scope,
+        dryRun: !isWebhookConnector,
+        endpointUrl: isWebhookConnector ? endpointUrl : undefined,
+      });
+
+      setConnectorSyncResult(result);
+      setConnectorSyncMessage({
+        type: "success",
+        text: `Connector sync completed: ${result.mappedRecords}/${result.totalRecords} mapped, ${result.failedRecords} failed.`,
+      });
+    } catch {
+      setConnectorSyncMessage({
+        type: "error",
+        text: "Connector sync failed. Check connector settings and try again.",
+      });
+    } finally {
+      setIsSyncingConnector(false);
     }
   };
 
@@ -964,6 +1056,120 @@ export default function DashboardPage() {
                             />
                           </div>
                         )}
+
+                        <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-4">
+                          <p className="mb-2 text-sm font-medium text-gray-700">
+                            Partner API Connectors (Listing Synchronization)
+                          </p>
+
+                          {portfolioConnectors.length === 0 ? (
+                            <p className="text-sm text-gray-500">
+                              No connectors available.
+                            </p>
+                          ) : (
+                            <>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="text-sm text-gray-700">
+                                  <span className="mb-1 block font-medium">
+                                    Connector
+                                  </span>
+                                  <select
+                                    value={selectedConnectorId}
+                                    onChange={(event) => {
+                                      setSelectedConnectorId(
+                                        event.target
+                                          .value as PortfolioConnectorId,
+                                      );
+                                      setConnectorSyncResult(null);
+                                      setConnectorSyncMessage(null);
+                                    }}
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                  >
+                                    {portfolioConnectors.map((connector) => (
+                                      <option
+                                        key={connector.id}
+                                        value={connector.id}
+                                      >
+                                        {connector.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+
+                                <label className="text-sm text-gray-700">
+                                  <span className="mb-1 block font-medium">
+                                    Endpoint URL (webhook only)
+                                  </span>
+                                  <input
+                                    type="url"
+                                    value={connectorEndpointUrl}
+                                    onChange={(event) =>
+                                      setConnectorEndpointUrl(
+                                        event.target.value,
+                                      )
+                                    }
+                                    placeholder="https://partner.example.com/webhook"
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                    disabled={selectedConnectorId !== "webhook"}
+                                  />
+                                </label>
+                              </div>
+
+                              <div className="mt-3 flex items-center justify-between gap-3">
+                                <p className="text-xs text-gray-500">
+                                  {portfolioConnectors.find(
+                                    (connector) =>
+                                      connector.id === selectedConnectorId,
+                                  )?.description || ""}
+                                </p>
+                                <Button
+                                  variant="outline"
+                                  onClick={handleSyncConnector}
+                                  isLoading={isSyncingConnector}
+                                >
+                                  Sync Connector
+                                </Button>
+                              </div>
+
+                              {connectorSyncMessage && (
+                                <div className="mt-3">
+                                  <Alert
+                                    type={connectorSyncMessage.type}
+                                    message={connectorSyncMessage.text}
+                                    onClose={() =>
+                                      setConnectorSyncMessage(null)
+                                    }
+                                  />
+                                </div>
+                              )}
+
+                              {connectorSyncResult && (
+                                <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+                                  <p>
+                                    Total: {connectorSyncResult.totalRecords} |
+                                    Mapped: {connectorSyncResult.mappedRecords}{" "}
+                                    | Failed:{" "}
+                                    {connectorSyncResult.failedRecords}
+                                    {connectorSyncResult.pushedRecords > 0 && (
+                                      <>
+                                        {" "}
+                                        | Pushed:{" "}
+                                        {connectorSyncResult.pushedRecords}
+                                      </>
+                                    )}
+                                  </p>
+                                  {connectorSyncResult.issues.length > 0 && (
+                                    <p className="mt-1 text-amber-700">
+                                      First issue: row{" "}
+                                      {connectorSyncResult.issues[0].rowNumber}{" "}
+                                      - {connectorSyncResult.issues[0].message}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

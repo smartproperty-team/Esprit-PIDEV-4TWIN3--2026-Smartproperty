@@ -5,6 +5,9 @@
 import type {
   CreatePropertyDto,
   PortfolioBinaryFileResponse,
+  PortfolioConnectorDefinition,
+  PortfolioConnectorSyncRequest,
+  PortfolioConnectorSyncResult,
   PortfolioExportResponse,
   PortfolioFilters,
   PortfolioImportCommitResult,
@@ -185,6 +188,25 @@ export const propertyService = {
         rows,
         skipDuplicates,
       },
+    );
+
+    return response.data;
+  },
+
+  async getPortfolioConnectors(): Promise<PortfolioConnectorDefinition[]> {
+    const response = await api.get<PortfolioConnectorDefinition[]>(
+      "/properties/portfolio/connectors",
+    );
+
+    return response.data;
+  },
+
+  async syncPortfolioConnector(
+    payload: PortfolioConnectorSyncRequest,
+  ): Promise<PortfolioConnectorSyncResult> {
+    const response = await api.post<PortfolioConnectorSyncResult>(
+      "/properties/portfolio/connectors/sync",
+      payload,
     );
 
     return response.data;

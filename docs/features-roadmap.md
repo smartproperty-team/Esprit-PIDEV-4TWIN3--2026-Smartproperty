@@ -282,7 +282,7 @@ US-3.2.2 Automatic analysis of the candidate file (Actor: AI System)
 - [x] Property categorization (sale, rental, management)
 - [x] Portfolio dashboard with KPI widgets
 - [x] Import/export via Excel templates
-- [ ] Partner API connectors for listing synchronization
+- [x] Partner API connectors for listing synchronization
 
 ### Property Images
 

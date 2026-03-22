@@ -40,6 +40,7 @@ import {
   PROPERTY_MANAGEMENT_ROLES,
 } from '../users/role-groups';
 import {
+  PortfolioConnectorSyncDto,
   PortfolioExportQueryDto,
   PortfolioImportCommitDto,
   PortfolioSummaryQueryDto,
@@ -186,6 +187,26 @@ export class PropertiesController {
       role,
       body.skipDuplicates,
     );
+  }
+
+  @Get('portfolio/connectors')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES, UserRole.ACCOUNTANT_ADMIN_ASSISTANT)
+  @ApiOperation({ summary: 'List available partner connectors' })
+  @ApiResponse({ status: 200, description: 'Connector catalog' })
+  getPortfolioConnectors() {
+    return this.propertiesService.getPortfolioConnectors();
+  }
+
+  @Post('portfolio/connectors/sync')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES, UserRole.ACCOUNTANT_ADMIN_ASSISTANT)
+  @ApiOperation({ summary: 'Sync portfolio data to a partner connector' })
+  @ApiResponse({ status: 201, description: 'Sync execution result' })
+  async syncPortfolioConnector(
+    @Body() body: PortfolioConnectorSyncDto,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
+  ) {
+    return this.propertiesService.syncPortfolioConnector(userId, role, body);
   }
 
   // ===========================================

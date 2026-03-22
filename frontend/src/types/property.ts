@@ -192,3 +192,31 @@ export interface PortfolioImportCommitResult {
   failed: number;
   issues: PortfolioImportIssue[];
 }
+
+export type PortfolioConnectorId = "seloger" | "leboncoin" | "webhook";
+
+export interface PortfolioConnectorDefinition {
+  id: PortfolioConnectorId;
+  label: string;
+  description: string;
+  supportsPush: boolean;
+  requiredFields: string[];
+}
+
+export interface PortfolioConnectorSyncRequest extends PortfolioFilters {
+  connectorId: PortfolioConnectorId;
+  dryRun?: boolean;
+  endpointUrl?: string;
+}
+
+export interface PortfolioConnectorSyncResult {
+  connectorId: PortfolioConnectorId;
+  dryRun: boolean;
+  totalRecords: number;
+  mappedRecords: number;
+  failedRecords: number;
+  pushedRecords: number;
+  endpointUrl?: string;
+  payloadSample: Array<Record<string, unknown>>;
+  issues: PortfolioImportIssue[];
+}

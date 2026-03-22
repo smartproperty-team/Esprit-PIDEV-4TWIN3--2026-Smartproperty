@@ -14,7 +14,11 @@ import { Repository } from 'typeorm';
 import * as XLSX from 'xlsx';
 import { UserRole } from '../users/entities/user.entity';
 import { hasPlatformAdminRole } from '../users/role-groups';
-import { PortfolioImportRowDto } from './dto/portfolio.dto';
+import {
+  PortfolioConnectorId,
+  PortfolioConnectorSyncDto,
+  PortfolioImportRowDto,
+} from './dto/portfolio.dto';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
 import {
   Property,
@@ -98,12 +102,57 @@ export interface PortfolioBinaryFileResult {
   base64: string;
 }
 
+export interface PortfolioConnectorDefinition {
+  id: PortfolioConnectorId;
+  label: string;
+  description: string;
+  supportsPush: boolean;
+  requiredFields: string[];
+}
+
+export interface PortfolioConnectorSyncResult {
+  connectorId: PortfolioConnectorId;
+  dryRun: boolean;
+  totalRecords: number;
+  mappedRecords: number;
+  failedRecords: number;
+  pushedRecords: number;
+  endpointUrl?: string;
+  payloadSample: Array<Record<string, unknown>>;
+  issues: PortfolioImportIssue[];
+}
+
 // ===========================================
 // Properties Service
 // ===========================================
 
 @Injectable()
 export class PropertiesService {
+  private readonly portfolioConnectorCatalog: PortfolioConnectorDefinition[] = [
+    {
+      id: PortfolioConnectorId.SELOGER,
+      label: 'SeLoger Connector',
+      description: 'Formats portfolio listings for SeLoger distribution.',
+      supportsPush: false,
+      requiredFields: ['title', 'price', 'city', 'country', 'type', 'status'],
+    },
+    {
+      id: PortfolioConnectorId.LEBONCOIN,
+      label: 'LeBonCoin Connector',
+      description: 'Formats portfolio listings for LeBonCoin publication feed.',
+      supportsPush: false,
+      requiredFields: ['title', 'price', 'city', 'country', 'category'],
+    },
+    {
+      id: PortfolioConnectorId.WEBHOOK,
+      label: 'Generic Webhook Connector',
+      description:
+        'Dispatches normalized listing payload to a partner endpoint URL.',
+      supportsPush: true,
+      requiredFields: ['title', 'price', 'city', 'country'],
+    },
+  ];
+
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
@@ -552,6 +601,104 @@ export class PropertiesService {
     throw new ForbiddenException(
       'You do not have access to import portfolio data',
     );
+  }
+
+  private mapConnectorPayload(
+    property: Property,
+    connectorId: PortfolioConnectorId,
+  ): Record<string, unknown> {
+    const basePayload: Record<string, unknown> = {
+      externalId: property.id,
+      title: property.title,
+      description: property.description,
+      type: property.type,
+      status: property.status,
+      category: property.category || PropertyCategory.RENTAL,
+      price: property.price,
+      currency: property.currency,
+      location: {
+        street: property.address?.street,
+        city: property.address?.city,
+        state: property.address?.state,
+        zipCode: property.address?.zipCode,
+        country: property.address?.country,
+        coordinates: property.address?.coordinates,
+      },
+      features: property.features,
+      images: (property.images || []).map((image) => image.url),
+      virtualTour: property.virtualTour,
+      ownerId: property.ownerId,
+      managerId: property.managerId,
+      publishedAt: property.createdAt,
+      updatedAt: property.updatedAt,
+    };
+
+    if (connectorId === PortfolioConnectorId.SELOGER) {
+      return {
+        ...basePayload,
+        listingType:
+          property.category === PropertyCategory.SALE ? 'sell' : 'rent',
+        source: 'smartproperty-seloger',
+      };
+    }
+
+    if (connectorId === PortfolioConnectorId.LEBONCOIN) {
+      return {
+        ...basePayload,
+        adCategory:
+          property.category === PropertyCategory.MANAGEMENT
+            ? 'service'
+            : 'real_estate',
+        source: 'smartproperty-leboncoin',
+      };
+    }
+
+    return {
+      ...basePayload,
+      source: 'smartproperty-webhook',
+    };
+  }
+
+  private validateConnectorRequiredFields(
+    property: Property,
+    connector: PortfolioConnectorDefinition,
+    rowNumber: number,
+  ): PortfolioImportIssue[] {
+    const issues: PortfolioImportIssue[] = [];
+
+    if (!property.title?.trim()) {
+      issues.push({
+        rowNumber,
+        code: 'MISSING_TITLE',
+        message: `${connector.label}: title is required`,
+      });
+    }
+
+    if (property.price === undefined || property.price === null) {
+      issues.push({
+        rowNumber,
+        code: 'MISSING_PRICE',
+        message: `${connector.label}: price is required`,
+      });
+    }
+
+    if (!property.address?.city?.trim()) {
+      issues.push({
+        rowNumber,
+        code: 'MISSING_CITY',
+        message: `${connector.label}: city is required`,
+      });
+    }
+
+    if (!property.address?.country?.trim()) {
+      issues.push({
+        rowNumber,
+        code: 'MISSING_COUNTRY',
+        message: `${connector.label}: country is required`,
+      });
+    }
+
+    return issues;
   }
 
   // ===========================================
@@ -1191,6 +1338,121 @@ export class PropertiesService {
       created,
       skipped,
       failed,
+      issues,
+    };
+  }
+
+  getPortfolioConnectors(): PortfolioConnectorDefinition[] {
+    return this.portfolioConnectorCatalog;
+  }
+
+  async syncPortfolioConnector(
+    currentUserId: string,
+    currentUserRole: UserRole,
+    payload: PortfolioConnectorSyncDto,
+  ): Promise<PortfolioConnectorSyncResult> {
+    if (!this.canAccessPortfolio(currentUserRole)) {
+      throw new ForbiddenException('You do not have access to portfolio data');
+    }
+
+    const connector = this.portfolioConnectorCatalog.find(
+      (item) => item.id === payload.connectorId,
+    );
+
+    if (!connector) {
+      throw new NotFoundException('Connector not found');
+    }
+
+    const dryRun = payload.dryRun ?? true;
+
+    if (
+      connector.id === PortfolioConnectorId.WEBHOOK &&
+      !dryRun &&
+      !payload.endpointUrl
+    ) {
+      throw new ForbiddenException(
+        'endpointUrl is required for webhook connector push',
+      );
+    }
+
+    const scopedWhere = this.buildScopedWhere(
+      currentUserId,
+      currentUserRole,
+      payload.scope,
+    );
+
+    const where = this.applyPortfolioFilters(scopedWhere, payload);
+
+    const properties = await this.propertyRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
+
+    const issues: PortfolioImportIssue[] = [];
+    const mappedPayloads: Array<Record<string, unknown>> = [];
+
+    properties.forEach((property, index) => {
+      const rowNumber = index + 1;
+      const rowIssues = this.validateConnectorRequiredFields(
+        property,
+        connector,
+        rowNumber,
+      );
+
+      if (rowIssues.length > 0) {
+        issues.push(...rowIssues);
+        return;
+      }
+
+      mappedPayloads.push(this.mapConnectorPayload(property, connector.id));
+    });
+
+    let pushedRecords = 0;
+
+    if (
+      !dryRun &&
+      connector.supportsPush &&
+      payload.endpointUrl &&
+      mappedPayloads.length > 0
+    ) {
+      try {
+        const response = await fetch(payload.endpointUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connectorId: connector.id,
+            exportedAt: new Date().toISOString(),
+            records: mappedPayloads,
+          }),
+        });
+
+        if (!response.ok) {
+          issues.push({
+            rowNumber: 0,
+            code: 'PUSH_FAILED',
+            message: `Connector push failed with status ${response.status}`,
+          });
+        } else {
+          pushedRecords = mappedPayloads.length;
+        }
+      } catch {
+        issues.push({
+          rowNumber: 0,
+          code: 'PUSH_FAILED',
+          message: 'Connector push failed due to network error',
+        });
+      }
+    }
+
+    return {
+      connectorId: connector.id,
+      dryRun,
+      totalRecords: properties.length,
+      mappedRecords: mappedPayloads.length,
+      failedRecords: properties.length - mappedPayloads.length,
+      pushedRecords,
+      endpointUrl: payload.endpointUrl,
+      payloadSample: mappedPayloads.slice(0, 3),
       issues,
     };
   }
