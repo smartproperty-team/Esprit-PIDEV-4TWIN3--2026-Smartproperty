@@ -814,6 +814,7 @@ export default function PropertyFormPage() {
                       type="button"
                       className="image-preview-remove"
                       onClick={() => handleRemoveExistingImage(img.key)}
+                      aria-label={`Remove image ${index + 1}`}
                     >
                       <CloseIcon />
                     </button>
@@ -865,6 +866,7 @@ export default function PropertyFormPage() {
                       type="button"
                       className="image-preview-remove"
                       onClick={() => handleRemoveImage(index)}
+                      aria-label={`Remove image ${index + 1}`}
                     >
                       <CloseIcon />
                     </button>

@@ -9,13 +9,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, label, error, icon, id, ...props }, ref) => {
-    const generatedId = React.useId();
-    const inputId =
-      id || label?.toLowerCase().replace(/\s+/g, "-") || generatedId;
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     const errorId = error ? `${inputId}-error` : undefined;
-    const describedBy = [props["aria-describedby"], errorId]
-      .filter(Boolean)
-      .join(" ");
+    const isRequired = !!props.required;
 
     return (
       <div className="w-full">
@@ -25,7 +21,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className="mb-1.5 block text-sm font-medium text-gray-700"
           >
             {label}
-            {props.required && (
+            {isRequired && (
               <span className="ml-1 text-red-600" aria-hidden="true">
                 *
               </span>
@@ -52,11 +48,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className,
             )}
             ref={ref}
+            aria-required={isRequired || undefined}
+            aria-invalid={!!error}
+            aria-describedby={errorId}
             {...props}
           />
         </div>
         {error && (
-          <p id={errorId} className="mt-1.5 text-sm text-red-600" role="alert">
+          <p id={errorId} className="mt-1.5 text-sm text-red-600">
             {error}
           </p>
         )}

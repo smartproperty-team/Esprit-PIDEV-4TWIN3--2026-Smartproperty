@@ -7,6 +7,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
 import ReadAloudWidget from "./components/accessibility/ReadAloudWidget";
 import { ProtectedRoute } from "./components/auth";
+import { useLanguageStore } from "./i18n";
 import {
   ApplicationsReviewPage,
   TenantApplicationsPage,
@@ -91,6 +92,7 @@ function getPageTitle(pathname: string): string {
 
 function App() {
   const location = useLocation();
+  const { language } = useLanguageStore();
   const { checkAuth, isAuthenticated, user } = useAuthStore();
   const { openOnboarding, getUserPreferences, setUserPreferences } =
     usePreferencesStore();
@@ -108,24 +110,62 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // Set a clear page title for each route to support accessibility/navigation.
   useEffect(() => {
-    document.title = getPageTitle(location.pathname);
+    const path = location.pathname;
+    let pageTitle = "SmartProperty";
+
+    if (path === "/") pageTitle = "Home | SmartProperty";
+    else if (path === "/login") pageTitle = "Sign In | SmartProperty";
+    else if (path === "/register") pageTitle = "Register | SmartProperty";
+    else if (path === "/forgot-password") {
+      pageTitle = "Forgot Password | SmartProperty";
+    } else if (path === "/reset-password") {
+      pageTitle = "Reset Password | SmartProperty";
+    } else if (path === "/verify-email") {
+      pageTitle = "Verify Email | SmartProperty";
+    } else if (path.startsWith("/properties/new")) {
+      pageTitle = "Add Property | SmartProperty";
+    } else if (path.startsWith("/properties/mine")) {
+      pageTitle = "My Properties | SmartProperty";
+    } else if (path.startsWith("/properties/") && path.endsWith("/edit")) {
+      pageTitle = "Edit Property | SmartProperty";
+    } else if (path.startsWith("/properties/")) {
+      pageTitle = "Property Details | SmartProperty";
+    } else if (path === "/properties") {
+      pageTitle = "Properties | SmartProperty";
+    } else if (path === "/dashboard") {
+      pageTitle = "Dashboard | SmartProperty";
+    } else if (path === "/profile") {
+      pageTitle = "Profile | SmartProperty";
+    } else if (path === "/settings") {
+      pageTitle = "Settings | SmartProperty";
+    } else if (path === "/sessions") {
+      pageTitle = "Sessions | SmartProperty";
+    } else if (path === "/verification") {
+      pageTitle = "Verification | SmartProperty";
+    } else if (path === "/applications") {
+      pageTitle = "My Applications | SmartProperty";
+    } else if (path === "/applications/review") {
+      pageTitle = "Review Applications | SmartProperty";
+    } else if (path === "/super-administrator/verifications") {
+      pageTitle = "Admin Verifications | SmartProperty";
+    } else if (path === "/super-administrator/users") {
+      pageTitle = "Admin Users | SmartProperty";
+    } else if (path === "/security/2fa") {
+      pageTitle = "Two-Factor Authentication | SmartProperty";
+    }
+
+    document.title = pageTitle;
   }, [location.pathname]);
 
-  // Ensure every route has a skip-link target on its first main landmark.
   useEffect(() => {
-    const mainElement = document.querySelector("main");
-    if (!mainElement) {
-      return;
-    }
+    document.documentElement.lang = language;
+  }, [language]);
 
-    if (!mainElement.id) {
-      mainElement.id = mainContentId;
-    }
-
-    if (!mainElement.hasAttribute("tabindex")) {
-      mainElement.setAttribute("tabindex", "-1");
+  useEffect(() => {
+    const mainEl = document.querySelector("main");
+    if (mainEl && !mainEl.id) {
+      mainEl.id = "main-content";
     }
   }, [location.pathname]);
 
@@ -173,9 +213,11 @@ function App() {
 
   return (
     <>
-      <a href={`#${mainContentId}`} className="skip-link">
-        Skip to main content
-      </a>
+      {location.pathname !== "/" && (
+        <a href="#main-content" className="global-skip-link">
+          Skip to main content
+        </a>
+      )}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

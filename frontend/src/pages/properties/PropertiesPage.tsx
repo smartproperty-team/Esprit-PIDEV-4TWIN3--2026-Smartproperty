@@ -559,7 +559,8 @@ export default function PropertiesPage() {
             </div>
             {/* Filters */}
             <form className="properties-filters" onSubmit={handleSearch}>
-              <div className="filters-row">
+              <fieldset className="filters-row">
+                <legend className="sr-only">Property filter controls</legend>
                 <div className="filter-group">
                   <label htmlFor="filter-search">{t.properties.search}</label>
                   <input
@@ -635,7 +636,7 @@ export default function PropertiesPage() {
                     {t.properties.reset}
                   </button>
                 </div>
-              </div>
+              </fieldset>
             </form>
           </div>
         </div>
@@ -830,7 +831,7 @@ export default function PropertiesPage() {
           </div>
         ) : error ? (
           <div className="empty-state">
-            <p style={{ color: "#ef4444" }}>{t.common.error}</p>
+            <p style={{ color: "#b91c1c" }}>{t.common.error}</p>
             <button className="btn-filter primary" onClick={loadProperties}>
               {t.properties.retry}
             </button>

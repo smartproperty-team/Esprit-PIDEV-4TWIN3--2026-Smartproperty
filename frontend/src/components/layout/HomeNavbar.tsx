@@ -1,6 +1,11 @@
 import { LanguageToggle } from "@/components/ui";
 import { useTranslation } from "@/i18n";
-import { notificationService } from "@/services";
+import {
+  authService,
+  getAccessToken,
+  getRefreshToken,
+  notificationService,
+} from "@/services";
 import type { Notification } from "@/services/notification.service";
 import { useAuthStore, usePreferencesStore } from "@/store";
 import { isOwner, isTenant } from "@/utils";
@@ -29,9 +34,14 @@ export default function HomeNavbar() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [notificationsAutoRefreshEnabled, setNotificationsAutoRefreshEnabled] =
+    useState(true);
   const notifPanelRef = useRef<HTMLDivElement>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const [sessionWarningVisible, setSessionWarningVisible] = useState(false);
+  const [isExtendingSession, setIsExtendingSession] = useState(false);
+  const dismissedSessionExpiryRef = useRef<number | null>(null);
 
   const navLinks = [
     { to: "/", label: t.nav.home, hasDropdown: true },
@@ -55,17 +65,96 @@ export default function HomeNavbar() {
     }
   }, [user]);
 
+  const getTokenExpiryTime = useCallback((): number | null => {
+    const token = getAccessToken();
+    if (!token) return null;
+
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) return null;
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const normalized = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+      const parsed = JSON.parse(window.atob(normalized)) as { exp?: number };
+      return typeof parsed.exp === "number" ? parsed.exp * 1000 : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     const initialTimer = setTimeout(() => {
       void fetchNotifications();
     }, 0);
 
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = notificationsAutoRefreshEnabled
+      ? setInterval(fetchNotifications, 30000)
+      : null;
+
     return () => {
       clearTimeout(initialTimer);
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, notificationsAutoRefreshEnabled, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setSessionWarningVisible(false);
+      dismissedSessionExpiryRef.current = null;
+      return;
+    }
+
+    const warningLeadMs = 2 * 60 * 1000;
+    const checkSessionExpiry = () => {
+      const expiresAt = getTokenExpiryTime();
+      if (!expiresAt) {
+        setSessionWarningVisible(false);
+        return;
+      }
+
+      if (dismissedSessionExpiryRef.current !== expiresAt) {
+        dismissedSessionExpiryRef.current = null;
+      }
+
+      const msRemaining = expiresAt - Date.now();
+      const shouldWarn =
+        msRemaining > 0 &&
+        msRemaining <= warningLeadMs &&
+        dismissedSessionExpiryRef.current !== expiresAt;
+
+      setSessionWarningVisible(shouldWarn);
+    };
+
+    checkSessionExpiry();
+    const timer = window.setInterval(checkSessionExpiry, 15000);
+    return () => window.clearInterval(timer);
+  }, [getTokenExpiryTime, user]);
+
+  const handleExtendSession = useCallback(async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      await logout();
+      navigate("/login");
+      return;
+    }
+
+    setIsExtendingSession(true);
+    try {
+      await authService.refreshTokens(refreshToken);
+      dismissedSessionExpiryRef.current = null;
+      setSessionWarningVisible(false);
+    } catch {
+      await logout();
+      navigate("/login");
+    } finally {
+      setIsExtendingSession(false);
+    }
+  }, [logout, navigate]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -128,6 +217,43 @@ export default function HomeNavbar() {
 
   return (
     <header>
+      {sessionWarningVisible && (
+        <div
+          className="fixed left-4 right-4 top-36 z-50 rounded-lg border border-amber-300 bg-amber-50 p-3 shadow-md sm:left-auto sm:right-6 sm:w-88"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-sm font-semibold text-amber-900">
+            {t.nav.sessionExpiringTitle}
+          </p>
+          <p className="mt-1 text-xs text-amber-800">
+            {t.nav.sessionExpiringMessage}
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+              onClick={() => {
+                void handleExtendSession();
+              }}
+              disabled={isExtendingSession}
+            >
+              {isExtendingSession ? "..." : t.nav.staySignedIn}
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-amber-400 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+              onClick={() => {
+                dismissedSessionExpiryRef.current = getTokenExpiryTime();
+                setSessionWarningVisible(false);
+              }}
+            >
+              {t.nav.dismiss}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showPreferencesReminder && (
         <button
           type="button"
@@ -142,10 +268,10 @@ export default function HomeNavbar() {
         className="fixed inset-x-0 top-0 z-40 border-b border-white/20 bg-[#1A3263] shadow-[0_10px_28px_rgba(20,40,79,0.38)] backdrop-blur"
         aria-label="Main navigation"
       >
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3.5 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-white transition-colors hover:text-[#FFC570]"
+            className="inline-flex shrink-0 items-center gap-2 text-white transition-colors hover:text-[#FFC570]"
             aria-label="Smart Property - Home"
           >
             <svg
@@ -177,19 +303,18 @@ export default function HomeNavbar() {
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
 
-          <div className="hidden items-center gap-3 md:flex" role="menubar">
+          <div className="hidden min-w-0 flex-1 flex-wrap items-center justify-center gap-1.5 md:flex">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[15px] font-semibold tracking-[0.01em] transition-colors ${
+                  className={`inline-flex whitespace-nowrap items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold tracking-[0.01em] transition-colors ${
                     isActive
                       ? "bg-[#FFC570] text-[#1A3263]"
                       : "text-white/95 hover:bg-white/10 hover:text-white"
                   }`}
-                  role="menuitem"
                   aria-current={isActive ? "page" : undefined}
                 >
                   <span>{link.label}</span>
@@ -205,7 +330,7 @@ export default function HomeNavbar() {
             })}
           </div>
 
-          <div className="hidden items-center gap-2.5 md:flex">
+          <div className="hidden max-w-full flex-1 flex-wrap items-center justify-end gap-1.5 md:flex">
             <ReadAloudWidget
               mode="inline"
               showLabel={false}
@@ -234,7 +359,7 @@ export default function HomeNavbar() {
                       <User className="h-4 w-4" />
                     )}
                   </div>
-                  <span className="hidden max-w-32 truncate text-[13px] font-bold text-[#1A3263] sm:inline">
+                  <span className="hidden max-w-24 truncate text-[13px] font-bold text-[#1A3263] 2xl:inline">
                     {user.fullName || user.firstName}
                   </span>
                   <ChevronDown className="h-4 w-4 text-[#1A3263]" />
@@ -243,7 +368,6 @@ export default function HomeNavbar() {
                 {showUserDropdown && (
                   <div
                     id="user-menu"
-                    role="menu"
                     className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
                   >
                     <div className="border-b border-gray-100 px-4 py-3">
@@ -377,18 +501,31 @@ export default function HomeNavbar() {
                       <h3 className="text-sm font-semibold text-[#1A3263]">
                         {t.nav.notifications}
                       </h3>
-                      {unreadCount > 0 && (
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
                           className="text-xs font-semibold text-[#1A3263] hover:text-[#547792]"
-                          onClick={async () => {
-                            await notificationService.markAllAsRead();
-                            await fetchNotifications();
-                          }}
+                          onClick={() =>
+                            setNotificationsAutoRefreshEnabled((prev) => !prev)
+                          }
                         >
-                          {t.nav.markAllRead}
+                          {notificationsAutoRefreshEnabled
+                            ? t.nav.pauseLiveUpdates
+                            : t.nav.resumeLiveUpdates}
                         </button>
-                      )}
+                        {unreadCount > 0 && (
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-[#1A3263] hover:text-[#547792]"
+                            onClick={async () => {
+                              await notificationService.markAllAsRead();
+                              await fetchNotifications();
+                            }}
+                          >
+                            {t.nav.markAllRead}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
@@ -494,6 +631,8 @@ export default function HomeNavbar() {
                 to={link.to}
                 className="block rounded-lg px-3 py-2.5 text-base font-semibold text-white/95 transition-colors hover:bg-white/10 hover:text-[#FFC570]"
                 onClick={() => setMobileMenuOpen(false)}
+                tabIndex={mobileMenuOpen ? 0 : -1}
+                aria-hidden={!mobileMenuOpen}
               >
                 {link.label}
               </Link>

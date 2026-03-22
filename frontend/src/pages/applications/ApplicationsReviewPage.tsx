@@ -303,8 +303,8 @@ export default function ApplicationsReviewPage() {
                                 href={doc.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label={`Open document ${doc.name} (opens in new tab)`}
                                 className="flex items-center gap-2 rounded border border-blue-200 bg-white px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100"
-                                aria-label={`Open document ${doc.name} in a new tab`}
                               >
                                 <span>📄</span>
                                 <span className="flex-1 truncate font-medium">
@@ -314,9 +314,6 @@ export default function ApplicationsReviewPage() {
                                   {(doc.size / 1024).toFixed(1)} KB
                                 </span>
                                 <span>↗️</span>
-                                <span className="sr-only">
-                                  Opens in a new tab
-                                </span>
                               </a>
                             ))}
                           </div>

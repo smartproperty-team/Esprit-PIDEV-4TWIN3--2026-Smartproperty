@@ -122,7 +122,7 @@ export default function AppSidebar() {
         </button>
 
         <div className="flex items-center gap-2">
-          <p className="max-w-[130px] truncate text-sm font-semibold text-gray-900">
+          <p className="max-w-32.5 truncate text-sm font-semibold text-gray-900">
             {user?.fullName || "SmartProperty"}
           </p>
           <ReadAloudWidget mode="inline" showLabel={false} />

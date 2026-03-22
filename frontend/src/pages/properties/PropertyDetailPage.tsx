@@ -317,7 +317,8 @@ function PropertyMap({ address, title }: PropertyMapProps) {
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button
             onClick={openInMaps}
-            title={t.propertyDetail.openStreetMap}
+            title={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
+            aria-label={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -356,7 +357,8 @@ function PropertyMap({ address, title }: PropertyMapProps) {
           </button>
           <button
             onClick={openInGoogleMaps}
-            title={t.propertyDetail.googleMaps}
+            title={`${t.propertyDetail.googleMaps} (opens in new tab)`}
+            aria-label={`${t.propertyDetail.googleMaps} (opens in new tab)`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -466,6 +468,7 @@ function PropertyMap({ address, title }: PropertyMapProps) {
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <button
                 onClick={openInMaps}
+                aria-label={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
                 style={{
                   padding: "0.45rem 1rem",
                   borderRadius: "8px",
@@ -481,6 +484,7 @@ function PropertyMap({ address, title }: PropertyMapProps) {
               </button>
               <button
                 onClick={openInGoogleMaps}
+                aria-label={`${t.propertyDetail.googleMaps} (opens in new tab)`}
                 style={{
                   padding: "0.45rem 1rem",
                   borderRadius: "8px",
@@ -1251,6 +1255,7 @@ export default function PropertyDetailPage() {
                       href={shareData.shareUrl || getFallbackShareUrl()}
                       target="_blank"
                       rel="noreferrer"
+                      aria-label={`${t.propertyDetail.openSharedLink} (opens in new tab)`}
                       className="btn-edit"
                       aria-label="Open shared property link in a new tab"
                     >

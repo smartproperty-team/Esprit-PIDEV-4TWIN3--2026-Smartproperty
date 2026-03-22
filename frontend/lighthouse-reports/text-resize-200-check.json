@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-03-21T10:33:04.621Z",
+  "method": "Playwright html font-size 200% smoke check",
+  "results": [
+    {
+      "url": "http://localhost:5174/",
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "hasHOverflow": false,
+      "interactiveCount": 54
+    },
+    {
+      "url": "http://localhost:5174/properties",
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "hasHOverflow": false,
+      "interactiveCount": 41
+    },
+    {
+      "url": "http://localhost:5174/login",
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "hasHOverflow": false,
+      "interactiveCount": 12
+    },
+    {
+      "url": "http://localhost:5174/register",
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "hasHOverflow": false,
+      "interactiveCount": 14
+    }
+  ]
+}

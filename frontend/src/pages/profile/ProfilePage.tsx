@@ -658,15 +658,16 @@ export default function ProfilePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-red-900">
-                  Delete Account Permanently (GDPR)
+                  Delete Account Permanently (General Data Protection
+                  Regulation, GDPR)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                   <p className="text-sm text-red-700 mb-4">
                     Permanently delete your account and all associated personal
-                    data. This action cannot be undone and complies with GDPR
-                    regulations.
+                    data. This action cannot be undone and complies with General
+                    Data Protection Regulation (GDPR) rules.
                   </p>
                   <Button
                     variant="destructive"
@@ -687,7 +688,7 @@ export default function ProfilePage() {
       {/* Deactivate Confirmation Modal */}
       {showDeactivateModal && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="deactivate-modal-title"
@@ -723,7 +724,7 @@ export default function ProfilePage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-modal-title"
@@ -736,8 +737,9 @@ export default function ProfilePage() {
             </h3>
             <p className="mt-2 text-sm text-gray-600">
               This action cannot be undone. Your account and all associated
-              personal data will be permanently deleted in compliance with GDPR
-              regulations. You will be signed out immediately.
+              personal data will be permanently deleted in compliance with the
+              General Data Protection Regulation (GDPR). You will be signed out
+              immediately.
             </p>
             <div className="mt-4 rounded-lg bg-red-50 p-3">
               <p className="text-sm font-medium text-red-800">

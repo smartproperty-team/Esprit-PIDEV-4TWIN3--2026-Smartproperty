@@ -21,6 +21,13 @@ export const en = {
     notifications: "Notifications",
     markAllRead: "Mark all read",
     noNotifications: "No notifications yet",
+    pauseLiveUpdates: "Pause updates",
+    resumeLiveUpdates: "Resume updates",
+    sessionExpiringTitle: "Session expiring soon",
+    sessionExpiringMessage:
+      "Your session is about to expire. Extend it now to avoid interruption.",
+    staySignedIn: "Stay signed in",
+    dismiss: "Dismiss",
     completeQuestions: "Complete your questions",
   },
 

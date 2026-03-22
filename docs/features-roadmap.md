@@ -224,10 +224,10 @@ US-3.2.2 Automatic analysis of the candidate file (Actor: AI System)
 
 ### User Preferences
 
-- [ ] Property type preferences
-- [ ] Budget range preferences
-- [ ] Location preferences
-- [ ] Notification preferences
+- [X]  Property type preferences
+- [X]  Budget range preferences
+- [X]  Location preferences
+- [X]  Notification preferences
 
 ### Document Management
 
@@ -268,14 +268,14 @@ US-3.2.2 Automatic analysis of the candidate file (Actor: AI System)
 
 ### Property CRUD
 
-- [x] Create property listing
-- [x] Update property details
-- [x] Delete property (soft delete)
-- [x] Get property by ID
-- [x] List owner's properties
-- [x] Multi-step property creation wizard
-- [x] Automatic geolocation with interactive map on listing form
-- [ ] Unique property identifier generation
+- [X]  Create property listing
+- [X]  Update property details
+- [X]  Delete property (soft delete)
+- [X]  Get property by ID
+- [X]  List owner's properties
+- [X]  Multi-step property creation wizard
+- [X]  Automatic geolocation with interactive map on listing form
+- [X]  Unique property identifier generation
 
 ### Portfolio Management & Data Exchange
 

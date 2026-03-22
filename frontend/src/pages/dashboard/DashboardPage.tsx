@@ -554,6 +554,7 @@ export default function DashboardPage() {
                   href="http://localhost:8025"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open MailHog (opens in new tab)"
                   className="text-sm text-indigo-600 hover:underline"
                 >
                   Open MailHog
@@ -1189,6 +1190,7 @@ export default function DashboardPage() {
                   href="http://localhost:3000/api/docs"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open Swagger API docs (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                   aria-label="Open Swagger API docs in a new tab"
                 >
@@ -1209,6 +1211,7 @@ export default function DashboardPage() {
                   href="http://localhost:8025"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open MailHog (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                   aria-label="Open MailHog in a new tab"
                 >
@@ -1225,6 +1228,7 @@ export default function DashboardPage() {
                   href="http://localhost:8081"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open Mongo Express (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                   aria-label="Open Mongo Express in a new tab"
                 >

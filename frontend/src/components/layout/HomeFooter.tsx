@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 export default function HomeFooter() {
   return (
-    <footer className="footer" role="contentinfo">
+    <footer className="footer">
       <div className="footer-shell">
         <div className="footer-head">
           <div className="footer-logo">
@@ -27,7 +27,7 @@ export default function HomeFooter() {
           </div>
           <div className="footer-follow">
             <span>FOLLOW US</span>
-            <div className="social-links" aria-label="Social media links">
+            <nav className="social-links" aria-label="Social media links">
               <a href="#" aria-label="Facebook" className="social-link">
                 <svg
                   width="20"
@@ -63,7 +63,7 @@ export default function HomeFooter() {
                   <circle cx="4" cy="4" r="2" />
                 </svg>
               </a>
-            </div>
+            </nav>
           </div>
         </div>
 
