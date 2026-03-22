@@ -256,6 +256,7 @@ export default function DashboardPage() {
                   href="http://localhost:8025"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open MailHog (opens in new tab)"
                   className="text-sm text-indigo-600 hover:underline"
                 >
                   Open MailHog →
@@ -388,7 +389,7 @@ export default function DashboardPage() {
 
             <Card
               className={
-                (canReviewApplications(user) || isTenant(user))
+                canReviewApplications(user) || isTenant(user)
                   ? "cursor-pointer transition hover:shadow-md"
                   : ""
               }
@@ -547,6 +548,7 @@ export default function DashboardPage() {
                   href="http://localhost:3000/api/docs"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open Swagger API docs (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
@@ -566,6 +568,7 @@ export default function DashboardPage() {
                   href="http://localhost:8025"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open MailHog (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
@@ -581,6 +584,7 @@ export default function DashboardPage() {
                   href="http://localhost:8081"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open Mongo Express (opens in new tab)"
                   className="flex items-center rounded-lg border border-gray-200 p-4 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">

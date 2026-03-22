@@ -225,10 +225,10 @@ US-3.2.2 Automatic analysis of the candidate file (Actor: AI System)
 
 ### User Preferences
 
-- [ ]  Property type preferences
-- [ ]  Budget range preferences
-- [ ]  Location preferences
-- [ ]  Notification preferences
+- [X]  Property type preferences
+- [X]  Budget range preferences
+- [X]  Location preferences
+- [X]  Notification preferences
 
 ### Document Management
 
@@ -276,7 +276,7 @@ US-3.2.2 Automatic analysis of the candidate file (Actor: AI System)
 - [X]  List owner's properties
 - [X]  Multi-step property creation wizard
 - [X]  Automatic geolocation with interactive map on listing form
-- [ ]  Unique property identifier generation
+- [X]  Unique property identifier generation
 
 ### Portfolio Management & Data Exchange
 

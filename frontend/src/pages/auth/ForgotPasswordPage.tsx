@@ -60,11 +60,11 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <Navbar />
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12 pt-28">
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-indigo-100 via-white to-purple-100 px-4 py-12 pt-28">
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="mb-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-indigo-600 to-purple-600">
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <h1 className="mt-4 text-3xl font-bold text-gray-900">
@@ -101,6 +101,7 @@ export default function ForgotPasswordPage() {
                     placeholder="you@example.com"
                     icon={<Mail className="h-5 w-5" />}
                     error={errors.email?.message}
+                    required
                     {...register("email")}
                   />
                 )}
@@ -125,6 +126,7 @@ export default function ForgotPasswordPage() {
                         href="http://localhost:8025"
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="Open MailHog (opens in new tab)"
                         className="text-indigo-600 hover:underline"
                       >
                         MailHog (localhost:8025)

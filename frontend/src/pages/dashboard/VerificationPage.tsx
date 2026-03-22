@@ -426,13 +426,13 @@ export default function VerificationPage() {
             <div
               className={`rounded-xl border p-6 ${
                 isVerified
-                  ? "border-green-200 bg-gradient-to-r from-green-50 to-emerald-50"
+                  ? "border-green-200 bg-linear-to-r from-green-50 to-emerald-50"
                   : overall === VerificationStatus.REJECTED
-                    ? "border-red-200 bg-gradient-to-r from-red-50 to-rose-50"
+                    ? "border-red-200 bg-linear-to-r from-red-50 to-rose-50"
                     : overall === VerificationStatus.UNDER_REVIEW ||
                         overall === VerificationStatus.PENDING
-                      ? "border-yellow-200 bg-gradient-to-r from-yellow-50 to-amber-50"
-                      : "border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50"
+                      ? "border-yellow-200 bg-linear-to-r from-yellow-50 to-amber-50"
+                      : "border-indigo-200 bg-linear-to-r from-indigo-50 to-purple-50"
               }`}
             >
               <div className="flex items-start gap-4">
@@ -590,7 +590,7 @@ export default function VerificationPage() {
                   onClick={handleSubmit}
                   isLoading={submitting}
                   disabled={!canSubmit}
-                  className="w-full gap-2 sm:w-auto sm:min-w-[240px]"
+                  className="w-full gap-2 sm:w-auto sm:min-w-60"
                 >
                   <ShieldCheck className="h-5 w-5" />
                   Submit for Verification
@@ -620,7 +620,7 @@ export default function VerificationPage() {
                       "AES-256 Encryption",
                       "Secure Cloud Storage",
                       "Auto-deletion",
-                      "GDPR Compliant",
+                      "General Data Protection Regulation (GDPR) Compliant",
                     ].map((badge) => (
                       <span
                         key={badge}

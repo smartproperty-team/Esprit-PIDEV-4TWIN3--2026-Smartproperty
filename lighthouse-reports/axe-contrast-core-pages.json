@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-03-21T09:45:41.289Z",
+  "tool": "axe-core + playwright",
+  "results": [
+    {
+      "url": "http://localhost:5174/",
+      "violations": [],
+      "passes": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 68
+        }
+      ],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 23
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:5174/properties",
+      "violations": [],
+      "passes": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 45
+        }
+      ],
+      "incomplete": []
+    },
+    {
+      "url": "http://localhost:5174/login",
+      "violations": [],
+      "passes": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 5
+        }
+      ],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 18
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:5174/register",
+      "violations": [],
+      "passes": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 5
+        }
+      ],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 30
+        }
+      ]
+    }
+  ]
+}

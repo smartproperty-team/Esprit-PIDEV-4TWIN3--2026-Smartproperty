@@ -562,7 +562,8 @@ export default function MyPropertiesPage() {
 
           {/* Filters */}
           <form className="properties-filters" onSubmit={handleSearch}>
-            <div className="filters-row">
+            <fieldset className="filters-row">
+              <legend className="sr-only">Property filter controls</legend>
               <div className="filter-group">
                 <label htmlFor="filter-search">{t.properties.search}</label>
                 <input
@@ -625,7 +626,7 @@ export default function MyPropertiesPage() {
                   {t.properties.reset}
                 </button>
               </div>
-            </div>
+            </fieldset>
           </form>
         </div>
 

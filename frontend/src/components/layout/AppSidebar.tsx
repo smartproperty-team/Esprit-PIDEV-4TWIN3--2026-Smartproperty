@@ -122,7 +122,7 @@ export default function AppSidebar() {
         </button>
 
         <div className="flex items-center gap-2">
-          <p className="max-w-[130px] truncate text-sm font-semibold text-gray-900">
+          <p className="max-w-32.5 truncate text-sm font-semibold text-gray-900">
             {user?.fullName || "SmartProperty"}
           </p>
           <ReadAloudWidget mode="inline" showLabel={false} />
@@ -170,6 +170,7 @@ export default function AppSidebar() {
                     key={`mobile-${link.to}`}
                     type="button"
                     onClick={() => navigate(link.to)}
+                    aria-current={active ? "page" : undefined}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       active
                         ? "bg-indigo-50 font-semibold text-indigo-700"
