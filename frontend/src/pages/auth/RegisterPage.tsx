@@ -297,8 +297,10 @@ export default function RegisterPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-home-primary hover:underline"
+                aria-label="Open API documentation in a new tab"
               >
                 localhost:3000/api/docs
+                <span className="sr-only"> (opens in a new tab)</span>
               </a>
             </p>
           </div>

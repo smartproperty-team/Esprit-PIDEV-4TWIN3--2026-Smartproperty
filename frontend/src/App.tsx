@@ -48,6 +48,47 @@ import {
   isTenant,
 } from "./utils";
 
+function getPageTitle(pathname: string): string {
+  const exactTitles: Record<string, string> = {
+    "/": "Home",
+    "/design/palette": "Design Palette",
+    "/login": "Login",
+    "/register": "Register",
+    "/forgot-password": "Forgot Password",
+    "/reset-password": "Reset Password",
+    "/verify-email": "Verify Email",
+    "/auth/google/callback": "Google Sign-In",
+    "/auth/facebook/callback": "Facebook Sign-In",
+    "/dashboard": "Dashboard",
+    "/sessions": "Sessions",
+    "/verification": "Verification",
+    "/applications": "My Applications",
+    "/applications/review": "Applications Review",
+    "/super-administrator/verifications": "Verification Review",
+    "/super-administrator/users": "User Management",
+    "/profile": "Profile",
+    "/settings": "Settings",
+    "/security/2fa": "Two-Factor Authentication",
+    "/properties": "Properties",
+    "/properties/mine": "My Properties",
+    "/properties/new": "Create Property",
+  };
+
+  if (exactTitles[pathname]) {
+    return `${exactTitles[pathname]} | SmartProperty`;
+  }
+
+  if (/^\/properties\/[^/]+\/edit$/.test(pathname)) {
+    return "Edit Property | SmartProperty";
+  }
+
+  if (/^\/properties\/[^/]+$/.test(pathname)) {
+    return "Property Details | SmartProperty";
+  }
+
+  return "SmartProperty";
+}
+
 function App() {
   const location = useLocation();
   const { checkAuth, isAuthenticated, user } = useAuthStore();
@@ -60,11 +101,33 @@ function App() {
     ) ||
     location.pathname === "/auth/google/callback" ||
     location.pathname === "/auth/facebook/callback";
+  const mainContentId = "main-content";
 
   // Check if user is authenticated on app load
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Set a clear page title for each route to support accessibility/navigation.
+  useEffect(() => {
+    document.title = getPageTitle(location.pathname);
+  }, [location.pathname]);
+
+  // Ensure every route has a skip-link target on its first main landmark.
+  useEffect(() => {
+    const mainElement = document.querySelector("main");
+    if (!mainElement) {
+      return;
+    }
+
+    if (!mainElement.id) {
+      mainElement.id = mainContentId;
+    }
+
+    if (!mainElement.hasAttribute("tabindex")) {
+      mainElement.setAttribute("tabindex", "-1");
+    }
+  }, [location.pathname]);
 
   // Bootstrap preferences after login
   useEffect(() => {
@@ -110,6 +173,9 @@ function App() {
 
   return (
     <>
+      <a href={`#${mainContentId}`} className="skip-link">
+        Skip to main content
+      </a>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

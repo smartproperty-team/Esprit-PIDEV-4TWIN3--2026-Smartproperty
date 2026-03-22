@@ -49,13 +49,19 @@ export default function ApplicationsReviewPage() {
 
   useEffect(() => {
     if (targetApplicationId && !loading) {
-      const element = document.getElementById(`review-app-${targetApplicationId}`);
+      const element = document.getElementById(
+        `review-app-${targetApplicationId}`,
+      );
       if (element) {
         setTimeout(() => {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
           element.classList.add("ring-2", "ring-indigo-500", "ring-offset-2");
           setTimeout(() => {
-            element.classList.remove("ring-2", "ring-indigo-500", "ring-offset-2");
+            element.classList.remove(
+              "ring-2",
+              "ring-indigo-500",
+              "ring-offset-2",
+            );
           }, 3000);
         }, 100);
       }
@@ -175,17 +181,49 @@ export default function ApplicationsReviewPage() {
           ) : (
             <div className="space-y-6">
               {items.map((application) => {
-                const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-                  submitted: { bg: "bg-blue-50", text: "text-blue-700", label: "📋 Submitted" },
-                  under_review: { bg: "bg-amber-50", text: "text-amber-700", label: "👀 Under Review" },
-                  documents_requested: { bg: "bg-orange-50", text: "text-orange-700", label: "📄 Documents Requested" },
-                  viewing_scheduled: { bg: "bg-purple-50", text: "text-purple-700", label: "📅 Viewing Scheduled" },
-                  approved: { bg: "bg-emerald-50", text: "text-emerald-700", label: "✅ Approved" },
-                  rejected: { bg: "bg-rose-50", text: "text-rose-700", label: "❌ Rejected" },
-                  withdrawn: { bg: "bg-gray-50", text: "text-gray-700", label: "⏸️ Withdrawn" },
+                const statusColors: Record<
+                  string,
+                  { bg: string; text: string; label: string }
+                > = {
+                  submitted: {
+                    bg: "bg-blue-50",
+                    text: "text-blue-700",
+                    label: "📋 Submitted",
+                  },
+                  under_review: {
+                    bg: "bg-amber-50",
+                    text: "text-amber-700",
+                    label: "👀 Under Review",
+                  },
+                  documents_requested: {
+                    bg: "bg-orange-50",
+                    text: "text-orange-700",
+                    label: "📄 Documents Requested",
+                  },
+                  viewing_scheduled: {
+                    bg: "bg-purple-50",
+                    text: "text-purple-700",
+                    label: "📅 Viewing Scheduled",
+                  },
+                  approved: {
+                    bg: "bg-emerald-50",
+                    text: "text-emerald-700",
+                    label: "✅ Approved",
+                  },
+                  rejected: {
+                    bg: "bg-rose-50",
+                    text: "text-rose-700",
+                    label: "❌ Rejected",
+                  },
+                  withdrawn: {
+                    bg: "bg-gray-50",
+                    text: "text-gray-700",
+                    label: "⏸️ Withdrawn",
+                  },
                 };
 
-                const colors = statusColors[application.status] || statusColors.submitted;
+                const colors =
+                  statusColors[application.status] || statusColors.submitted;
 
                 return (
                   <article
@@ -201,11 +239,14 @@ export default function ApplicationsReviewPage() {
                         </h2>
                         <p className="mt-1 text-sm text-gray-600">
                           {application.tenantEmail}
-                          {application.tenantPhone && ` • ${application.tenantPhone}`}
+                          {application.tenantPhone &&
+                            ` • ${application.tenantPhone}`}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full px-3 py-1.5 text-sm font-semibold ${colors.text}`}>
+                        <span
+                          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${colors.text}`}
+                        >
                           {colors.label}
                         </span>
                       </div>
@@ -214,7 +255,9 @@ export default function ApplicationsReviewPage() {
                     {/* Property and employment info */}
                     <div className="mt-4 grid gap-4 rounded-lg bg-white p-4 md:grid-cols-2">
                       <div>
-                        <p className="text-xs font-semibold uppercase text-gray-500">Property</p>
+                        <p className="text-xs font-semibold uppercase text-gray-500">
+                          Property
+                        </p>
                         <p className="mt-1 text-sm font-medium text-gray-900">
                           {application.propertyTitle || "Property"}
                         </p>
@@ -223,12 +266,15 @@ export default function ApplicationsReviewPage() {
                         </p>
                         {application.propertyPrice && (
                           <p className="mt-1 text-xs text-gray-700">
-                            💰 €{application.propertyPrice.toLocaleString()}/month
+                            💰 €{application.propertyPrice.toLocaleString()}
+                            /month
                           </p>
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase text-gray-500">Employment</p>
+                        <p className="text-xs font-semibold uppercase text-gray-500">
+                          Employment
+                        </p>
                         <p className="mt-1 text-sm font-medium text-gray-900">
                           {application.employmentInfo.jobTitle}
                         </p>
@@ -236,51 +282,69 @@ export default function ApplicationsReviewPage() {
                           {application.employmentInfo.companyName}
                         </p>
                         <p className="mt-1 text-xs text-gray-700">
-                          💼 €{application.employmentInfo.monthlyIncome.toLocaleString()}/month
+                          💼 €
+                          {application.employmentInfo.monthlyIncome.toLocaleString()}
+                          /month
                         </p>
                       </div>
                     </div>
 
                     {/* Uploaded Documents Section */}
-                    {application.documents && application.documents.length > 0 && (
-                      <div className="mt-4 rounded-lg bg-blue-50 p-4">
-                        <p className="mb-3 font-semibold text-blue-900">📂 Uploaded Documents</p>
-                        <div className="space-y-2">
-                          {application.documents.map((doc) => (
-                            <a
-                              key={doc.id}
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded border border-blue-200 bg-white px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100"
-                            >
-                              <span>📄</span>
-                              <span className="flex-1 truncate font-medium">{doc.name}</span>
-                              <span className="text-xs text-gray-500">
-                                {(doc.size / 1024).toFixed(1)} KB
-                              </span>
-                              <span>↗️</span>
-                            </a>
-                          ))}
+                    {application.documents &&
+                      application.documents.length > 0 && (
+                        <div className="mt-4 rounded-lg bg-blue-50 p-4">
+                          <p className="mb-3 font-semibold text-blue-900">
+                            📂 Uploaded Documents
+                          </p>
+                          <div className="space-y-2">
+                            {application.documents.map((doc) => (
+                              <a
+                                key={doc.id}
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 rounded border border-blue-200 bg-white px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100"
+                                aria-label={`Open document ${doc.name} in a new tab`}
+                              >
+                                <span>📄</span>
+                                <span className="flex-1 truncate font-medium">
+                                  {doc.name}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {(doc.size / 1024).toFixed(1)} KB
+                                </span>
+                                <span>↗️</span>
+                                <span className="sr-only">
+                                  Opens in a new tab
+                                </span>
+                              </a>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Requested Documents Status */}
-                    {application.requestedDocuments && application.requestedDocuments.length > 0 && (
-                      <div className="mt-4 rounded-lg bg-yellow-50 p-4">
-                        <p className="mb-2 font-semibold text-yellow-900">⏳ Documents Requested</p>
-                        <p className="text-sm text-yellow-800">
-                          {application.requestedDocuments.join(", ")}
-                        </p>
-                      </div>
-                    )}
+                    {application.requestedDocuments &&
+                      application.requestedDocuments.length > 0 && (
+                        <div className="mt-4 rounded-lg bg-yellow-50 p-4">
+                          <p className="mb-2 font-semibold text-yellow-900">
+                            ⏳ Documents Requested
+                          </p>
+                          <p className="text-sm text-yellow-800">
+                            {application.requestedDocuments.join(", ")}
+                          </p>
+                        </div>
+                      )}
 
                     {/* Actions section */}
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <label className="grid gap-1 rounded-lg bg-white p-3 text-sm text-gray-700">
-                        <span className="font-semibold">📄 Request Documents</span>
-                        <span className="text-xs text-gray-500">e.g.: Pay stubs, ID, bank statement</span>
+                        <span className="font-semibold">
+                          📄 Request Documents
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          e.g.: Pay stubs, ID, bank statement
+                        </span>
                         <input
                           className="mt-1 rounded border border-gray-300 px-3 py-2 text-sm"
                           value={requestDocsText[application.id] || ""}
@@ -295,8 +359,12 @@ export default function ApplicationsReviewPage() {
                       </label>
 
                       <label className="grid gap-1 rounded-lg bg-white p-3 text-sm text-gray-700">
-                        <span className="font-semibold">📅 Schedule Viewing</span>
-                        <span className="text-xs text-gray-500">When would you like to view?</span>
+                        <span className="font-semibold">
+                          📅 Schedule Viewing
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          When would you like to view?
+                        </span>
                         <input
                           type="datetime-local"
                           className="mt-1 rounded border border-gray-300 px-3 py-2 text-sm"
@@ -311,8 +379,12 @@ export default function ApplicationsReviewPage() {
                       </label>
 
                       <label className="grid gap-1 rounded-lg bg-white p-3 text-sm text-gray-700 md:col-span-2">
-                        <span className="font-semibold">❌ Rejection Reason</span>
-                        <span className="text-xs text-gray-500">Only fill if you plan to reject this application</span>
+                        <span className="font-semibold">
+                          ❌ Rejection Reason
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Only fill if you plan to reject this application
+                        </span>
                         <textarea
                           className="min-h-16 mt-1 rounded border border-gray-300 px-3 py-2 text-sm"
                           value={rejectReason[application.id] || ""}
@@ -320,45 +392,47 @@ export default function ApplicationsReviewPage() {
                             setRejectReason((prev) => ({
                               ...prev,
                               [application.id]: e.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                  </div>
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <button
-                      type="button"
-                      className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800"
-                      onClick={() => void handleApprove(application.id)}
-                    >
-                      ✅ Approve Application
-                    </button>
-                    <button
-                      type="button"
-                      className="flex-1 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 font-semibold text-amber-700 transition-colors hover:bg-amber-100 active:bg-amber-200"
-                      onClick={() => void handleRequestDocs(application.id)}
-                    >
-                      📄 Request Documents
-                    </button>
-                    <button
-                      type="button"
-                      className="flex-1 rounded-lg border-2 border-purple-400 bg-purple-50 px-4 py-3 font-semibold text-purple-700 transition-colors hover:bg-purple-100 active:bg-purple-200"
-                      onClick={() => void handleScheduleViewing(application.id)}
-                    >
-                      📅 Schedule Viewing
-                    </button>
-                    <button
-                      type="button"
-                      className="flex-1 rounded-lg border-2 border-rose-400 bg-rose-50 px-4 py-3 font-semibold text-rose-700 transition-colors hover:bg-rose-100 active:bg-rose-200"
-                      onClick={() => void handleReject(application.id)}
-                    >
-                      ❌ Reject Application
-                    </button>
-                  </div>
-                </article>
-              );
+                    {/* Action Buttons */}
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 active:bg-emerald-800"
+                        onClick={() => void handleApprove(application.id)}
+                      >
+                        ✅ Approve Application
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 font-semibold text-amber-700 transition-colors hover:bg-amber-100 active:bg-amber-200"
+                        onClick={() => void handleRequestDocs(application.id)}
+                      >
+                        📄 Request Documents
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 rounded-lg border-2 border-purple-400 bg-purple-50 px-4 py-3 font-semibold text-purple-700 transition-colors hover:bg-purple-100 active:bg-purple-200"
+                        onClick={() =>
+                          void handleScheduleViewing(application.id)
+                        }
+                      >
+                        📅 Schedule Viewing
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 rounded-lg border-2 border-rose-400 bg-rose-50 px-4 py-3 font-semibold text-rose-700 transition-colors hover:bg-rose-100 active:bg-rose-200"
+                        onClick={() => void handleReject(application.id)}
+                      >
+                        ❌ Reject Application
+                      </button>
+                    </div>
+                  </article>
+                );
               })}
             </div>
           )}

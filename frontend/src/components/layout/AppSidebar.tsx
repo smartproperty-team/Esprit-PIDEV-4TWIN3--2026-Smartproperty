@@ -170,6 +170,7 @@ export default function AppSidebar() {
                     key={`mobile-${link.to}`}
                     type="button"
                     onClick={() => navigate(link.to)}
+                    aria-current={active ? "page" : undefined}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       active
                         ? "bg-indigo-50 font-semibold text-indigo-700"
