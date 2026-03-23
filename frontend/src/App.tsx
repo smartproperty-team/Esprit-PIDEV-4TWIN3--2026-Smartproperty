@@ -29,7 +29,10 @@ import {
   VerificationPage,
 } from "./pages/dashboard";
 import { HomePage, PaletteDemoPage } from "./pages/home";
-import { MaintenanceRequestFormPage } from "./pages/maintenance";
+import {
+  MaintenanceRequestFormPage,
+  ServiceProviderMaintenancePage,
+} from "./pages/maintenance";
 import { PreferencesOnboardingModal } from "./pages/onboarding";
 import { ProfilePage } from "./pages/profile";
 import {
@@ -45,6 +48,7 @@ import {
   canAccessAdminUsers,
   canCreateMaintenanceRequest,
   canCreateProperties,
+  canManageAssignedMaintenance,
   canManageProperties,
   canReviewApplications,
   canReviewVerifications,
@@ -76,6 +80,7 @@ function getPageTitle(pathname: string): string {
     "/properties/mine": "My Properties",
     "/properties/new": "Create Property",
     "/maintenance/requests/new": "Maintenance Request",
+    "/maintenance/requests/assigned": "Assigned Maintenance",
   };
 
   if (exactTitles[pathname]) {
@@ -130,6 +135,8 @@ function App() {
       pageTitle = "Add Property | SmartProperty";
     } else if (path.startsWith("/maintenance/requests/new")) {
       pageTitle = "Maintenance Request | SmartProperty";
+    } else if (path.startsWith("/maintenance/requests/assigned")) {
+      pageTitle = "Assigned Maintenance | SmartProperty";
     } else if (path.startsWith("/properties/mine")) {
       pageTitle = "My Properties | SmartProperty";
     } else if (path.startsWith("/properties/") && path.endsWith("/edit")) {
@@ -400,6 +407,19 @@ function App() {
             <ProtectedRoute>
               {canCreateMaintenanceRequest(user) ? (
                 <MaintenanceRequestFormPage />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/maintenance/requests/assigned"
+          element={
+            <ProtectedRoute>
+              {canManageAssignedMaintenance(user) ? (
+                <ServiceProviderMaintenancePage />
               ) : (
                 <Navigate to="/dashboard" replace />
               )}

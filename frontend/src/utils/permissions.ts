@@ -58,6 +58,8 @@ const MAINTENANCE_INTAKE_ROLES: UserRole[] = [
   UserRole.BRANCH_MANAGER,
 ];
 
+const MAINTENANCE_PROVIDER_ROLES: UserRole[] = [UserRole.SERVICE_PROVIDER];
+
 function hasRole(
   user: User | null | undefined,
   allowedRoles: UserRole[],
@@ -133,6 +135,15 @@ export function canCreateMaintenanceRequest(
   user: User | null | undefined,
 ): boolean {
   return hasRole(user, MAINTENANCE_INTAKE_ROLES);
+}
+
+/**
+ * Can access service provider maintenance management.
+ */
+export function canManageAssignedMaintenance(
+  user: User | null | undefined,
+): boolean {
+  return hasRole(user, MAINTENANCE_PROVIDER_ROLES);
 }
 
 /**

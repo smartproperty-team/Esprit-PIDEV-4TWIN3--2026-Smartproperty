@@ -32,6 +32,7 @@ import { VerificationStatus } from "@/types/verification";
 import {
   canAccessAdminUsers,
   canCreateMaintenanceRequest,
+  canManageAssignedMaintenance,
   canManageProperties,
   canReviewApplications,
   canReviewVerifications,
@@ -108,6 +109,7 @@ export default function DashboardPage() {
     canManageProperties(user) ||
     user?.role === UserRole.ACCOUNTANT_ADMIN_ASSISTANT;
   const canRequestMaintenance = canCreateMaintenanceRequest(user);
+  const canManageMaintenanceAsProvider = canManageAssignedMaintenance(user);
 
   // Fetch verification status for tenants
   useEffect(() => {
@@ -591,6 +593,16 @@ export default function DashboardPage() {
                 <Button onClick={() => navigate("/maintenance/requests/new")}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Request Maintenance
+                </Button>
+              </div>
+            )}
+            {canManageMaintenanceAsProvider && (
+              <div className="mt-4">
+                <Button
+                  onClick={() => navigate("/maintenance/requests/assigned")}
+                >
+                  <Wrench className="mr-2 h-4 w-4" />
+                  Manage Maintenance Requests
                 </Button>
               </div>
             )}

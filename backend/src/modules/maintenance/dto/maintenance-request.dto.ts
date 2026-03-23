@@ -282,3 +282,28 @@ export class SubmitServiceReportDto {
   @IsBoolean()
   followUpRequired?: boolean;
 }
+
+export class UpdateProviderMaintenanceStatusDto {
+  @ApiProperty({
+    enum: [
+      MaintenanceStatus.IN_PROGRESS,
+      MaintenanceStatus.WAITING_PARTS,
+      MaintenanceStatus.COMPLETED,
+      MaintenanceStatus.CANCELED,
+    ],
+  })
+  @IsEnum(MaintenanceStatus)
+  status!:
+    | MaintenanceStatus.IN_PROGRESS
+    | MaintenanceStatus.WAITING_PARTS
+    | MaintenanceStatus.COMPLETED
+    | MaintenanceStatus.CANCELED;
+
+  @ApiPropertyOptional({
+    example: 'Paused while waiting for replacement part.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  reason?: string;
+}

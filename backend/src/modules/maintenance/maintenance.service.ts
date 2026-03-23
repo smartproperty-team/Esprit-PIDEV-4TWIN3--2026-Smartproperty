@@ -12,6 +12,7 @@ import {
   RecordMaintenanceOutcomeDto,
   SubmitServiceReportDto,
   UpdateMaintenanceStatusDto,
+  UpdateProviderMaintenanceStatusDto,
 } from './dto/maintenance-request.dto';
 import {
   MaintenancePriority,
@@ -51,6 +52,18 @@ export class MaintenanceService {
 
     return {
       requesterId: { $in: idVariants },
+    };
+  }
+
+  private normalizeAssigneeFilter(userId: string): Record<string, unknown> {
+    const idVariants: Array<string | ObjectId> = [userId];
+
+    if (ObjectId.isValid(userId)) {
+      idVariants.push(new ObjectId(userId));
+    }
+
+    return {
+      'assignment.assigneeId': { $in: idVariants },
     };
   }
 
@@ -213,6 +226,33 @@ export class MaintenanceService {
     return list.map((item) => this.toResponse(item));
   }
 
+  async findAssignedToProvider(userId: string) {
+    const list = await this.maintenanceRepo.find({
+      where: this.normalizeAssigneeFilter(userId),
+      order: { updatedAt: 'DESC' },
+    });
+
+    return list
+      .filter((item) => item.isDraft !== true)
+      .map((item) => this.toResponse(item));
+  }
+
+  async findAvailableForProvider() {
+    const list = await this.maintenanceRepo.find({
+      where: { isDraft: false },
+      order: { createdAt: 'DESC' },
+    });
+
+    return list
+      .filter((item) => !item.assignment?.assigneeId)
+      .filter((item) =>
+        [MaintenanceStatus.SUBMITTED, MaintenanceStatus.TRIAGED].includes(
+          item.status,
+        ),
+      )
+      .map((item) => this.toResponse(item));
+  }
+
   async assignRequest(id: string, dto: AssignMaintenanceRequestDto) {
     const request = await this.findByIdOrFail(id);
 
@@ -295,6 +335,57 @@ export class MaintenanceService {
     if (dto.workPerformedSummary) {
       request.status = MaintenanceStatus.COMPLETED;
     }
+
+    const saved = await this.maintenanceRepo.save(request);
+    return this.toResponse(saved);
+  }
+
+  async updateProviderStatus(
+    id: string,
+    providerUserId: string,
+    dto: UpdateProviderMaintenanceStatusDto,
+  ) {
+    const request = await this.findByIdOrFail(id);
+
+    const assigneeId = request.assignment?.assigneeId;
+    if (!assigneeId || String(assigneeId) !== String(providerUserId)) {
+      throw new NotFoundException(
+        'Assigned maintenance request not found for this service provider',
+      );
+    }
+
+    request.status = dto.status;
+    request.statusReason = dto.reason;
+
+    if (dto.status === MaintenanceStatus.COMPLETED) {
+      request.closedAt = undefined;
+    }
+
+    if (dto.status === MaintenanceStatus.CANCELED) {
+      request.closedAt = new Date();
+      request.closeReason = dto.reason;
+    }
+
+    const saved = await this.maintenanceRepo.save(request);
+    return this.toResponse(saved);
+  }
+
+  async claimRequest(id: string, providerUserId: string) {
+    const request = await this.findByIdOrFail(id);
+
+    if (request.isDraft) {
+      throw new BadRequestException('Cannot claim draft maintenance requests');
+    }
+
+    if (request.assignment?.assigneeId) {
+      throw new BadRequestException('Request is already assigned');
+    }
+
+    request.assignment = this.omitUndefined({
+      ...(request.assignment || {}),
+      assigneeId: providerUserId,
+    });
+    request.status = MaintenanceStatus.ASSIGNED;
 
     const saved = await this.maintenanceRepo.save(request);
     return this.toResponse(saved);

@@ -2,6 +2,7 @@ import { useAuthStore } from "@/store";
 import {
   canAccessAdminUsers,
   canCreateMaintenanceRequest,
+  canManageAssignedMaintenance,
   canReviewApplications,
   canReviewVerifications,
   isTenant,
@@ -64,6 +65,15 @@ export default function AppSidebar() {
             {
               label: "Request Maintenance",
               to: "/maintenance/requests/new",
+              icon: Wrench,
+            },
+          ]
+        : []),
+      ...(canManageAssignedMaintenance(user)
+        ? [
+            {
+              label: "Manage Maintenance",
+              to: "/maintenance/requests/assigned",
               icon: Wrench,
             },
           ]

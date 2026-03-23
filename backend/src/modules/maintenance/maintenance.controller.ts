@@ -25,6 +25,7 @@ import {
   RecordMaintenanceOutcomeDto,
   SubmitServiceReportDto,
   UpdateMaintenanceStatusDto,
+  UpdateProviderMaintenanceStatusDto,
 } from './dto/maintenance-request.dto';
 import { MaintenanceService } from './maintenance.service';
 
@@ -59,6 +60,24 @@ export class MaintenanceController {
   })
   findMine(@CurrentUser('id') userId: string) {
     return this.maintenanceService.findMine(userId);
+  }
+
+  @Get('assigned')
+  @Roles(UserRole.SERVICE_PROVIDER)
+  @ApiOperation({
+    summary: 'List maintenance requests assigned to current service provider',
+  })
+  findAssigned(@CurrentUser('id') userId: string) {
+    return this.maintenanceService.findAssignedToProvider(userId);
+  }
+
+  @Get('available')
+  @Roles(UserRole.SERVICE_PROVIDER)
+  @ApiOperation({
+    summary: 'List open maintenance requests available to claim by providers',
+  })
+  findAvailable() {
+    return this.maintenanceService.findAvailableForProvider();
   }
 
   @Patch(':id/assign')
@@ -101,5 +120,23 @@ export class MaintenanceController {
     @Body() dto: SubmitServiceReportDto,
   ) {
     return this.maintenanceService.submitServiceReport(id, dto);
+  }
+
+  @Patch(':id/provider-status')
+  @Roles(UserRole.SERVICE_PROVIDER)
+  @ApiOperation({ summary: 'Update assigned maintenance status as provider' })
+  updateProviderStatus(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateProviderMaintenanceStatusDto,
+  ) {
+    return this.maintenanceService.updateProviderStatus(id, userId, dto);
+  }
+
+  @Patch(':id/claim')
+  @Roles(UserRole.SERVICE_PROVIDER)
+  @ApiOperation({ summary: 'Claim an open maintenance request' })
+  claimRequest(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.maintenanceService.claimRequest(id, userId);
   }
 }
