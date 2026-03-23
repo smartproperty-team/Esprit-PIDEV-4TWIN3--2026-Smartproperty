@@ -138,6 +138,15 @@ export function canCreateMaintenanceRequest(
 }
 
 /**
+ * Can view status of own maintenance requests.
+ */
+export function canTrackMaintenanceRequests(
+  user: User | null | undefined,
+): boolean {
+  return hasRole(user, MAINTENANCE_INTAKE_ROLES);
+}
+
+/**
  * Can access service provider maintenance management.
  */
 export function canManageAssignedMaintenance(

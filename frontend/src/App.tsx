@@ -31,6 +31,7 @@ import {
 import { HomePage, PaletteDemoPage } from "./pages/home";
 import {
   MaintenanceRequestFormPage,
+  MyMaintenanceRequestsPage,
   ServiceProviderMaintenancePage,
 } from "./pages/maintenance";
 import { PreferencesOnboardingModal } from "./pages/onboarding";
@@ -52,6 +53,7 @@ import {
   canManageProperties,
   canReviewApplications,
   canReviewVerifications,
+  canTrackMaintenanceRequests,
   isTenant,
 } from "./utils";
 
@@ -80,6 +82,7 @@ function getPageTitle(pathname: string): string {
     "/properties/mine": "My Properties",
     "/properties/new": "Create Property",
     "/maintenance/requests/new": "Maintenance Request",
+    "/maintenance/requests/mine": "My Maintenance Status",
     "/maintenance/requests/assigned": "Assigned Maintenance",
   };
 
@@ -135,6 +138,8 @@ function App() {
       pageTitle = "Add Property | SmartProperty";
     } else if (path.startsWith("/maintenance/requests/new")) {
       pageTitle = "Maintenance Request | SmartProperty";
+    } else if (path.startsWith("/maintenance/requests/mine")) {
+      pageTitle = "My Maintenance Status | SmartProperty";
     } else if (path.startsWith("/maintenance/requests/assigned")) {
       pageTitle = "Assigned Maintenance | SmartProperty";
     } else if (path.startsWith("/properties/mine")) {
@@ -407,6 +412,19 @@ function App() {
             <ProtectedRoute>
               {canCreateMaintenanceRequest(user) ? (
                 <MaintenanceRequestFormPage />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/maintenance/requests/mine"
+          element={
+            <ProtectedRoute>
+              {canTrackMaintenanceRequests(user) ? (
+                <MyMaintenanceRequestsPage />
               ) : (
                 <Navigate to="/dashboard" replace />
               )}

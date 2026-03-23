@@ -308,7 +308,7 @@ export default function MaintenanceRequestFormPage() {
     setLoading(true);
     try {
       await maintenanceService.createRequest(toPayload(true));
-      navigate("/dashboard");
+      navigate("/maintenance/requests/mine");
     } catch (error) {
       console.error("Failed to save maintenance draft:", error);
       alert("Could not save draft. Please review the form and try again.");
@@ -325,7 +325,7 @@ export default function MaintenanceRequestFormPage() {
     setLoading(true);
     try {
       await maintenanceService.createRequest(toPayload(false));
-      navigate("/dashboard");
+      navigate("/maintenance/requests/mine");
     } catch (error) {
       console.error("Failed to submit maintenance request:", error);
       alert(

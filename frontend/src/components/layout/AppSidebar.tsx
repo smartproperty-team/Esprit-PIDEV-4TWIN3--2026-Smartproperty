@@ -5,6 +5,7 @@ import {
   canManageAssignedMaintenance,
   canReviewApplications,
   canReviewVerifications,
+  canTrackMaintenanceRequests,
   isTenant,
 } from "@/utils";
 import {
@@ -65,6 +66,15 @@ export default function AppSidebar() {
             {
               label: "Request Maintenance",
               to: "/maintenance/requests/new",
+              icon: Wrench,
+            },
+          ]
+        : []),
+      ...(canTrackMaintenanceRequests(user)
+        ? [
+            {
+              label: "My Maintenance Status",
+              to: "/maintenance/requests/mine",
               icon: Wrench,
             },
           ]

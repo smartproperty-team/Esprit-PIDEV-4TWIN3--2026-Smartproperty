@@ -1,11 +1,14 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import { MongoRepository } from 'typeorm';
+import { NotificationType } from '../notifications/entities/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   AssignMaintenanceRequestDto,
   CreateMaintenanceRequestDto,
@@ -22,10 +25,72 @@ import {
 
 @Injectable()
 export class MaintenanceService {
+  private readonly logger = new Logger(MaintenanceService.name);
+
   constructor(
     @InjectRepository(MaintenanceRequest)
     private readonly maintenanceRepo: MongoRepository<MaintenanceRequest>,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  private normalizeUserId(value: unknown): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (value instanceof ObjectId) {
+      return value.toHexString();
+    }
+
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'toHexString' in value &&
+      typeof (value as { toHexString?: unknown }).toHexString === 'function'
+    ) {
+      return (value as { toHexString: () => string }).toHexString();
+    }
+
+    return String(value);
+  }
+
+  private getRequestLink(request: MaintenanceRequest): string {
+    const requestId = request._id?.toHexString?.() || String(request._id);
+    return `/maintenance/requests/mine?requestId=${requestId}`;
+  }
+
+  private async notifyRequester(
+    request: MaintenanceRequest,
+    title: string,
+    message: string,
+    type: NotificationType,
+  ): Promise<void> {
+    const requesterId = this.normalizeUserId(request.requesterId);
+
+    if (!requesterId || request.isDraft === true) {
+      return;
+    }
+
+    try {
+      await this.notificationsService.create({
+        userId: requesterId,
+        title,
+        message,
+        type,
+        link: this.getRequestLink(request),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to create notification for maintenance request ${String(request._id)}: ${
+          error instanceof Error ? error.message : 'unknown error'
+        }`,
+      );
+    }
+  }
 
   private async findByIdOrFail(id: string): Promise<MaintenanceRequest> {
     if (!ObjectId.isValid(id)) {
@@ -239,6 +304,16 @@ export class MaintenanceService {
     );
 
     const saved = await this.maintenanceRepo.save(request);
+
+    if (saved.isDraft !== true) {
+      await this.notifyRequester(
+        saved,
+        'Maintenance request submitted',
+        `Your request "${saved.issueTitle || 'Untitled issue'}" has been submitted successfully.`,
+        NotificationType.MAINTENANCE_REQUEST_SUBMITTED,
+      );
+    }
+
     return this.toResponse(saved);
   }
 
@@ -294,6 +369,14 @@ export class MaintenanceService {
       : MaintenanceStatus.ASSIGNED;
 
     const saved = await this.maintenanceRepo.save(request);
+
+    await this.notifyRequester(
+      saved,
+      'Maintenance request assigned',
+      `Your request "${saved.issueTitle || 'Untitled issue'}" is now assigned to a service provider.`,
+      NotificationType.MAINTENANCE_ASSIGNED,
+    );
+
     return this.toResponse(saved);
   }
 
@@ -313,6 +396,14 @@ export class MaintenanceService {
     }
 
     const saved = await this.maintenanceRepo.save(request);
+
+    await this.notifyRequester(
+      saved,
+      'Maintenance status updated',
+      `Your request "${saved.issueTitle || 'Untitled issue'}" is now ${saved.status.replace('_', ' ')}.`,
+      NotificationType.MAINTENANCE_STATUS_CHANGED,
+    );
+
     return this.toResponse(saved);
   }
 
@@ -337,6 +428,14 @@ export class MaintenanceService {
     }
 
     const saved = await this.maintenanceRepo.save(request);
+
+    await this.notifyRequester(
+      saved,
+      'Maintenance outcome recorded',
+      `The outcome for your request "${saved.issueTitle || 'Untitled issue'}" has been recorded. Current status: ${saved.status.replace('_', ' ')}.`,
+      NotificationType.MAINTENANCE_STATUS_CHANGED,
+    );
+
     return this.toResponse(saved);
   }
 
@@ -371,6 +470,16 @@ export class MaintenanceService {
     }
 
     const saved = await this.maintenanceRepo.save(request);
+
+    if (dto.workPerformedSummary) {
+      await this.notifyRequester(
+        saved,
+        'Maintenance completed',
+        `Your request "${saved.issueTitle || 'Untitled issue'}" has been marked as completed by the service provider.`,
+        NotificationType.MAINTENANCE_COMPLETED,
+      );
+    }
+
     return this.toResponse(saved);
   }
 
@@ -396,6 +505,16 @@ export class MaintenanceService {
     }
 
     const saved = await this.maintenanceRepo.save(request);
+
+    await this.notifyRequester(
+      saved,
+      'Maintenance status updated',
+      `Your request "${saved.issueTitle || 'Untitled issue'}" is now ${saved.status.replace('_', ' ')}.`,
+      dto.status === MaintenanceStatus.COMPLETED
+        ? NotificationType.MAINTENANCE_COMPLETED
+        : NotificationType.MAINTENANCE_STATUS_CHANGED,
+    );
+
     return this.toResponse(saved);
   }
 
@@ -417,6 +536,14 @@ export class MaintenanceService {
     request.status = MaintenanceStatus.ASSIGNED;
 
     const saved = await this.maintenanceRepo.save(request);
+
+    await this.notifyRequester(
+      saved,
+      'Maintenance request assigned',
+      `A service provider has claimed your request "${saved.issueTitle || 'Untitled issue'}".`,
+      NotificationType.MAINTENANCE_ASSIGNED,
+    );
+
     return this.toResponse(saved);
   }
 }

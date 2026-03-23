@@ -36,6 +36,7 @@ import {
   canManageProperties,
   canReviewApplications,
   canReviewVerifications,
+  canTrackMaintenanceRequests,
   isTenant,
 } from "@/utils";
 import {
@@ -109,6 +110,7 @@ export default function DashboardPage() {
     canManageProperties(user) ||
     user?.role === UserRole.ACCOUNTANT_ADMIN_ASSISTANT;
   const canRequestMaintenance = canCreateMaintenanceRequest(user);
+  const canTrackOwnMaintenance = canTrackMaintenanceRequests(user);
   const canManageMaintenanceAsProvider = canManageAssignedMaintenance(user);
 
   // Fetch verification status for tenants
@@ -593,6 +595,17 @@ export default function DashboardPage() {
                 <Button onClick={() => navigate("/maintenance/requests/new")}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Request Maintenance
+                </Button>
+              </div>
+            )}
+            {canTrackOwnMaintenance && (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/maintenance/requests/mine")}
+                >
+                  <Wrench className="mr-2 h-4 w-4" />
+                  My Maintenance Status
                 </Button>
               </div>
             )}
