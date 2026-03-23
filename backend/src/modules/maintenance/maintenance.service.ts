@@ -67,6 +67,31 @@ export class MaintenanceService {
     };
   }
 
+  private readonly providerLockedStatuses: MaintenanceStatus[] = [
+    MaintenanceStatus.COMPLETED,
+    MaintenanceStatus.CLOSED,
+    MaintenanceStatus.CANCELED,
+    MaintenanceStatus.REJECTED,
+  ];
+
+  private assertProviderCanMutate(
+    request: MaintenanceRequest,
+    providerUserId: string,
+  ): void {
+    const assigneeId = request.assignment?.assigneeId;
+    if (!assigneeId || String(assigneeId) !== String(providerUserId)) {
+      throw new NotFoundException(
+        'Assigned maintenance request not found for this service provider',
+      );
+    }
+
+    if (this.providerLockedStatuses.includes(request.status)) {
+      throw new BadRequestException(
+        'This request is locked and can no longer be modified by the service provider',
+      );
+    }
+  }
+
   private validateMediaFileConstraints(dto: CreateMaintenanceRequestDto): void {
     const mediaItems = dto.media || [];
 
@@ -315,8 +340,17 @@ export class MaintenanceService {
     return this.toResponse(saved);
   }
 
-  async submitServiceReport(id: string, dto: SubmitServiceReportDto) {
+  async submitServiceReport(
+    id: string,
+    dto: SubmitServiceReportDto,
+    actorUserId?: string,
+    actorRole?: string,
+  ) {
     const request = await this.findByIdOrFail(id);
+
+    if (actorRole === 'service_provider' && actorUserId) {
+      this.assertProviderCanMutate(request, actorUserId);
+    }
 
     request.serviceProviderReport = this.omitUndefined({
       interventionStartedAt: dto.interventionStartedAt
@@ -347,12 +381,7 @@ export class MaintenanceService {
   ) {
     const request = await this.findByIdOrFail(id);
 
-    const assigneeId = request.assignment?.assigneeId;
-    if (!assigneeId || String(assigneeId) !== String(providerUserId)) {
-      throw new NotFoundException(
-        'Assigned maintenance request not found for this service provider',
-      );
-    }
+    this.assertProviderCanMutate(request, providerUserId);
 
     request.status = dto.status;
     request.statusReason = dto.reason;

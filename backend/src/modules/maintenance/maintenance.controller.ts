@@ -117,9 +117,11 @@ export class MaintenanceController {
   @ApiOperation({ summary: 'Submit service provider intervention report' })
   submitServiceReport(
     @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
     @Body() dto: SubmitServiceReportDto,
   ) {
-    return this.maintenanceService.submitServiceReport(id, dto);
+    return this.maintenanceService.submitServiceReport(id, dto, userId, role);
   }
 
   @Patch(':id/provider-status')

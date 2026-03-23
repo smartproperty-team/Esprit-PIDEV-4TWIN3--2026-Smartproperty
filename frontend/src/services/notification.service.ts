@@ -16,6 +16,10 @@ export interface Notification {
     | "application_status_changed"
     | "application_document_requested"
     | "application_deadline_reminder"
+    | "maintenance_request_submitted"
+    | "maintenance_assigned"
+    | "maintenance_status_changed"
+    | "maintenance_completed"
     | "system"
     | "info";
   isRead: boolean;
