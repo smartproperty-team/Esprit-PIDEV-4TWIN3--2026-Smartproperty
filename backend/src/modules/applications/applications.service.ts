@@ -202,7 +202,27 @@ export class ApplicationsService {
     }
 
     const normalizedManagerId = this.normalizeId(property.managerId);
-    if (!normalizedManagerId) {
+    let resolvedManagerId = normalizedManagerId;
+
+    if (!resolvedManagerId) {
+      const owner = await this.findUserByLooseId(property.ownerId);
+      const ownerRole = owner?.role;
+
+      if (
+        ownerRole === UserRole.BRANCH_MANAGER ||
+        ownerRole === UserRole.REAL_ESTATE_AGENT ||
+        ownerRole === UserRole.RENTAL_MANAGER
+      ) {
+        const normalizedFallbackManagerId = this.normalizeId(property.ownerId);
+        if (normalizedFallbackManagerId) {
+          resolvedManagerId = normalizedFallbackManagerId;
+          property.managerId = normalizedFallbackManagerId;
+          await this.propertyRepo.save(property);
+        }
+      }
+    }
+
+    if (!resolvedManagerId) {
       throw new BadRequestException(
         'No responsible agent/manager is assigned to this property yet.',
       );
@@ -212,7 +232,7 @@ export class ApplicationsService {
       propertyId: dto.propertyId,
       tenantId,
       ownerId: normalizedOwnerId,
-      managerId: normalizedManagerId,
+      managerId: resolvedManagerId,
       status: ApplicationStatus.SUBMITTED,
       employmentInfo: dto.employmentInfo,
       references: dto.references || [],
