@@ -508,26 +508,32 @@ export class ApplicationsService {
 
     const where: Record<string, unknown> = {
       deletedAt: null,
+      status: { $ne: ApplicationStatus.WITHDRAWN } as any,
     };
 
     if (!hasPlatformAdminRole(role)) {
       const idFilters: Array<Record<string, unknown>> = [
-        { ownerId: reviewerId },
         { managerId: reviewerId },
       ];
 
       if (ObjectId.isValid(reviewerId)) {
         const reviewerObjectId = new ObjectId(reviewerId);
-        idFilters.push(
-          { ownerId: reviewerObjectId },
-          { managerId: reviewerObjectId },
-        );
+        idFilters.push({ managerId: reviewerObjectId });
       }
 
       where.$or = idFilters;
     }
 
     if (query.status) {
+      if (query.status === ApplicationStatus.WITHDRAWN) {
+        return {
+          applications: [],
+          total: 0,
+          page,
+          limit,
+        };
+      }
+
       where.status = query.status;
     }
 

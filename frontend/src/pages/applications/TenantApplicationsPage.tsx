@@ -7,7 +7,7 @@ import type {
   ApplicationQuestionnaire,
 } from "@/types/application";
 import { ApplicationStatus } from "@/types/application";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const APPLICATION_FORM_STEPS: StepperStep[] = [
@@ -69,9 +69,12 @@ export default function TenantApplicationsPage() {
 
   const [messageToOwner, setMessageToOwner] = useState("");
   const [currentFormStep, setCurrentFormStep] = useState(0);
+  const [validationPopupMessage, setValidationPopupMessage] = useState<
+    string | null
+  >(null);
+  const submitIntentRef = useRef(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isBlockedForSelectedProperty, setIsBlockedForSelectedProperty] =
     useState(false);
 
@@ -119,6 +122,10 @@ export default function TenantApplicationsPage() {
     return fallback;
   };
 
+  const showValidationPopup = (message: string) => {
+    setValidationPopupMessage(message);
+  };
+
   const validateStep = (stepIndex: number) => {
     if (stepIndex === 0 && !propertyId.trim()) {
       return "Please open a property and click Apply first.";
@@ -144,6 +151,10 @@ export default function TenantApplicationsPage() {
     }
 
     if (stepIndex === 2) {
+      if (!desiredMoveInDate.trim()) {
+        return "Please choose your desired move-in date.";
+      }
+
       if (!leaseDurationPreference.trim()) {
         return "Please select a lease duration preference.";
       }
@@ -171,7 +182,7 @@ export default function TenantApplicationsPage() {
     const validationError = validateStep(currentFormStep);
 
     if (validationError) {
-      setError(validationError);
+      showValidationPopup(validationError);
       return;
     }
 
@@ -246,14 +257,15 @@ export default function TenantApplicationsPage() {
     );
 
     setIsBlockedForSelectedProperty(hasActiveApplication);
-
-    if (hasActiveApplication) {
-      setError("You already have an active application for this property.");
-    }
   }, [applications, prefilledPropertyId]);
 
   const submitApplication = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (currentFormStep === finalFormStepIndex && !submitIntentRef.current) {
+      return;
+    }
+    submitIntentRef.current = false;
 
     if (currentFormStep < finalFormStepIndex) {
       goToNextStep();
@@ -261,12 +273,14 @@ export default function TenantApplicationsPage() {
     }
 
     if (!propertyId.trim()) {
-      setError("Please open a property and click Apply first.");
+      showValidationPopup("Please open a property and click Apply first.");
       return;
     }
 
     if (isBlockedForSelectedProperty) {
-      setError("You already have an active application for this property.");
+      showValidationPopup(
+        "You already have an active application for this property.",
+      );
       return;
     }
 
@@ -274,7 +288,7 @@ export default function TenantApplicationsPage() {
       const validationError = validateStep(stepIndex);
       if (validationError) {
         setCurrentFormStep(stepIndex);
-        setError(validationError);
+        showValidationPopup(validationError);
         return;
       }
     }
@@ -315,34 +329,34 @@ export default function TenantApplicationsPage() {
         questionnaire,
       });
 
-      setPropertyId("");
-      setDateOfBirth("");
-      setCurrentAddress("");
-      setPreferredContactChannel("email");
-      setOccupantsAdults("1");
-      setOccupantsChildren("0");
-      setOccupantRelationshipSummary("");
-      setHasPets(false);
-      setPetType("");
-      setPetCount("0");
-      setSmokingStatus("not_specified");
-      setDesiredMoveInDate("");
-      setLeaseDurationPreference("12_months");
-      setReasonForMoving("");
-      setHadRentPaymentIncidents(false);
-      setRentPaymentIncidentsExplanation("");
-      setMessageToOwner("");
-      setCurrentFormStep(0);
-      setShowSuccessPopup(true);
-      await loadApplications();
-      window.setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 1500);
+      navigate("/dashboard", {
+        replace: true,
+        state: { applicationSubmitted: true },
+      });
+      return;
     } catch (error) {
       setError(getApiErrorMessage(error, "Failed to submit application."));
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+
+    if (target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    if (target instanceof HTMLButtonElement && target.type === "submit") {
+      return;
+    }
+
+    event.preventDefault();
   };
 
   return (
@@ -409,7 +423,12 @@ export default function TenantApplicationsPage() {
             )}
 
             {!isBlockedForSelectedProperty && (
-              <form className="mt-8" onSubmit={submitApplication}>
+              <form
+                className="mt-8"
+                onSubmit={submitApplication}
+                onKeyDown={handleFormKeyDown}
+                noValidate
+              >
                 <Stepper
                   steps={APPLICATION_FORM_STEPS}
                   currentStep={currentFormStep}
@@ -440,6 +459,9 @@ export default function TenantApplicationsPage() {
                         <button
                           type="submit"
                           disabled={isSubmitting}
+                          onClick={() => {
+                            submitIntentRef.current = true;
+                          }}
                           className="ml-auto rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-3 font-bold text-white shadow-lg transition-all hover:from-indigo-700 hover:to-indigo-800 hover:shadow-xl active:scale-95"
                         >
                           {isSubmitting
@@ -641,6 +663,7 @@ export default function TenantApplicationsPage() {
                             onChange={(e) =>
                               setDesiredMoveInDate(e.target.value)
                             }
+                            required
                           />
                         </label>
 
@@ -691,7 +714,7 @@ export default function TenantApplicationsPage() {
                               onChange={(e) =>
                                 setReasonForMoving(e.target.value)
                               }
-                              required
+                              spellCheck={false}
                             />
                           </label>
                           <label className="grid gap-1 text-sm text-gray-700">
@@ -751,19 +774,27 @@ export default function TenantApplicationsPage() {
           </section>
         </div>
       </main>
-      {showSuccessPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center shadow-2xl">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-2xl font-bold text-white">
-              ✓
+      {validationPopupMessage && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 px-4">
+          <div className="relative z-[3001] w-full max-w-md rounded-2xl border border-rose-200 bg-white p-6 shadow-2xl">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-600 text-xl font-bold text-white">
+              !
             </div>
-            <h3 className="mt-4 text-xl font-bold text-emerald-900">
-              Application Submitted
+            <h3 className="mt-4 text-lg font-bold text-rose-900">
+              Please Check Your Form
             </h3>
-            <p className="mt-2 text-sm text-emerald-800">
-              Great news. Your application was submitted successfully.
-              Redirecting you to your dashboard...
+            <p className="mt-2 text-sm text-rose-800">
+              {validationPopupMessage}
             </p>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+                onClick={() => setValidationPopupMessage(null)}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
