@@ -28,7 +28,6 @@ const PROPERTY_MANAGERS: UserRole[] = [
 const PROPERTY_CREATORS: UserRole[] = [
   UserRole.SUPER_ADMIN,
   UserRole.OWNER,
-  UserRole.BRANCH_MANAGER,
   UserRole.REAL_ESTATE_AGENT,
 ];
 
