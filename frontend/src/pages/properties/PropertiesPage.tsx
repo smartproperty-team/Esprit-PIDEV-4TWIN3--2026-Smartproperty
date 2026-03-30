@@ -4,6 +4,7 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AdvancedPropertySearchBar from "@/components/properties/AdvancedPropertySearchBar";
+import PropertyMapView from "@/components/properties/PropertyMapView";
 import LocationPreferenceMap from "@/components/settings/LocationPreferenceMap";
 import { useTranslation } from "@/i18n";
 import { propertyService } from "@/services/property.service";
@@ -122,6 +123,21 @@ const MyPropertiesIcon = () => (
   </svg>
 );
 
+const MapIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <polygon points="3,6 9,3 15,6 21,3 21,18 15,21 9,18 3,21" />
+    <line x1="9" y1="3" x2="9" y2="18" />
+    <line x1="15" y1="6" x2="15" y2="21" />
+  </svg>
+);
+
 // ===========================================
 // Property Card Component
 // ===========================================
@@ -133,6 +149,9 @@ interface PropertyCardProps {
   isCompared?: boolean;
   compareDisabled?: boolean;
   isSharing?: boolean;
+  isHighlighted?: boolean;
+  onMouseEnter?: (id: string) => void;
+  onMouseLeave?: () => void;
   t: ReturnType<typeof import("@/i18n").useTranslation>;
 }
 
@@ -143,6 +162,9 @@ function PropertyCard({
   isCompared = false,
   compareDisabled = false,
   isSharing = false,
+  isHighlighted = false,
+  onMouseEnter,
+  onMouseLeave,
   t,
 }: PropertyCardProps) {
   const propertyId = property.id || property._id || "";
@@ -173,7 +195,12 @@ function PropertyCard({
               : t.properties.typeLand;
 
   return (
-    <article className="property-card" aria-label={property.title}>
+    <article
+      className={`property-card${isHighlighted ? " highlighted" : ""}`}
+      aria-label={property.title}
+      onMouseEnter={() => onMouseEnter?.(propertyId)}
+      onMouseLeave={() => onMouseLeave?.()}
+    >
       <div className="property-card-image">
         <img
           src={imageUrl}
@@ -287,6 +314,8 @@ export default function PropertiesPage() {
     const parsed = parseNumberParam(value);
     return parsed !== undefined && parsed > 0 ? parsed : undefined;
   };
+  const [showMap, setShowMap] = useState(false);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
@@ -660,6 +689,14 @@ export default function PropertiesPage() {
                   {t.properties.showMyProperties}
                 </Link>
               )}
+              <button
+                type="button"
+                className={`btn-map-toggle${showMap ? " active" : ""}`}
+                onClick={() => setShowMap((prev) => !prev)}
+              >
+                <MapIcon />
+                {showMap ? "Hide map" : "Show map"}
+              </button>
             </div>
             <AdvancedPropertySearchBar
               searchQuery={searchText}
@@ -973,6 +1010,81 @@ export default function PropertiesPage() {
                 {t.properties.addProperty}
               </Link>
             )}
+          </div>
+        ) : showMap ? (
+          /* Split layout: list left, map right */
+          <div className="properties-split-layout">
+            <div className="properties-list-panel">
+              <div className="properties-grid">
+                {properties.map((property) => (
+                  <PropertyCard
+                    key={property.id || property._id}
+                    property={property}
+                    onToggleCompare={handleToggleCompare}
+                    onQuickShare={handleQuickShare}
+                    isCompared={comparisonIds.includes(getPropertyId(property))}
+                    compareDisabled={comparisonIds.length >= 3}
+                    isSharing={sharingPropertyId === getPropertyId(property)}
+                    isHighlighted={hoveredPropertyId === getPropertyId(property)}
+                    onMouseEnter={setHoveredPropertyId}
+                    onMouseLeave={() => setHoveredPropertyId(null)}
+                    t={t}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav className="pagination" aria-label="Pagination">
+                  <button
+                    className="pagination-btn"
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                  >
+                    {t.properties.previous}
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      const distance = Math.abs(page - currentPage);
+                      return (
+                        distance === 0 ||
+                        distance === 1 ||
+                        page === 1 ||
+                        page === totalPages
+                      );
+                    })
+                    .map((page, index, array) => (
+                      <span key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="pagination-info">...</span>
+                        )}
+                        <button
+                          className={`pagination-btn ${page === currentPage ? "active" : ""}`}
+                          onClick={() => handlePageChange(page)}
+                        >
+                          {page}
+                        </button>
+                      </span>
+                    ))}
+
+                  <button
+                    className="pagination-btn"
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                  >
+                    {t.properties.next}
+                  </button>
+                </nav>
+              )}
+            </div>
+
+            <div className="properties-map-panel">
+              <PropertyMapView
+                properties={properties}
+                hoveredPropertyId={hoveredPropertyId}
+                onPropertyHover={setHoveredPropertyId}
+              />
+            </div>
           </div>
         ) : (
           <>
