@@ -40,6 +40,9 @@ function buildIcon(price: number, currency: string, selected: boolean, hovered: 
   });
 }
 
+// Approximate pill marker half-height (used as gap above popup)
+const MARKER_HALF_H = 18;
+
 /**
  * Clamp popup position so it stays within the map container,
  * preferring to appear above the marker.
@@ -50,15 +53,15 @@ function clampPopupPos(
   mapW: number,
   mapH: number,
 ): { left: number; top: number } {
-  const GAP = 12; // gap between marker and popup edge
+  const GAP = 10;
 
-  // Default: centered above the marker
+  // Default: centered above the marker pill
   let left = px - POPUP_W / 2;
-  let top = py - POPUP_H - GAP;
+  let top = py - MARKER_HALF_H - POPUP_H - GAP;
 
-  // Flip below the marker if not enough room above
+  // Flip below if not enough room above
   if (top < GAP) {
-    top = py + GAP;
+    top = py + MARKER_HALF_H + GAP;
   }
 
   // Clamp horizontally
