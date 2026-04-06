@@ -13,6 +13,14 @@ import { UserRole } from '../users/entities/user.entity';
 import { AgenciesService } from './agencies.service';
 import { CreateAgencyDto } from './dto/create-agency.dto';
 
+type CurrentBranchManager = {
+  id: string;
+  email?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+};
+
 @ApiTags('Agencies')
 @ApiBearerAuth()
 @Controller('agencies')
@@ -31,12 +39,18 @@ export class AgenciesController {
   })
   createAgency(
     @Body() createAgencyDto: CreateAgencyDto,
-    @CurrentUser('id') currentUserId: string,
+    @CurrentUser() currentUser: CurrentBranchManager,
   ) {
-    return this.agenciesService.createWithAutoAccounts(
-      createAgencyDto,
-      currentUserId,
-    );
+    const managerName =
+      currentUser.fullName?.trim() ||
+      `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
+      'Branch Manager';
+
+    return this.agenciesService.createWithAutoAccounts(createAgencyDto, {
+      id: currentUser.id,
+      email: currentUser.email,
+      name: managerName,
+    });
   }
 
   @Get('mine')

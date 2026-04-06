@@ -1,15 +1,72 @@
 {
-  "generatedAt": "2026-03-21T09:45:41.289Z",
+  "generatedAt": "2026-04-01T10:40:11.305Z",
   "tool": "axe-core + playwright",
   "results": [
     {
-      "url": "http://localhost:5174/",
-      "violations": [],
+      "url": "http://localhost:5173/",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "article[aria-label=\"notif test - 800 TND\"] > .property-card-image > .sale.property-badge[aria-label=\"For Sale\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #ffffff, background color: #10b981, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article[aria-label=\"notif test - 800 TND\"] > .property-card-image > .property-featured[aria-label=\"Featured\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.55 (foreground color: #ffffff, background color: #ffc570, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(2) > .property-card-image > .sale.property-badge[aria-label=\"For Sale\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #ffffff, background color: #10b981, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(2) > .property-card-image > .property-featured[aria-label=\"Featured\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.55 (foreground color: #ffffff, background color: #ffc570, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(3) > .property-card-image > .sale.property-badge[aria-label=\"For Sale\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #ffffff, background color: #10b981, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(3) > .property-card-image > .property-featured[aria-label=\"Featured\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.55 (foreground color: #ffffff, background color: #ffc570, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(4) > .property-card-image > .sale.property-badge[aria-label=\"For Sale\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #ffffff, background color: #10b981, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "article:nth-child(4) > .property-card-image > .property-featured[aria-label=\"Featured\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.55 (foreground color: #ffffff, background color: #ffc570, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
       "passes": [
         {
           "id": "color-contrast",
           "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-          "nodes": 68
+          "nodes": 148
         }
       ],
       "incomplete": [
@@ -21,19 +78,25 @@
       ]
     },
     {
-      "url": "http://localhost:5174/properties",
+      "url": "http://localhost:5173/properties",
       "violations": [],
       "passes": [
         {
           "id": "color-contrast",
           "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-          "nodes": 45
+          "nodes": 127
         }
       ],
-      "incomplete": []
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": 18
+        }
+      ]
     },
     {
-      "url": "http://localhost:5174/login",
+      "url": "http://localhost:5173/login",
       "violations": [],
       "passes": [
         {
@@ -51,7 +114,7 @@
       ]
     },
     {
-      "url": "http://localhost:5174/register",
+      "url": "http://localhost:5173/register",
       "violations": [],
       "passes": [
         {

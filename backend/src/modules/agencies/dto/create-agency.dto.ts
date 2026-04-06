@@ -32,6 +32,15 @@ export class RoleSeedDto {
   @MinLength(2)
   @MaxLength(50)
   lastName?: string;
+
+  @ApiPropertyOptional({
+    example: 'john.personal@example.com',
+    description:
+      'Optional personal email that receives credentials for this seeded role account',
+  })
+  @IsOptional()
+  @IsEmail()
+  personalEmail?: string;
 }
 
 export class CreateAgencyDto {
