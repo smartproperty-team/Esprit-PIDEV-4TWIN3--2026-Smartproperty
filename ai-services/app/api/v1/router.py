@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     image_analysis,
     search,
     analytics,
+    marketing,
 )
 
 api_router = APIRouter()
@@ -43,4 +44,10 @@ api_router.include_router(
     analytics.router,
     prefix="/analytics",
     tags=["Market Analytics"],
+)
+
+api_router.include_router(
+    marketing.router,
+    prefix="/marketing",
+    tags=["Marketing & Distribution"],
 )

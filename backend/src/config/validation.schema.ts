@@ -75,4 +75,9 @@ export const validationSchema = Joi.object({
   // GraphQL
   GRAPHQL_PLAYGROUND: Joi.boolean().default(true),
   GRAPHQL_DEBUG: Joi.boolean().default(true),
+
+  // AI Services proxy
+  AI_SERVICE_URL: Joi.string().uri().default('http://localhost:8000'),
+  AI_SERVICE_TIMEOUT_MS: Joi.number().default(60000),
+  AI_SERVICE_RETRIES: Joi.number().default(1),
 });

@@ -23,4 +23,11 @@ export const appConfig = registerAs('app', () => ({
     debug: process.env.GRAPHQL_DEBUG === 'true',
     path: '/graphql',
   },
+
+  // AI Services
+  aiService: {
+    url: process.env.AI_SERVICE_URL || 'http://localhost:8000',
+    timeoutMs: parseInt(process.env.AI_SERVICE_TIMEOUT_MS || '60000', 10),
+    retries: parseInt(process.env.AI_SERVICE_RETRIES || '1', 10),
+  },
 }));

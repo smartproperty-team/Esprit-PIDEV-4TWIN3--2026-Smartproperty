@@ -8,9 +8,13 @@ import { HomeFooter, Navbar } from "../../components/layout";
 import AddressInput, {
   type AddressData,
 } from "../../components/properties/AddressInputOSM";
+import AiDescriptionPanel from "../../components/properties/AiDescriptionPanel";
 import { Stepper, type StepperStep } from "../../components/ui";
 import { useTranslation } from "../../i18n";
-import { propertyService } from "../../services/property.service";
+import {
+  propertyService,
+  type AiPropertySnapshot,
+} from "../../services/property.service";
 import type {
   CreatePropertyDto,
   Property,
@@ -174,6 +178,32 @@ export default function PropertyFormPage() {
       country?: string;
     }
   >({});
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
+    const amenitiesList = formData.amenities
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    return {
+      title: formData.title || undefined,
+      propertyType: formData.type,
+      city: formData.address.city || undefined,
+      state: formData.address.state || undefined,
+      country: formData.address.country || undefined,
+      bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
+      bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
+      areaSqft: formData.area ? Number(formData.area) : undefined,
+      parkingSpaces: formData.parkingSpaces
+        ? Number(formData.parkingSpaces)
+        : undefined,
+      furnished: formData.furnished,
+      petFriendly: formData.petFriendly,
+      amenities: amenitiesList.length ? amenitiesList : undefined,
+      price: formData.price ? Number(formData.price) : undefined,
+      currency: formData.currency || undefined,
+    };
+  }, [formData]);
 
   const wizardSteps: StepperStep[] = [
     { id: "details", label: t.properties.form.steps.details },
@@ -525,19 +555,6 @@ export default function PropertyFormPage() {
                 )}
               </div>
 
-              <div className="form-group full-width">
-                <label htmlFor="description">
-                  {t.properties.form.labels.description}
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder={t.properties.form.placeholders.description}
-                />
-              </div>
-
               <div className="form-group">
                 <label htmlFor="type">{t.properties.form.labels.type}</label>
                 <select
@@ -874,6 +891,54 @@ export default function PropertyFormPage() {
                 ))}
               </div>
             )}
+
+            {/* Description (final step) - generated from the data entered in
+                the previous wizard steps. */}
+            <div
+              className="form-group full-width"
+              style={{ marginTop: "1.5rem" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <label htmlFor="description">
+                  {t.properties.form.labels.description}
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setAiPanelOpen(true)}
+                  data-testid="ai-description-cta"
+                >
+                  {t.properties.form.aiDescription.cta}
+                </button>
+              </div>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder={t.properties.form.placeholders.description}
+                rows={6}
+              />
+            </div>
+
+            <AiDescriptionPanel
+              open={aiPanelOpen}
+              onClose={() => setAiPanelOpen(false)}
+              snapshot={buildAiSnapshot()}
+              propertyId={id}
+              onApply={(text) => {
+                setFormData((prev) => ({ ...prev, description: text }));
+                setAiPanelOpen(false);
+              }}
+            />
           </div>
         );
 
