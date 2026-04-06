@@ -26,7 +26,11 @@ interface TwoFactorSetup {
 // Two-Factor Authentication Page
 // ===========================================
 
-export default function TwoFactorPage() {
+export default function TwoFactorPage({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
 
@@ -91,10 +95,12 @@ export default function TwoFactorPage() {
       setSetupData(null);
       setVerificationCode("");
 
-      // Redirect to dashboard after 2 seconds
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
+      if (!embedded) {
+        // Keep standalone behavior unchanged.
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -147,8 +153,14 @@ export default function TwoFactorPage() {
 
   return (
     <>
-      <AppSidebar />
-      <div className="min-h-screen bg-gray-50 px-4 py-12 pt-16 sm:px-6 lg:px-8 lg:pt-24">
+      {!embedded && <AppSidebar />}
+      <div
+        className={
+          embedded
+            ? "bg-gray-50 px-2 py-2 sm:px-0"
+            : "min-h-screen bg-gray-50 px-4 py-12 pt-16 sm:px-6 lg:px-8 lg:pt-24"
+        }
+      >
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">
@@ -380,14 +392,16 @@ export default function TwoFactorPage() {
             )}
           </Card>
 
-          <div className="mt-6 text-center">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-              {"<- Back to Dashboard"}
-            </Button>
-          </div>
+          {!embedded && (
+            <div className="mt-6 text-center">
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+                {"<- Back to Dashboard"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-      <HomeFooter />
+      {!embedded && <HomeFooter />}
     </>
   );
 }

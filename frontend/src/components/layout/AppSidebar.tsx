@@ -16,11 +16,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Monitor,
   Settings,
   Shield,
   ShieldCheck,
-  User,
   Users,
   Wrench,
   X,
@@ -90,10 +88,8 @@ export default function AppSidebar() {
             },
           ]
         : []),
-      { label: "Profile", to: "/profile", icon: User },
       { label: "Settings", to: "/settings", icon: Settings },
       { label: "Verification", to: "/verification", icon: Shield },
-      { label: "Sessions", to: "/sessions", icon: Monitor },
     ];
 
     if (canReviewVerifications(user)) {
@@ -132,10 +128,6 @@ export default function AppSidebar() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -210,7 +202,10 @@ export default function AppSidebar() {
                   <button
                     key={`mobile-${link.to}`}
                     type="button"
-                    onClick={() => navigate(link.to)}
+                    onClick={() => {
+                      setMobileOpen(false);
+                      navigate(link.to);
+                    }}
                     aria-current={active ? "page" : undefined}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       active
