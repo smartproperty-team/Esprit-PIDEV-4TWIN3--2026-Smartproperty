@@ -59,6 +59,72 @@ import {
   isTenant,
 } from "./utils";
 
+function getSettingsTabTitle(search: string): string {
+  const tab = new URLSearchParams(search).get("tab");
+
+  switch (tab) {
+    case "account":
+      return "Account Settings";
+    case "security":
+      return "Security Settings";
+    case "sessions":
+      return "Session Settings";
+    case "preferences":
+      return "Preference Settings";
+    case "workspace":
+      return "Workspace Settings";
+    default:
+      return "Settings";
+  }
+}
+
+function getPageTitle(path: string, search: string): string {
+  if (path === "/settings") {
+    return `${getSettingsTabTitle(search)} | SmartProperty`;
+  }
+
+  const exactTitles: Record<string, string> = {
+    "/": "Home",
+    "/design/palette": "Design Palette",
+    "/login": "Sign In",
+    "/register": "Register",
+    "/forgot-password": "Forgot Password",
+    "/reset-password": "Reset Password",
+    "/verify-email": "Verify Email",
+    "/dashboard": "Dashboard",
+    "/sessions": "Session Settings",
+    "/verification": "Verification",
+    "/applications": "My Applications",
+    "/applications/review": "Review Applications",
+    "/super-administrator/verifications": "Admin Verifications",
+    "/super-administrator/users": "Admin Users",
+    "/branch-manager/agencies": "My Agencies",
+    "/branch-manager/agencies/new": "Agency Onboarding",
+    "/profile": "Account Settings",
+    "/security/2fa": "Security Settings",
+    "/properties": "Properties",
+    "/properties/mine": "My Properties",
+    "/properties/new": "Add Property",
+    "/maintenance/requests/new": "Maintenance Request",
+    "/maintenance/requests/mine": "My Maintenance Status",
+    "/maintenance/requests/assigned": "Assigned Maintenance",
+  };
+
+  if (exactTitles[path]) {
+    return `${exactTitles[path]} | SmartProperty`;
+  }
+
+  if (path.startsWith("/properties/") && path.endsWith("/edit")) {
+    return "Edit Property | SmartProperty";
+  }
+
+  if (path.startsWith("/properties/")) {
+    return "Property Details | SmartProperty";
+  }
+
+  return "SmartProperty";
+}
+
 function App() {
   const location = useLocation();
   const { language } = useLanguageStore();
@@ -78,60 +144,8 @@ function App() {
   }, [checkAuth]);
 
   useEffect(() => {
-    const path = location.pathname;
-    let pageTitle = "SmartProperty";
-
-    if (path === "/") pageTitle = "Home | SmartProperty";
-    else if (path === "/login") pageTitle = "Sign In | SmartProperty";
-    else if (path === "/register") pageTitle = "Register | SmartProperty";
-    else if (path === "/forgot-password") {
-      pageTitle = "Forgot Password | SmartProperty";
-    } else if (path === "/reset-password") {
-      pageTitle = "Reset Password | SmartProperty";
-    } else if (path === "/verify-email") {
-      pageTitle = "Verify Email | SmartProperty";
-    } else if (path.startsWith("/properties/new")) {
-      pageTitle = "Add Property | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/new")) {
-      pageTitle = "Maintenance Request | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/mine")) {
-      pageTitle = "My Maintenance Status | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/assigned")) {
-      pageTitle = "Assigned Maintenance | SmartProperty";
-    } else if (path.startsWith("/properties/mine")) {
-      pageTitle = "My Properties | SmartProperty";
-    } else if (path.startsWith("/properties/") && path.endsWith("/edit")) {
-      pageTitle = "Edit Property | SmartProperty";
-    } else if (path.startsWith("/properties/")) {
-      pageTitle = "Property Details | SmartProperty";
-    } else if (path === "/properties") {
-      pageTitle = "Properties | SmartProperty";
-    } else if (path === "/dashboard") {
-      pageTitle = "Dashboard | SmartProperty";
-    } else if (path === "/profile") {
-      pageTitle = "Profile | SmartProperty";
-    } else if (path === "/settings") {
-      pageTitle = "Settings | SmartProperty";
-    } else if (path === "/sessions") {
-      pageTitle = "Sessions | SmartProperty";
-    } else if (path === "/verification") {
-      pageTitle = "Verification | SmartProperty";
-    } else if (path === "/applications") {
-      pageTitle = "My Applications | SmartProperty";
-    } else if (path === "/applications/review") {
-      pageTitle = "Review Applications | SmartProperty";
-    } else if (path === "/super-administrator/verifications") {
-      pageTitle = "Admin Verifications | SmartProperty";
-    } else if (path === "/super-administrator/users") {
-      pageTitle = "Admin Users | SmartProperty";
-    } else if (path === "/branch-manager/agencies") {
-      pageTitle = "My Agencies | SmartProperty";
-    } else if (path === "/security/2fa") {
-      pageTitle = "Two-Factor Authentication | SmartProperty";
-    }
-
-    document.title = pageTitle;
-  }, [location.pathname]);
+    document.title = getPageTitle(location.pathname, location.search);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     document.documentElement.lang = language;
