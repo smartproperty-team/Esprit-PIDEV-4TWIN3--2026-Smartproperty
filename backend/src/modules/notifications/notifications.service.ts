@@ -107,6 +107,17 @@ export class NotificationsService {
     };
   }
 
+  private buildUnreadFilter(userId: string): Record<string, unknown> {
+    return {
+      ...this.buildUserFilter(userId),
+      $or: [
+        { isRead: false },
+        { isRead: null },
+        { isRead: { $exists: false } },
+      ],
+    };
+  }
+
   // ─── Create a notification ─────────────────────────────
   async create(dto: CreateNotificationDto): Promise<Notification> {
     const notification = this.notificationRepo.create({
@@ -143,12 +154,11 @@ export class NotificationsService {
 
   // ─── Get unread count ──────────────────────────────────
   async getUnreadCount(userId: string): Promise<number> {
-    return this.notificationRepo.count({
-      where: {
-        ...this.buildUserFilter(userId),
-        isRead: false,
-      },
+    const unread = await this.notificationRepo.find({
+      where: this.buildUnreadFilter(userId) as any,
     });
+
+    return unread.length;
   }
 
   // ─── Mark one notification as read ─────────────────────
@@ -172,10 +182,7 @@ export class NotificationsService {
   // ─── Mark all as read ──────────────────────────────────
   async markAllAsRead(userId: string) {
     const notifications = await this.notificationRepo.find({
-      where: {
-        ...this.buildUserFilter(userId),
-        isRead: false,
-      },
+      where: this.buildUnreadFilter(userId) as any,
     });
 
     for (const n of notifications) {

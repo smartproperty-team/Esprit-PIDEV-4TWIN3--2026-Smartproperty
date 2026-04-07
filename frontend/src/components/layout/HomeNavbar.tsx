@@ -48,6 +48,7 @@ export default function HomeNavbar() {
     useState(true);
   const notificationsAutoRefreshRef = useRef(true);
   const notificationSocketRef = useRef<Socket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const notifPanelRef = useRef<HTMLDivElement>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -114,6 +115,54 @@ export default function HomeNavbar() {
     };
   }, [fetchNotifications, notificationsAutoRefreshEnabled, user]);
 
+  const playNotificationSound = useCallback(() => {
+    try {
+      const AudioContextCtor = window.AudioContext;
+      if (!AudioContextCtor) {
+        return;
+      }
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextCtor();
+      }
+
+      const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") {
+        void ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+
+      const playChime = (startAt: number, frequency: number) => {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, startAt);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          frequency * 0.75,
+          startAt + 0.2,
+        );
+
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.26);
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start(startAt);
+        oscillator.stop(startAt + 0.28);
+      };
+
+      // Double-chime pattern to make alerts obvious even in noisy environments.
+      playChime(now, 1180);
+      playChime(now + 0.18, 980);
+    } catch {
+      // Keep notification updates working even if browser blocks audio.
+    }
+  }, []);
+
   useEffect(() => {
     notificationsAutoRefreshRef.current = notificationsAutoRefreshEnabled;
   }, [notificationsAutoRefreshEnabled]);
@@ -139,22 +188,22 @@ export default function HomeNavbar() {
     });
 
     socket.on("notification:new", (incoming: Notification) => {
-      if (!notificationsAutoRefreshRef.current) {
-        return;
+      if (notificationsAutoRefreshRef.current) {
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === incoming.id)) {
+            return prev;
+          }
+          return [incoming, ...prev];
+        });
       }
 
-      setNotifications((prev) => {
-        if (prev.some((n) => n.id === incoming.id)) {
-          return prev;
-        }
-        return [incoming, ...prev];
-      });
+      if (!incoming.isRead) {
+        setUnreadCount((prev) => prev + 1);
+        playNotificationSound();
+      }
     });
 
     socket.on("notification:count", (count: number) => {
-      if (!notificationsAutoRefreshRef.current) {
-        return;
-      }
       setUnreadCount(count);
     });
 
@@ -166,7 +215,7 @@ export default function HomeNavbar() {
         notificationSocketRef.current = null;
       }
     };
-  }, [user]);
+  }, [playNotificationSound, user]);
 
   const handleNotificationPanelToggle = useCallback(async () => {
     const nextOpen = !showNotifPanel;
@@ -547,7 +596,11 @@ export default function HomeNavbar() {
               <div className="relative" ref={notifPanelRef}>
                 <button
                   type="button"
-                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/15 text-white transition-colors hover:bg-white/25"
+                  className={`inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border px-3 transition-colors ${
+                    unreadCount > 0
+                      ? "border-red-300 bg-red-500/25 text-red-100 hover:bg-red-500/35"
+                      : "border-white/45 bg-white/15 text-white hover:bg-white/25"
+                  }`}
                   aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
                   title="Notifications"
                   onClick={() => {
@@ -571,11 +624,9 @@ export default function HomeNavbar() {
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
+                  <span className="text-xs font-bold leading-none text-white">
+                    {unreadCount}
+                  </span>
                 </button>
 
                 {showNotifPanel && (
