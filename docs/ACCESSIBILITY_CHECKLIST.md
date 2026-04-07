@@ -13,99 +13,99 @@ Use it during design, development, QA, and release validation.
 
 ### 1.1 Texte alternatif
 
-- [x] Every informative image has meaningful alt text.
-- [x] Decorative images/icons use empty alt (alt="").
-- [x] Icon-only buttons include an accessible name (aria-label or visible text).
-- [x] Charts/complex visuals include a text summary. (N/A in current frontend scope)
+- [X]  Every informative image has meaningful alt text.
+- [X]  Decorative images/icons use empty alt (alt="").
+- [X]  Icon-only buttons include an accessible name (aria-label or visible text).
+- [X]  Charts/complex visuals include a text summary. (N/A in current frontend scope)
 
 ### 1.2 Media temporel
 
-- [x] Videos include captions. (N/A in current frontend scope)
-- [x] Audio-only content has a transcript. (N/A in current frontend scope)
-- [x] Video content includes transcript or audio description when needed. (N/A in current frontend scope)
-- [x] Autoplay media can be paused or stopped. (N/A in current frontend scope)
+- [X]  Videos include captions. (N/A in current frontend scope)
+- [X]  Audio-only content has a transcript. (N/A in current frontend scope)
+- [X]  Video content includes transcript or audio description when needed. (N/A in current frontend scope)
+- [X]  Autoplay media can be paused or stopped. (N/A in current frontend scope)
 
 ### 1.3 Adaptable
 
-- [x] Content order remains logical when styles are removed.
-- [x] Headings follow semantic hierarchy (h1 -> h2 -> h3 ...).
-- [x] Forms use proper labels, fieldsets, and legends when grouping is needed.
-- [x] Tables use semantic headers (<th>) and structure.
+- [X]  Content order remains logical when styles are removed.
+- [X]  Headings follow semantic hierarchy (h1 -> h2 -> h3 ...).
+- [X]  Forms use proper labels, fieldsets, and legends when grouping is needed.
+- [X]  Tables use semantic headers (<th>) and structure.
 
 ### 1.4 Distinguable
 
-- [x] Text contrast meets minimum ratio (normal text >= 4.5:1, large text >= 3:1).
-- [x] Information is not conveyed by color alone.
-- [x] Text can be resized to 200% without loss of content/function.
-- [x] Focus indicators are clearly visible.
+- [X]  Text contrast meets minimum ratio (normal text >= 4.5:1, large text >= 3:1).
+- [X]  Information is not conveyed by color alone.
+- [X]  Text can be resized to 200% without loss of content/function.
+- [X]  Focus indicators are clearly visible.
 
 ## 2) Utilisable
 
 ### 2.1 Accessible au clavier
 
-- [x] All interactive elements are reachable by keyboard.
-- [x] No keyboard trap exists.
-- [x] Tab order is logical and predictable.
-- [x] Custom controls support keyboard interaction.
+- [X]  All interactive elements are reachable by keyboard.
+- [X]  No keyboard trap exists.
+- [X]  Tab order is logical and predictable.
+- [X]  Custom controls support keyboard interaction.
 
 ### 2.2 Assez de temps
 
-- [x] Users can extend or disable time limits where possible.
-- [x] Session timeout warnings are provided in advance.
-- [x] Auto-updating content can be paused/stopped.
+- [X]  Users can extend or disable time limits where possible.
+- [X]  Session timeout warnings are provided in advance.
+- [X]  Auto-updating content can be paused/stopped.
 
 ### 2.3 Crise d'epilepsie
 
-- [x] No content flashes more than 3 times per second.
-- [x] Animations avoid seizure-triggering patterns.
-- [x] Motion effects have reduced-motion alternatives when relevant.
+- [X]  No content flashes more than 3 times per second.
+- [X]  Animations avoid seizure-triggering patterns.
+- [X]  Motion effects have reduced-motion alternatives when relevant.
 
 ### 2.4 Navigable
 
-- [x] Every page has a clear title.
-- [x] Skip link to main content is available.
-- [x] Navigation is consistent across screens.
-- [x] Link text is descriptive (no generic "click here").
-- [x] Current location/state is communicated (active nav, breadcrumbs, stepper state).
+- [X]  Every page has a clear title.
+- [X]  Skip link to main content is available.
+- [X]  Navigation is consistent across screens.
+- [X]  Link text is descriptive (no generic "click here").
+- [X]  Current location/state is communicated (active nav, breadcrumbs, stepper state).
 
 ## 3) Comprehensible
 
 ### 3.1 Lisible
 
-- [x] Primary language is defined in the document/page.
-- [x] Instructions are clear and concise.
-- [x] Acronyms/abbreviations are explained when needed.
+- [X]  Primary language is defined in the document/page.
+- [X]  Instructions are clear and concise.
+- [X]  Acronyms/abbreviations are explained when needed.
 
 ### 3.2 Previsible
 
-- [x] UI components behave consistently.
-- [x] Focus changes do not trigger unexpected context changes.
-- [x] New windows/tabs are announced to users.
+- [X]  UI components behave consistently.
+- [X]  Focus changes do not trigger unexpected context changes.
+- [X]  New windows/tabs are announced to users.
 
 ### 3.3 Input
 
-- [x] Form errors are clearly identified near relevant fields.
-- [x] Error messages explain how to fix the issue.
-- [x] Required fields are clearly indicated.
-- [x] Important actions include confirmation when needed.
+- [X]  Form errors are clearly identified near relevant fields.
+- [X]  Error messages explain how to fix the issue.
+- [X]  Required fields are clearly indicated.
+- [X]  Important actions include confirmation when needed.
 
 ## 4) Robuste
 
 ### 4.1 Compatible
 
-- [x] HTML is semantically valid.
-- [x] ARIA is used only when necessary and correctly.
-- [ ] UI is tested with screen readers (at least one desktop + one mobile flow).
-- [ ] UI is tested in major browsers and responsive breakpoints.
+- [X]  HTML is semantically valid.
+- [X]  ARIA is used only when necessary and correctly.
+- [ ]  UI is tested with screen readers (at least one desktop + one mobile flow).
+- [ ]  UI is tested in major browsers and responsive breakpoints.
 
 ## Quick Validation Log
 
-- [ ] Keyboard-only pass completed
-- [ ] Screen reader pass completed
-- [x] Contrast pass completed
-- [x] Forms and errors pass completed
-- [ ] Media accessibility pass completed
-- [ ] Regression pass completed after fixes
+- [ ]  Keyboard-only pass completed
+- [ ]  Screen reader pass completed
+- [X]  Contrast pass completed
+- [X]  Forms and errors pass completed
+- [ ]  Media accessibility pass completed
+- [ ]  Regression pass completed after fixes
 
 ## Notes
 

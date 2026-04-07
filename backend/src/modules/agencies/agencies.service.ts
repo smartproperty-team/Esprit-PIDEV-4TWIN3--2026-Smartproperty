@@ -26,6 +26,31 @@ type ProvisionRoleSpec = {
   fallbackLastName: string;
 };
 
+type AgencyCreator = {
+  id: string;
+  email?: string;
+  name?: string;
+};
+
+type CreatedProvisionedAccount = {
+  id: string;
+  role: UserRole;
+  roleLabel: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  temporaryPassword: string;
+  notificationEmail: string;
+};
+
+type SkippedProvisionedAccount = {
+  role: UserRole;
+  roleLabel: string;
+  email: string;
+  reason: string;
+  message: string;
+};
+
 @Injectable()
 export class AgenciesService {
   private readonly logger = new Logger(AgenciesService.name);
@@ -41,7 +66,7 @@ export class AgenciesService {
 
   async createWithAutoAccounts(
     createAgencyDto: CreateAgencyDto,
-    createdBy: string,
+    createdBy: AgencyCreator,
   ) {
     const slug = this.toAgencySlug(createAgencyDto.name);
     await this.ensureUniqueAgency(slug, createAgencyDto.name);
@@ -54,7 +79,7 @@ export class AgenciesService {
       phone: createAgencyDto.phone?.trim(),
       contactEmail: createAgencyDto.contactEmail?.toLowerCase(),
       establishedAt: new Date(createAgencyDto.agencyCreationDate),
-      createdBy,
+      createdBy: createdBy.id,
       members: [],
     });
 
@@ -86,8 +111,8 @@ export class AgenciesService {
       },
     ];
 
-    const createdAccounts: Array<Record<string, unknown>> = [];
-    const skippedAccounts: Array<Record<string, unknown>> = [];
+    const createdAccounts: CreatedProvisionedAccount[] = [];
+    const skippedAccounts: SkippedProvisionedAccount[] = [];
     const members: AgencyMember[] = [];
 
     for (const spec of roleSpecs) {
@@ -99,6 +124,7 @@ export class AgenciesService {
       if (existingUser) {
         skippedAccounts.push({
           role: spec.role,
+          roleLabel: spec.fallbackLastName,
           email,
           reason: 'email_exists',
           message: 'An account with this email already exists',
@@ -136,23 +162,38 @@ export class AgenciesService {
       createdAccounts.push({
         id: savedUser.id,
         role: savedUser.role,
+        roleLabel: spec.fallbackLastName,
         email: savedUser.email,
         firstName: savedUser.firstName,
         lastName: savedUser.lastName,
         temporaryPassword,
+        notificationEmail:
+          spec.seed.personalEmail?.trim().toLowerCase() || savedUser.email,
       });
 
+      const notificationEmail =
+        spec.seed.personalEmail?.trim().toLowerCase() || savedUser.email;
+
       await this.sendProvisioningEmail({
-        to: savedUser.email,
+        to: notificationEmail,
         firstName: savedUser.firstName,
         roleLabel: spec.fallbackLastName,
         agencyName: savedAgency.name,
+        loginEmail: savedUser.email,
         temporaryPassword,
       });
     }
 
     savedAgency.members = members;
     await this.agenciesRepository.save(savedAgency);
+
+    await this.sendManagerSummaryEmail({
+      to: createdBy.email,
+      managerName: createdBy.name || 'Branch Manager',
+      agencyName: savedAgency.name,
+      createdAccounts,
+      skippedAccounts,
+    });
 
     return {
       agency: savedAgency.toJSON(),
@@ -242,6 +283,7 @@ export class AgenciesService {
     firstName: string;
     roleLabel: string;
     agencyName: string;
+    loginEmail: string;
     temporaryPassword: string;
   }): Promise<void> {
     const loginUrl = this.resolveFrontendLoginUrl();
@@ -255,7 +297,8 @@ export class AgenciesService {
           firstName: params.firstName,
           role: params.roleLabel,
           agencyName: params.agencyName,
-          email: params.to,
+          recipientEmail: params.to,
+          loginEmail: params.loginEmail,
           temporaryPassword: params.temporaryPassword,
           loginUrl,
         },
@@ -263,6 +306,44 @@ export class AgenciesService {
     } catch (error) {
       this.logger.warn(
         `Provisioning email failed for ${params.to}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
+    }
+  }
+
+  private async sendManagerSummaryEmail(params: {
+    to?: string;
+    managerName: string;
+    agencyName: string;
+    createdAccounts: CreatedProvisionedAccount[];
+    skippedAccounts: SkippedProvisionedAccount[];
+  }): Promise<void> {
+    if (!params.to) {
+      this.logger.warn(
+        `Manager summary email skipped for agency ${params.agencyName}: creator email unavailable`,
+      );
+      return;
+    }
+
+    const loginUrl = this.resolveFrontendLoginUrl();
+
+    try {
+      await this.mailerService.sendMail({
+        to: params.to,
+        subject: `${params.agencyName} account credentials summary`,
+        template: 'agency-accounts-summary',
+        context: {
+          managerName: params.managerName,
+          agencyName: params.agencyName,
+          loginUrl,
+          createdAccounts: params.createdAccounts,
+          skippedAccounts: params.skippedAccounts,
+          hasCreatedAccounts: params.createdAccounts.length > 0,
+          hasSkippedAccounts: params.skippedAccounts.length > 0,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Manager summary email failed for ${params.to}: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
     }
   }

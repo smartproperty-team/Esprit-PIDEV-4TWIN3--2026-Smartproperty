@@ -18,7 +18,11 @@ import {
 import { authService } from "../../services";
 import { useAuthStore } from "../../store";
 
-export default function ProfilePage() {
+export default function ProfilePage({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuthStore();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -289,27 +293,38 @@ export default function ProfilePage() {
 
   return (
     <>
-      <AppSidebar />
-      <div className="min-h-screen bg-gray-50 pt-16 lg:pt-24">
-        {/* Header */}
-        <header className="border-b border-gray-200 bg-white shadow-sm">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                ← Back to Dashboard
-              </button>
+      {!embedded && <AppSidebar />}
+      <div
+        className={
+          embedded ? "bg-gray-50" : "min-h-screen bg-gray-50 pt-16 lg:pt-24"
+        }
+      >
+        {!embedded && (
+          <header className="border-b border-gray-200 bg-white shadow-sm">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  ← Back to Dashboard
+                </button>
+              </div>
+              <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
+                Profile Settings
+              </h1>
             </div>
-            <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
-              Profile Settings
-            </h1>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Main Content */}
-        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <main
+          className={
+            embedded
+              ? "mx-auto max-w-4xl py-4"
+              : "mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8"
+          }
+        >
           {/* Account Information Card */}
           <div className="mb-8">
             <Card>
@@ -682,7 +697,7 @@ export default function ProfilePage() {
           </div>
         </main>
 
-        <HomeFooter />
+        {!embedded && <HomeFooter />}
       </div>
 
       {/* Deactivate Confirmation Modal */}

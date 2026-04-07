@@ -39,6 +39,12 @@ import {
   PROPERTY_CREATOR_ROLES,
   PROPERTY_MANAGEMENT_ROLES,
 } from '../users/role-groups';
+import { randomUUID } from 'crypto';
+import { AiDescriptionService } from './ai-description.service';
+import {
+  GenerateDescriptionDto,
+  GenerateDescriptionResponseDto,
+} from './dto/ai-description.dto';
 import {
   PortfolioConnectorSyncDto,
   PortfolioExportQueryDto,
@@ -66,6 +72,7 @@ export class PropertiesController {
   constructor(
     private readonly propertiesService: PropertiesService,
     private readonly configService: ConfigService,
+    private readonly aiDescriptionService: AiDescriptionService,
   ) {}
 
   // ===========================================
@@ -212,6 +219,39 @@ export class PropertiesController {
     @CurrentUser('role') role: UserRole,
   ) {
     return this.propertiesService.syncPortfolioConnector(userId, role, body);
+  }
+
+  // ===========================================
+  // AI Description Generation
+  // (Declared BEFORE generic :id routes to avoid route capture)
+  // ===========================================
+
+  @Post('ai/descriptions/generate')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES, ...PROPERTY_CREATOR_ROLES)
+  @ApiOperation({
+    summary: 'Generate AI marketing descriptions for a property',
+    description:
+      'Proxies to ai-services to generate multi-variant, multilingual ' +
+      'marketing descriptions. Does not persist generated text.',
+  })
+  @ApiResponse({ status: 200, description: 'Generated descriptions' })
+  @ApiResponse({ status: 400, description: 'Invalid request payload' })
+  @ApiResponse({ status: 504, description: 'AI generation timed out' })
+  @HttpCode(HttpStatus.OK)
+  async generateAiDescription(
+    @Body() body: GenerateDescriptionDto,
+    @CurrentUser('id') userId: string,
+  ): Promise<GenerateDescriptionResponseDto> {
+    const requestId = `${userId || 'anon'}:${randomUUID()}`;
+    return this.aiDescriptionService.generateDescription(body, requestId);
+  }
+
+  @Get('ai/model/status')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES, ...PROPERTY_CREATOR_ROLES)
+  @ApiOperation({ summary: 'Get AI marketing model status' })
+  @ApiResponse({ status: 200, description: 'Model status payload' })
+  async getAiModelStatus() {
+    return this.aiDescriptionService.getModelStatus();
   }
 
   // ===========================================

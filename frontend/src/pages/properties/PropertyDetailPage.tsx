@@ -3,10 +3,12 @@
 // ===========================================
 
 import { HomeFooter, Navbar } from "@/components/layout";
+import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
 import { useTranslation } from "@/i18n";
 import applicationService from "@/services/application.service";
 import {
   propertyService,
+  type AiPropertySnapshot,
   type PropertyShareData,
 } from "@/services/property.service";
 import { useAuthStore } from "@/store";
@@ -811,6 +813,47 @@ export default function PropertyDetailPage() {
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [hasActiveApplication, setHasActiveApplication] = useState(false);
   const [checkingApplication, setCheckingApplication] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiSaveError, setAiSaveError] = useState<string | null>(null);
+
+  const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
+    if (!property) return {};
+    return {
+      title: property.title,
+      propertyType: property.type as string | undefined,
+      city: property.address?.city,
+      state: property.address?.state,
+      country: property.address?.country,
+      bedrooms: property.features?.bedrooms,
+      bathrooms: property.features?.bathrooms,
+      areaSqft: property.features?.area,
+      furnished: property.features?.furnished,
+      petFriendly: property.features?.petFriendly,
+      parkingSpaces: property.features?.parkingSpaces,
+      amenities: property.features?.amenities,
+      price: property.price,
+      currency: property.currency,
+    };
+  }, [property]);
+
+  const handleApplyAiDescription = useCallback(
+    async (text: string) => {
+      const propertyId = property?.id || property?._id;
+      if (!propertyId) return;
+      setAiSaveError(null);
+      try {
+        const updated = await propertyService.updateProperty(propertyId, {
+          description: text,
+        });
+        setProperty(updated);
+        setAiPanelOpen(false);
+      } catch (err) {
+        console.error("Failed to apply AI description:", err);
+        setAiSaveError(t.propertyDetail.aiDescription.saveError);
+      }
+    },
+    [property, t.propertyDetail.aiDescription.saveError],
+  );
 
   const loadProperty = useCallback(async () => {
     if (!id) return;
@@ -1221,10 +1264,33 @@ export default function PropertyDetailPage() {
               </div>
             )}
 
-            {property.description && (
+            {(property.description || canManage) && (
               <div className="property-description">
-                <h3>{t.propertyDetail.description}</h3>
-                <p>{property.description}</p>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <h3>{t.propertyDetail.description}</h3>
+                  {canManage && (
+                    <button
+                      type="button"
+                      className="btn-ai-trigger"
+                      onClick={() => setAiPanelOpen(true)}
+                      data-testid="ai-description-cta"
+                    >
+                      {t.propertyDetail.aiDescription.cta}
+                    </button>
+                  )}
+                </div>
+                {property.description && <p>{property.description}</p>}
+                {aiSaveError && (
+                  <p role="alert" style={{ color: "#a32020" }}>
+                    {aiSaveError}
+                  </p>
+                )}
               </div>
             )}
 
@@ -1396,8 +1462,27 @@ export default function PropertyDetailPage() {
                     <DeleteIcon />
                     {t.propertyDetail.deleteProperty}
                   </button>
+                  <button
+                    type="button"
+                    className="btn-ai-trigger"
+                    onClick={() => setAiPanelOpen(true)}
+                    style={{ width: "100%" }}
+                    data-testid="ai-description-cta-sidebar"
+                  >
+                    {t.propertyDetail.aiDescription.cta}
+                  </button>
                 </div>
               </div>
+            )}
+
+            {canManage && (
+              <AiDescriptionPanel
+                open={aiPanelOpen}
+                onClose={() => setAiPanelOpen(false)}
+                snapshot={buildAiSnapshot()}
+                propertyId={property.id || property._id}
+                onApply={handleApplyAiDescription}
+              />
             )}
 
             {property.owner && (

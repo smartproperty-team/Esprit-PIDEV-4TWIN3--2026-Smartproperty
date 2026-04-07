@@ -9,6 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { HomeFooter, Navbar } from "../../components/layout";
 import {
   Alert,
   Button,
@@ -164,180 +165,186 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-page auth-bg">
-      <main className="auth-main px-4 py-12">
-        <div className="w-full max-w-lg">
-          <div className="mb-8 text-center auth-brand">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
-              <Building2 className="h-8 w-8 text-white" />
+    <>
+      <Navbar />
+      <div className="auth-page auth-bg pt-28">
+        <main className="auth-main px-4 py-12">
+          <div className="w-full max-w-lg">
+            <div className="mb-8 text-center auth-brand">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
+                <Building2 className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="mt-4 text-3xl font-bold text-home-text">
+                SmartProperty
+              </h1>
+              <p className="mt-2 text-home-muted">
+                Welcome back! Sign in to continue.
+              </p>
             </div>
-            <h1 className="mt-4 text-3xl font-bold text-home-text">
-              SmartProperty
-            </h1>
-            <p className="mt-2 text-home-muted">
-              Welcome back! Sign in to continue.
-            </p>
-          </div>
 
-          <Card className="auth-card border-home-border/60 shadow-xl">
-            <CardHeader className="text-center">
-              <CardTitle>Welcome</CardTitle>
-              <CardDescription>
-                We&apos;re happy to see you again
-              </CardDescription>
-            </CardHeader>
+            <Card className="auth-card border-home-border/60 shadow-xl">
+              <CardHeader className="text-center">
+                <CardTitle>Welcome</CardTitle>
+                <CardDescription>
+                  We&apos;re happy to see you again
+                </CardDescription>
+              </CardHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <CardContent className="space-y-4">
-                {error && (
-                  <Alert type="error" message={error} onClose={clearError} />
-                )}
-
-                {successMessage && (
-                  <Alert type="success" message={successMessage} />
-                )}
-
-                {captchaError && <Alert type="error" message={captchaError} />}
-
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="you@example.com"
-                  icon={<Mail className="h-5 w-5" />}
-                  error={errors.email?.message}
-                  className="focus-visible:ring-home-primary"
-                  required
-                  {...register("email")}
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
-                  icon={<Lock className="h-5 w-5" />}
-                  error={errors.password?.message}
-                  className="focus-visible:ring-home-primary"
-                  required
-                  {...register("password")}
-                />
-
-                {show2FA && (
-                  <div className="space-y-2">
-                    <Input
-                      label="Two-Factor Code"
-                      type="text"
-                      placeholder="123456"
-                      maxLength={6}
-                      error={errors.twoFactorCode?.message}
-                      className="focus-visible:ring-home-primary"
-                      required
-                      {...register("twoFactorCode")}
-                    />
-                    <p className="text-sm text-home-muted">
-                      Enter the 6-digit code from your authenticator app
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-home-border text-home-primary focus:ring-home-primary"
-                    />
-                    <span className="ml-2 text-sm text-home-muted">
-                      Remember me
-                    </span>
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm font-medium text-home-primary hover:text-home-primary-dark"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-
-                <div className="flex justify-center">
-                  {siteKey ? (
-                    <ReCAPTCHA
-                      sitekey={siteKey}
-                      onChange={(token: string | null) => {
-                        setCaptchaToken(token);
-                        setCaptchaError(null);
-                      }}
-                      onExpired={() => setCaptchaToken(null)}
-                    />
-                  ) : (
-                    <p className="text-sm text-red-600">
-                      Missing CAPTCHA site key.
-                    </p>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <CardContent className="space-y-4">
+                  {error && (
+                    <Alert type="error" message={error} onClose={clearError} />
                   )}
-                </div>
-              </CardContent>
 
-              <CardFooter className="flex-col space-y-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-home-secondary hover:bg-home-secondary-dark focus-visible:ring-home-primary"
-                  size="lg"
-                  isLoading={isLoading}
-                >
-                  Sign In
-                </Button>
+                  {successMessage && (
+                    <Alert type="success" message={successMessage} />
+                  )}
 
-                <div className="auth-social">
-                  <p className="auth-social-title">OR LOGIN WITH</p>
-                  <div className="auth-social-icons">
-                    <button
-                      type="button"
-                      className="auth-social-icon-btn"
-                      onClick={handleGoogleLogin}
-                      aria-label="Sign in with Google"
+                  {captchaError && (
+                    <Alert type="error" message={captchaError} />
+                  )}
+
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    placeholder="you@example.com"
+                    icon={<Mail className="h-5 w-5" />}
+                    error={errors.email?.message}
+                    className="focus-visible:ring-home-primary"
+                    required
+                    {...register("email")}
+                  />
+
+                  <Input
+                    label="Password"
+                    type="password"
+                    placeholder="••••••••"
+                    icon={<Lock className="h-5 w-5" />}
+                    error={errors.password?.message}
+                    className="focus-visible:ring-home-primary"
+                    required
+                    {...register("password")}
+                  />
+
+                  {show2FA && (
+                    <div className="space-y-2">
+                      <Input
+                        label="Two-Factor Code"
+                        type="text"
+                        placeholder="123456"
+                        maxLength={6}
+                        error={errors.twoFactorCode?.message}
+                        className="focus-visible:ring-home-primary"
+                        required
+                        {...register("twoFactorCode")}
+                      />
+                      <p className="text-sm text-home-muted">
+                        Enter the 6-digit code from your authenticator app
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-home-border text-home-primary focus:ring-home-primary"
+                      />
+                      <span className="ml-2 text-sm text-home-muted">
+                        Remember me
+                      </span>
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm font-medium text-home-primary hover:text-home-primary-dark"
                     >
-                      <GoogleIcon />
-                    </button>
-                    <button
-                      type="button"
-                      className="auth-social-icon-btn"
-                      onClick={handleFacebookLogin}
-                      aria-label="Sign in with Facebook"
-                    >
-                      <FacebookIcon />
-                    </button>
+                      Forgot password?
+                    </Link>
                   </div>
-                </div>
 
-                <p className="text-center text-sm text-home-muted">
-                  Don't have an account?{" "}
-                  <Link
-                    to="/register"
-                    className="font-medium text-home-primary hover:text-home-primary-dark"
+                  <div className="flex justify-center">
+                    {siteKey ? (
+                      <ReCAPTCHA
+                        sitekey={siteKey}
+                        onChange={(token: string | null) => {
+                          setCaptchaToken(token);
+                          setCaptchaError(null);
+                        }}
+                        onExpired={() => setCaptchaToken(null)}
+                      />
+                    ) : (
+                      <p className="text-sm text-red-600">
+                        Missing CAPTCHA site key.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex-col space-y-4">
+                  <Button
+                    type="submit"
+                    className="w-full bg-home-secondary hover:bg-home-secondary-dark focus-visible:ring-home-primary"
+                    size="lg"
+                    isLoading={isLoading}
                   >
-                    Create one now
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
+                    Sign In
+                  </Button>
 
-          <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
-            <p className="text-center text-sm text-home-muted">
-              <span className="font-medium">Testing?</span> Register a new
-              account or use the API docs at{" "}
-              <a
-                href="http://localhost:3000/api/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open API docs (opens in new tab)"
-                className="text-home-primary hover:underline"
-              >
-                localhost:3000/api/docs
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </p>
+                  <div className="auth-social">
+                    <p className="auth-social-title">OR LOGIN WITH</p>
+                    <div className="auth-social-icons">
+                      <button
+                        type="button"
+                        className="auth-social-icon-btn"
+                        onClick={handleGoogleLogin}
+                        aria-label="Sign in with Google"
+                      >
+                        <GoogleIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="auth-social-icon-btn"
+                        onClick={handleFacebookLogin}
+                        aria-label="Sign in with Facebook"
+                      >
+                        <FacebookIcon />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-sm text-home-muted">
+                    Don't have an account?{" "}
+                    <Link
+                      to="/register"
+                      className="font-medium text-home-primary hover:text-home-primary-dark"
+                    >
+                      Create one now
+                    </Link>
+                  </p>
+                </CardFooter>
+              </form>
+            </Card>
+
+            <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
+              <p className="text-center text-sm text-home-muted">
+                <span className="font-medium">Testing?</span> Register a new
+                account or use the API docs at{" "}
+                <a
+                  href="http://localhost:3000/api/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open API docs (opens in new tab)"
+                  className="text-home-primary hover:underline"
+                >
+                  localhost:3000/api/docs
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </p>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
+      <HomeFooter />
 
       {showReactivateModal && (
         <div
@@ -378,6 +385,6 @@ export default function LoginPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

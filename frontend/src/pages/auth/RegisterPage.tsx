@@ -9,6 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { HomeFooter, Navbar } from "../../components/layout";
 import {
   Alert,
   Button,
@@ -130,188 +131,194 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-page auth-bg">
-      <main className="auth-main px-4 py-12">
-        <div className="w-full max-w-lg">
-          <div className="mb-8 text-center auth-brand">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
-              <Building2 className="h-8 w-8 text-white" />
+    <>
+      <Navbar />
+      <div className="auth-page auth-bg pt-28">
+        <main className="auth-main px-4 py-12">
+          <div className="w-full max-w-lg">
+            <div className="mb-8 text-center auth-brand">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-r from-home-secondary-dark to-home-primary shadow-lg shadow-blue-200/60">
+                <Building2 className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="mt-4 text-3xl font-bold text-home-text">
+                SmartProperty
+              </h1>
+              <p className="mt-2 text-home-muted">
+                Create your account to get started
+              </p>
             </div>
-            <h1 className="mt-4 text-3xl font-bold text-home-text">
-              SmartProperty
-            </h1>
-            <p className="mt-2 text-home-muted">
-              Create your account to get started
-            </p>
-          </div>
 
-          <Card className="auth-card border-home-border/60 shadow-xl">
-            <CardHeader className="text-center">
-              <CardTitle>Create Account</CardTitle>
-              <CardDescription>
-                Fill in your details to register
-              </CardDescription>
-            </CardHeader>
+            <Card className="auth-card border-home-border/60 shadow-xl">
+              <CardHeader className="text-center">
+                <CardTitle>Create Account</CardTitle>
+                <CardDescription>
+                  Fill in your details to register
+                </CardDescription>
+              </CardHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <CardContent className="space-y-4">
-                {error && (
-                  <Alert type="error" message={error} onClose={clearError} />
-                )}
-
-                {captchaError && <Alert type="error" message={captchaError} />}
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    label="First Name"
-                    placeholder="John"
-                    icon={<User className="h-5 w-5" />}
-                    error={errors.firstName?.message}
-                    required
-                    {...register("firstName")}
-                  />
-
-                  <Input
-                    label="Last Name"
-                    placeholder="Doe"
-                    error={errors.lastName?.message}
-                    required
-                    {...register("lastName")}
-                  />
-                </div>
-
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="you@example.com"
-                  icon={<Mail className="h-5 w-5" />}
-                  error={errors.email?.message}
-                  required
-                  {...register("email")}
-                />
-
-                <Input
-                  label="Phone Number (Optional)"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  icon={<Phone className="h-5 w-5" />}
-                  error={errors.phone?.message}
-                  {...register("phone")}
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
-                  icon={<Lock className="h-5 w-5" />}
-                  error={errors.password?.message}
-                  required
-                  {...register("password")}
-                />
-
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="••••••••"
-                  icon={<Lock className="h-5 w-5" />}
-                  error={errors.confirmPassword?.message}
-                  required
-                  {...register("confirmPassword")}
-                />
-
-                <div className="text-xs text-home-muted">
-                  <p className="font-medium">Password requirements:</p>
-                  <ul className="mt-1 list-inside list-disc">
-                    <li>At least 8 characters</li>
-                    <li>One uppercase letter</li>
-                    <li>One lowercase letter</li>
-                    <li>One number</li>
-                    <li>One special character (@$!%*?&)</li>
-                  </ul>
-                </div>
-
-                <div className="flex justify-center">
-                  {siteKey ? (
-                    <ReCAPTCHA
-                      sitekey={siteKey}
-                      onChange={(token: string | null) => {
-                        setCaptchaToken(token);
-                        setCaptchaError(null);
-                      }}
-                      onExpired={() => setCaptchaToken(null)}
-                    />
-                  ) : (
-                    <p className="text-sm text-red-600">
-                      Missing CAPTCHA site key.
-                    </p>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <CardContent className="space-y-4">
+                  {error && (
+                    <Alert type="error" message={error} onClose={clearError} />
                   )}
-                </div>
-              </CardContent>
 
-              <CardFooter className="flex-col space-y-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-home-secondary hover:bg-home-secondary-dark focus-visible:ring-home-primary"
-                  size="lg"
-                  isLoading={isLoading}
-                >
-                  Create Account
-                </Button>
+                  {captchaError && (
+                    <Alert type="error" message={captchaError} />
+                  )}
 
-                <div className="auth-social">
-                  <p className="auth-social-title">OR SIGN UP WITH</p>
-                  <div className="auth-social-icons">
-                    <button
-                      type="button"
-                      className="auth-social-icon-btn"
-                      onClick={handleGoogleSignup}
-                      aria-label="Sign up with Google"
-                    >
-                      <GoogleIcon />
-                    </button>
-                    <button
-                      type="button"
-                      className="auth-social-icon-btn"
-                      onClick={handleFacebookSignup}
-                      aria-label="Sign up with Facebook"
-                    >
-                      <FacebookIcon />
-                    </button>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Input
+                      label="First Name"
+                      placeholder="John"
+                      icon={<User className="h-5 w-5" />}
+                      error={errors.firstName?.message}
+                      required
+                      {...register("firstName")}
+                    />
+
+                    <Input
+                      label="Last Name"
+                      placeholder="Doe"
+                      error={errors.lastName?.message}
+                      required
+                      {...register("lastName")}
+                    />
                   </div>
-                </div>
 
-                <p className="text-center text-sm text-home-muted">
-                  Already have an account?{" "}
-                  <Link
-                    to="/login"
-                    className="font-medium text-home-primary hover:text-home-primary-dark"
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    placeholder="you@example.com"
+                    icon={<Mail className="h-5 w-5" />}
+                    error={errors.email?.message}
+                    required
+                    {...register("email")}
+                  />
+
+                  <Input
+                    label="Phone Number (Optional)"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    icon={<Phone className="h-5 w-5" />}
+                    error={errors.phone?.message}
+                    {...register("phone")}
+                  />
+
+                  <Input
+                    label="Password"
+                    type="password"
+                    placeholder="••••••••"
+                    icon={<Lock className="h-5 w-5" />}
+                    error={errors.password?.message}
+                    required
+                    {...register("password")}
+                  />
+
+                  <Input
+                    label="Confirm Password"
+                    type="password"
+                    placeholder="••••••••"
+                    icon={<Lock className="h-5 w-5" />}
+                    error={errors.confirmPassword?.message}
+                    required
+                    {...register("confirmPassword")}
+                  />
+
+                  <div className="text-xs text-home-muted">
+                    <p className="font-medium">Password requirements:</p>
+                    <ul className="mt-1 list-inside list-disc">
+                      <li>At least 8 characters</li>
+                      <li>One uppercase letter</li>
+                      <li>One lowercase letter</li>
+                      <li>One number</li>
+                      <li>One special character (@$!%*?&)</li>
+                    </ul>
+                  </div>
+
+                  <div className="flex justify-center">
+                    {siteKey ? (
+                      <ReCAPTCHA
+                        sitekey={siteKey}
+                        onChange={(token: string | null) => {
+                          setCaptchaToken(token);
+                          setCaptchaError(null);
+                        }}
+                        onExpired={() => setCaptchaToken(null)}
+                      />
+                    ) : (
+                      <p className="text-sm text-red-600">
+                        Missing CAPTCHA site key.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex-col space-y-4">
+                  <Button
+                    type="submit"
+                    className="w-full bg-home-secondary hover:bg-home-secondary-dark focus-visible:ring-home-primary"
+                    size="lg"
+                    isLoading={isLoading}
                   >
-                    Sign in
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
+                    Create Account
+                  </Button>
 
-          <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
-            <p className="text-center text-sm text-home-muted">
-              <span className="font-medium">Testing?</span> Register a new
-              account or use the API docs at{" "}
-              <a
-                href="http://localhost:3000/api/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open API docs (opens in new tab)"
-                className="text-home-primary hover:underline"
-                aria-label="Open API documentation in a new tab"
-              >
-                localhost:3000/api/docs
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </p>
+                  <div className="auth-social">
+                    <p className="auth-social-title">OR SIGN UP WITH</p>
+                    <div className="auth-social-icons">
+                      <button
+                        type="button"
+                        className="auth-social-icon-btn"
+                        onClick={handleGoogleSignup}
+                        aria-label="Sign up with Google"
+                      >
+                        <GoogleIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="auth-social-icon-btn"
+                        onClick={handleFacebookSignup}
+                        aria-label="Sign up with Facebook"
+                      >
+                        <FacebookIcon />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-sm text-home-muted">
+                    Already have an account?{" "}
+                    <Link
+                      to="/login"
+                      className="font-medium text-home-primary hover:text-home-primary-dark"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </CardFooter>
+              </form>
+            </Card>
+
+            <div className="auth-note mt-6 rounded-lg border border-home-border p-4">
+              <p className="text-center text-sm text-home-muted">
+                <span className="font-medium">Testing?</span> Register a new
+                account or use the API docs at{" "}
+                <a
+                  href="http://localhost:3000/api/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open API docs (opens in new tab)"
+                  className="text-home-primary hover:underline"
+                  aria-label="Open API documentation in a new tab"
+                >
+                  localhost:3000/api/docs
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </p>
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+      <HomeFooter />
+    </>
   );
 }

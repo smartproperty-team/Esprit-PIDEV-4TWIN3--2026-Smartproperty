@@ -4,6 +4,7 @@ import api from "./api";
 export interface RoleSeedInput {
   firstName: string;
   lastName?: string;
+  personalEmail?: string;
 }
 
 export interface CreateAgencyOnboardingInput {
@@ -26,6 +27,7 @@ export interface CreatedProvisionedAccount {
   firstName: string;
   lastName: string;
   temporaryPassword: string;
+  notificationEmail?: string;
 }
 
 export interface SkippedProvisionedAccount {

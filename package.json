@@ -13,7 +13,8 @@
     "dev:backend": "npm run start:dev --prefix backend",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ..",
     "seed": "npm run seed --prefix backend",
-    "seed:users": "npm run seed:users --prefix backend"
+    "seed:users": "npm run seed:users --prefix backend",
+    "axe:contrast": "node frontend/scripts/axe-contrast-audit.cjs"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

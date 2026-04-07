@@ -90,7 +90,11 @@ const formatRelativeTime = (dateString: string): string => {
   return formatDate(dateString);
 };
 
-export const SessionsPage = () => {
+export const SessionsPage = ({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) => {
   const {
     sessions,
     isLoading,
@@ -146,8 +150,14 @@ export const SessionsPage = () => {
   if (isLoading && sessions.length === 0) {
     return (
       <>
-        <AppSidebar />
-        <div className="min-h-screen bg-gray-50 py-8 pt-16 lg:pt-24">
+        {!embedded && <AppSidebar />}
+        <div
+          className={
+            embedded
+              ? "bg-gray-50 py-4"
+              : "min-h-screen bg-gray-50 py-8 pt-16 lg:pt-24"
+          }
+        >
           <div className="max-w-4xl mx-auto px-4">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
@@ -162,15 +172,21 @@ export const SessionsPage = () => {
             </div>
           </div>
         </div>
-        <HomeFooter />
+        {!embedded && <HomeFooter />}
       </>
     );
   }
 
   return (
     <>
-      <AppSidebar />
-      <div className="min-h-screen bg-gray-50 py-8 pt-16 lg:pt-24">
+      {!embedded && <AppSidebar />}
+      <div
+        className={
+          embedded
+            ? "bg-gray-50 py-4"
+            : "min-h-screen bg-gray-50 py-8 pt-16 lg:pt-24"
+        }
+      >
         <div className="max-w-4xl mx-auto px-4">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -440,7 +456,7 @@ export const SessionsPage = () => {
           </div>
         )}
       </div>
-      <HomeFooter />
+      {!embedded && <HomeFooter />}
     </>
   );
 };

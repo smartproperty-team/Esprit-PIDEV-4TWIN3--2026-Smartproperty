@@ -849,11 +849,11 @@ export class PropertiesService {
     }
 
     if (bedrooms !== undefined) {
-      where['features.bedrooms'] = { $gte: bedrooms };
+      where['features.bedrooms'] = bedrooms;
     }
 
     if (bathrooms !== undefined) {
-      where['features.bathrooms'] = { $gte: bathrooms };
+      where['features.bathrooms'] = bathrooms;
     }
 
     if (options.search) {
