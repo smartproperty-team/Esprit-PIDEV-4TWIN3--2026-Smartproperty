@@ -18,6 +18,7 @@ import {
 } from "../../types/auth";
 
 type OnboardingStep = 1 | 2 | 3 | 4;
+const ONBOARDING_STEPS = [1, 2, 3, 4] as const;
 
 const PROPERTY_TYPE_OPTIONS = [
   "Apartment",
@@ -229,6 +230,45 @@ export default function PreferencesOnboardingModal() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Question {currentStep} of 4</span>
+              <span>{stepTitle}</span>
+            </div>
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gray-200">
+                <div
+                  className="h-2 rounded-full bg-home-primary transition-all"
+                  style={{
+                    width: `${((currentStep - 1) / (ONBOARDING_STEPS.length - 1)) * 100}%`,
+                  }}
+                />
+              </div>
+
+              <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between">
+                {ONBOARDING_STEPS.map((step) => {
+                  const isCompleted = step < currentStep;
+                  const isCurrent = step === currentStep;
+
+                  return (
+                    <span
+                      key={step}
+                      className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors ${
+                        isCompleted
+                          ? "border-home-primary bg-home-primary text-white"
+                          : isCurrent
+                            ? "border-home-primary bg-white text-home-primary"
+                            : "border-gray-300 bg-white text-gray-500"
+                      }`}
+                      aria-label={`Step ${step}`}
+                    >
+                      {isCompleted ? "✓" : step}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
           <CardTitle className="text-xl">
             Tell us your property preferences
           </CardTitle>
@@ -239,19 +279,6 @@ export default function PreferencesOnboardingModal() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>Question {currentStep} of 4</span>
-              <span>{stepTitle}</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-home-primary transition-all"
-                style={{ width: `${(currentStep / 4) * 100}%` }}
-              />
-            </div>
-          </div>
-
           {requestError && <Alert type="error" message={requestError} />}
 
           {currentStep === 1 && (
