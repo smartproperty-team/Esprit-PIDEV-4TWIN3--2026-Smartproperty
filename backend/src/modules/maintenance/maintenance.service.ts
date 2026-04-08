@@ -9,6 +9,7 @@ import { ObjectId } from 'mongodb';
 import { MongoRepository } from 'typeorm';
 import { NotificationType } from '../notifications/entities/notification.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import {
   AssignMaintenanceRequestDto,
   CreateMaintenanceRequestDto,
@@ -30,6 +31,8 @@ export class MaintenanceService {
   constructor(
     @InjectRepository(MaintenanceRequest)
     private readonly maintenanceRepo: MongoRepository<MaintenanceRequest>,
+    @InjectRepository(User)
+    private readonly userRepo: MongoRepository<User>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -90,6 +93,53 @@ export class MaintenanceService {
         }`,
       );
     }
+  }
+
+  private async notifyServiceProviders(
+    request: MaintenanceRequest,
+    title: string,
+    message: string,
+    type: NotificationType,
+  ): Promise<void> {
+    if (request.isDraft === true) {
+      return;
+    }
+
+    const providers = await this.userRepo.find({
+      where: {
+        role: UserRole.SERVICE_PROVIDER,
+        status: UserStatus.ACTIVE,
+        deletedAt: null,
+      } as any,
+    });
+
+    const uniqueProviderIds = Array.from(
+      new Set(
+        providers
+          .map((provider) => this.normalizeUserId(provider._id || provider.id))
+          .filter((id): id is string => !!id),
+      ),
+    );
+
+    await Promise.all(
+      uniqueProviderIds.map(async (userId) => {
+        try {
+          await this.notificationsService.create({
+            userId,
+            title,
+            message,
+            type,
+            link: `/maintenance/requests/available?requestId=${request._id?.toHexString?.() || String(request._id)}`,
+          });
+        } catch (error) {
+          this.logger.warn(
+            `Failed to notify service provider ${userId} for maintenance request ${String(request._id)}: ${
+              error instanceof Error ? error.message : 'unknown error'
+            }`,
+          );
+        }
+      }),
+    );
   }
 
   private async findByIdOrFail(id: string): Promise<MaintenanceRequest> {
@@ -310,6 +360,13 @@ export class MaintenanceService {
         saved,
         'Maintenance request submitted',
         `Your request "${saved.issueTitle || 'Untitled issue'}" has been submitted successfully.`,
+        NotificationType.MAINTENANCE_REQUEST_SUBMITTED,
+      );
+
+      await this.notifyServiceProviders(
+        saved,
+        'New maintenance request',
+        `A new maintenance request "${saved.issueTitle || 'Untitled issue'}" is available for assignment.`,
         NotificationType.MAINTENANCE_REQUEST_SUBMITTED,
       );
     }

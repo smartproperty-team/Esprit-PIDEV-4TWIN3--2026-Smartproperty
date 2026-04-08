@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui";
+import { useTranslation } from "../../i18n";
 import { authService } from "../../services";
 import { useAuthStore, usePreferencesStore } from "../../store";
 import {
@@ -18,16 +19,10 @@ import {
 } from "../../types/auth";
 
 type OnboardingStep = 1 | 2 | 3 | 4;
-
-const PROPERTY_TYPE_OPTIONS = [
-  "Apartment",
-  "House",
-  "Studio",
-  "Villa",
-  "Office",
-];
+const ONBOARDING_STEPS = [1, 2, 3, 4] as const;
 
 export default function PreferencesOnboardingModal() {
+  const t = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
   const {
     isOnboardingOpen,
@@ -63,6 +58,29 @@ export default function PreferencesOnboardingModal() {
   const [isSaving, setIsSaving] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
+
+  const propertyTypeOptions = [
+    {
+      value: "Apartment",
+      label: t.preferencesOnboarding.options.propertyTypes.apartment,
+    },
+    {
+      value: "House",
+      label: t.preferencesOnboarding.options.propertyTypes.house,
+    },
+    {
+      value: "Studio",
+      label: t.preferencesOnboarding.options.propertyTypes.studio,
+    },
+    {
+      value: "Villa",
+      label: t.preferencesOnboarding.options.propertyTypes.villa,
+    },
+    {
+      value: "Office",
+      label: t.preferencesOnboarding.options.propertyTypes.office,
+    },
+  ] as const;
 
   useEffect(() => {
     if (!existingPreferences || !isOnboardingOpen) {
@@ -126,12 +144,12 @@ export default function PreferencesOnboardingModal() {
 
   const validateStep = (step: OnboardingStep): boolean => {
     if (step === 1 && propertyTypes.length === 0) {
-      setRequestError("Please select at least one property type.");
+      setRequestError(t.preferencesOnboarding.errors.selectPropertyType);
       return false;
     }
 
     if (step === 3 && locations.trim().length === 0) {
-      setRequestError("Please provide at least one preferred location.");
+      setRequestError(t.preferencesOnboarding.errors.selectLocation);
       return false;
     }
 
@@ -141,7 +159,7 @@ export default function PreferencesOnboardingModal() {
       !notifications.sms &&
       !notifications.push
     ) {
-      setRequestError("Please enable at least one notification type.");
+      setRequestError(t.preferencesOnboarding.errors.enableNotification);
       return false;
     }
 
@@ -212,66 +230,98 @@ export default function PreferencesOnboardingModal() {
       });
       savePreferences(user.id, serverPreferences);
     } catch {
-      setRequestError("Failed to save preferences. Please try again.");
+      setRequestError(t.preferencesOnboarding.errors.saveFailed);
     } finally {
       setIsSaving(false);
     }
   };
 
   const stepTitle = {
-    1: "Property type preferences",
-    2: "Budget range preferences",
-    3: "Location preferences",
-    4: "Notification preferences",
+    1: t.preferencesOnboarding.steps.propertyTypes,
+    2: t.preferencesOnboarding.steps.budget,
+    3: t.preferencesOnboarding.steps.location,
+    4: t.preferencesOnboarding.steps.notifications,
   }[currentStep];
 
+  const questionLabel = t.preferencesOnboarding.progress.questionOf
+    .replace("{{current}}", String(currentStep))
+    .replace("{{total}}", String(ONBOARDING_STEPS.length));
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 px-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>{questionLabel}</span>
+              <span>{stepTitle}</span>
+            </div>
+            <div className="relative h-6">
+              <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gray-200">
+                <div
+                  className="h-2 rounded-full bg-home-primary transition-all"
+                  style={{
+                    width: `${((currentStep - 1) / (ONBOARDING_STEPS.length - 1)) * 100}%`,
+                  }}
+                />
+              </div>
+
+              <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between">
+                {ONBOARDING_STEPS.map((step) => {
+                  const isCompleted = step < currentStep;
+                  const isCurrent = step === currentStep;
+
+                  return (
+                    <span
+                      key={step}
+                      className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors ${
+                        isCompleted
+                          ? "border-home-primary bg-home-primary text-white"
+                          : isCurrent
+                            ? "border-home-primary bg-white text-home-primary"
+                            : "border-gray-300 bg-white text-gray-500"
+                      }`}
+                      aria-label={t.preferencesOnboarding.progress.stepLabel.replace(
+                        "{{step}}",
+                        String(step),
+                      )}
+                    >
+                      {isCompleted ? "✓" : step}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
           <CardTitle className="text-xl">
-            Tell us your property preferences
+            {t.preferencesOnboarding.title}
           </CardTitle>
           <p className="text-sm text-gray-600">
-            We use these answers to personalize listings and notifications for
-            you.
+            {t.preferencesOnboarding.subtitle}
           </p>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>Question {currentStep} of 4</span>
-              <span>{stepTitle}</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-home-primary transition-all"
-                style={{ width: `${(currentStep / 4) * 100}%` }}
-              />
-            </div>
-          </div>
-
           {requestError && <Alert type="error" message={requestError} />}
 
           {currentStep === 1 && (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900">
-                What property types do you prefer?
+                {t.preferencesOnboarding.questions.propertyTypes}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
-                {PROPERTY_TYPE_OPTIONS.map((option) => (
+                {propertyTypeOptions.map((option) => (
                   <label
-                    key={option}
+                    key={option.value}
                     className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
                   >
                     <input
                       type="checkbox"
-                      checked={propertyTypes.includes(option)}
-                      onChange={() => togglePropertyType(option)}
+                      checked={propertyTypes.includes(option.value)}
+                      onChange={() => togglePropertyType(option.value)}
                       className="h-4 w-4 rounded border-gray-300 text-home-primary focus:ring-home-primary"
                     />
-                    {option}
+                    {option.label}
                   </label>
                 ))}
               </div>
@@ -282,10 +332,11 @@ export default function PreferencesOnboardingModal() {
             <section className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-gray-900">
-                  What budget interval do you want?
+                  {t.preferencesOnboarding.questions.budget}
                 </h3>
                 <span className="text-sm text-gray-600">
-                  ${minBudget.toLocaleString()} - ${maxBudget.toLocaleString()}
+                  TND {minBudget.toLocaleString()} - TND{" "}
+                  {maxBudget.toLocaleString()}
                 </span>
               </div>
 
@@ -306,8 +357,8 @@ export default function PreferencesOnboardingModal() {
                   <Slider.Thumb className="block h-5 w-5 rounded-full border border-home-primary bg-white shadow focus:outline-none focus:ring-2 focus:ring-home-primary" />
                 </Slider.Root>
                 <div className="mt-3 flex justify-between text-xs text-gray-500">
-                  <span>$500</span>
-                  <span>$10,000</span>
+                  <span>TND 500</span>
+                  <span>TND 10,000</span>
                 </div>
               </div>
             </section>
@@ -316,7 +367,7 @@ export default function PreferencesOnboardingModal() {
           {currentStep === 3 && (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900">
-                Which locations are you interested in?
+                {t.preferencesOnboarding.questions.location}
               </h3>
               <LocationPreferenceMap
                 value={locations}
@@ -331,14 +382,29 @@ export default function PreferencesOnboardingModal() {
           {currentStep === 4 && (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900">
-                How do you want to receive notifications?
+                {t.preferencesOnboarding.questions.notifications}
               </h3>
               <div className="grid gap-2 sm:grid-cols-3">
                 {(
                   [
-                    { key: "email", label: "Email" },
-                    { key: "sms", label: "SMS" },
-                    { key: "push", label: "Push" },
+                    {
+                      key: "email",
+                      label:
+                        t.preferencesOnboarding.options.notificationChannels
+                          .email,
+                    },
+                    {
+                      key: "sms",
+                      label:
+                        t.preferencesOnboarding.options.notificationChannels
+                          .sms,
+                    },
+                    {
+                      key: "push",
+                      label:
+                        t.preferencesOnboarding.options.notificationChannels
+                          .push,
+                    },
                   ] as const
                 ).map((item) => (
                   <label
@@ -365,7 +431,7 @@ export default function PreferencesOnboardingModal() {
               onClick={handleSkip}
               isLoading={isSaving}
             >
-              Skip for now
+              {t.preferencesOnboarding.actions.skip}
             </Button>
 
             {currentStep > 1 && (
@@ -375,17 +441,17 @@ export default function PreferencesOnboardingModal() {
                 onClick={goToPreviousStep}
                 disabled={isSaving}
               >
-                Previous
+                {t.preferencesOnboarding.actions.previous}
               </Button>
             )}
 
             {currentStep < 4 ? (
               <Button type="button" onClick={goToNextStep} disabled={isSaving}>
-                Validate & Next
+                {t.preferencesOnboarding.actions.next}
               </Button>
             ) : (
               <Button type="button" onClick={handleSubmit} isLoading={isSaving}>
-                Save preferences
+                {t.preferencesOnboarding.actions.save}
               </Button>
             )}
           </div>

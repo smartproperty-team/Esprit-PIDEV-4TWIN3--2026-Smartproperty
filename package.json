@@ -14,7 +14,8 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ..",
     "seed": "npm run seed --prefix backend",
     "seed:users": "npm run seed:users --prefix backend",
-    "axe:contrast": "node frontend/scripts/axe-contrast-audit.cjs"
+    "fix:users-validator": "npm run update:users-validator --prefix backend",
+    "fix:properties-validator": "npm run update:properties-validator --prefix backend"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

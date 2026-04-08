@@ -283,33 +283,18 @@ function PropertyMap({ address, title }: PropertyMapProps) {
     }
   };
 
-  const accuracyColor = accuracyKey === "approximate" ? "#f59e0b" : "#10b981";
-
   return (
-    <div className="property-description" style={{ marginTop: "1.5rem" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "0.75rem",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-        }}
-      >
+    <div className="property-description property-map-section">
+      <div className="property-map-top">
         <div>
-          <h3 style={{ margin: 0 }}>{t.propertyDetail.location}</h3>
+          <h3 className="property-map-title">{t.propertyDetail.location}</h3>
           {accuracyKey && (
             <span
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 500,
-                color: accuracyColor,
-                display: "flex",
-                alignItems: "center",
-                gap: "0.25rem",
-                marginTop: "2px",
-              }}
+              className={`property-map-accuracy ${
+                accuracyKey === "approximate"
+                  ? "property-map-accuracy--approximate"
+                  : "property-map-accuracy--exact"
+              }`}
             >
               <svg
                 width="10"
@@ -325,31 +310,13 @@ function PropertyMap({ address, title }: PropertyMapProps) {
           )}
         </div>
         {/* Open in maps buttons */}
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div className="property-map-action-group">
           <button
+            type="button"
+            className="property-map-btn property-map-btn--osm"
             onClick={openInMaps}
             title={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
             aria-label={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              color: "var(--color-primary, #10b981)",
-              background: "rgba(16,185,129,0.08)",
-              border: "1px solid rgba(16,185,129,0.2)",
-              cursor: "pointer",
-              padding: "0.3rem 0.7rem",
-              borderRadius: "8px",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(16,185,129,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(16,185,129,0.08)";
-            }}
           >
             <svg
               width="13"
@@ -367,29 +334,11 @@ function PropertyMap({ address, title }: PropertyMapProps) {
             {t.propertyDetail.openStreetMap}
           </button>
           <button
+            type="button"
+            className="property-map-btn property-map-btn--google"
             onClick={openInGoogleMaps}
             title={`${t.propertyDetail.googleMaps} (opens in new tab)`}
             aria-label={`${t.propertyDetail.googleMaps} (opens in new tab)`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              color: "#4285F4",
-              background: "rgba(66,133,244,0.08)",
-              border: "1px solid rgba(66,133,244,0.2)",
-              cursor: "pointer",
-              padding: "0.3rem 0.7rem",
-              borderRadius: "8px",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(66,133,244,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(66,133,244,0.08)";
-            }}
           >
             <svg
               width="13"
@@ -408,48 +357,17 @@ function PropertyMap({ address, title }: PropertyMapProps) {
           </button>
         </div>
       </div>
-      <div
-        style={{
-          position: "relative",
-          borderRadius: "14px",
-          overflow: "hidden",
-          border: "1px solid var(--color-border, #e2e8f0)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-        }}
-      >
+      <div className="property-map-card">
         {isLoading && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#f8fafc",
-              gap: "0.75rem",
-            }}
-          >
+          <div className="property-map-loading-overlay">
             <div className="loading-spinner" />
-            <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>
+            <p className="property-map-loading-text">
               {t.propertyDetail.map.locating}
             </p>
           </div>
         )}
         {mapError ? (
-          <div
-            style={{
-              height: "380px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "1rem",
-              background: "#f8fafc",
-              color: "#64748b",
-            }}
-          >
+          <div className="property-map-error">
             <svg
               width="44"
               height="44"
@@ -462,70 +380,38 @@ function PropertyMap({ address, title }: PropertyMapProps) {
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <div style={{ textAlign: "center" }}>
-              <p
-                style={{
-                  margin: "0 0 0.25rem",
-                  fontWeight: 600,
-                  color: "#374151",
-                }}
-              >
+            <div className="property-map-error-body">
+              <p className="property-map-error-title">
                 {t.propertyDetail.map.notFoundTitle}
               </p>
-              <p style={{ margin: 0, fontSize: "0.82rem" }}>
+              <p className="property-map-error-subtitle">
                 {t.propertyDetail.map.notFoundSubtitle}
               </p>
             </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="property-map-error-actions">
               <button
+                type="button"
+                className="property-map-error-btn property-map-error-btn--osm"
                 onClick={openInMaps}
                 aria-label={`${t.propertyDetail.openStreetMap} (opens in new tab)`}
-                style={{
-                  padding: "0.45rem 1rem",
-                  borderRadius: "8px",
-                  background: "var(--color-primary, #10b981)",
-                  color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.82rem",
-                }}
               >
                 {t.propertyDetail.openStreetMap}
               </button>
               <button
+                type="button"
+                className="property-map-error-btn property-map-error-btn--google"
                 onClick={openInGoogleMaps}
                 aria-label={`${t.propertyDetail.googleMaps} (opens in new tab)`}
-                style={{
-                  padding: "0.45rem 1rem",
-                  borderRadius: "8px",
-                  background: "#4285F4",
-                  color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.82rem",
-                }}
               >
                 {t.propertyDetail.googleMaps}
               </button>
             </div>
           </div>
         ) : (
-          <div ref={mapRef} style={{ height: "380px", width: "100%" }} />
+          <div ref={mapRef} className="property-map-canvas" />
         )}
       </div>
-      <p
-        style={{
-          fontSize: "0.79rem",
-          color: "var(--color-text-muted, #94a3b8)",
-          marginTop: "0.5rem",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "0.3rem",
-          lineHeight: 1.5,
-        }}
-      >
+      <p className="property-map-address">
         <svg
           width="12"
           height="12"
@@ -533,7 +419,7 @@ function PropertyMap({ address, title }: PropertyMapProps) {
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          style={{ marginTop: "2px", flexShrink: 0 }}
+          className="property-map-address-icon"
           aria-hidden="true"
         >
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -1091,11 +977,7 @@ export default function PropertyDetailPage() {
 
       <main className="property-detail-container">
         {/* Back Button */}
-        <Link
-          to="/properties"
-          className="btn-cancel"
-          style={{ marginBottom: "1.5rem" }}
-        >
+        <Link to="/properties" className="btn-cancel property-back-link">
           <BackIcon />
           {t.propertyDetail.backToList}
         </Link>
@@ -1111,23 +993,17 @@ export default function PropertyDetailPage() {
               {property.address.country}
             </p>
           </div>
-          <div style={{ textAlign: "right" }}>
+          <div className="property-detail-header-meta">
             <div className="property-detail-price">
               {property.price.toLocaleString()} {property.currency}
             </div>
-            <div
-              style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}
-            >
+            <div className="property-detail-badges">
               <span
-                className={`property-badge ${property.status}`}
-                style={{ position: "static" }}
+                className={`property-badge property-badge-inline ${property.status}`}
               >
                 {getStatusLabel(property.status)}
               </span>
-              <span
-                className="property-type-badge"
-                style={{ position: "static" }}
-              >
+              <span className="property-type-badge property-type-badge-inline">
                 {getTypeLabel(property.type)}
               </span>
             </div>
@@ -1378,44 +1254,26 @@ export default function PropertyDetailPage() {
             {isTenant(user) && user && (
               <div className="sidebar-card">
                 <h3>Apply for Rental</h3>
-                <p
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--color-text-muted)",
-                    marginBottom: "1rem",
-                  }}
-                >
+                <p className="rental-apply-description">
                   Submit your rental application for this property
                 </p>
                 {hasActiveApplication ? (
                   <>
                     <button
                       type="button"
-                      className="btn-contact"
-                      style={{
-                        textAlign: "center",
-                        width: "100%",
-                        opacity: 0.7,
-                      }}
+                      className="btn-contact btn-contact-disabled"
                       disabled
                     >
                       Already Applied
                     </button>
-                    <p
-                      style={{
-                        marginTop: "0.5rem",
-                        fontSize: "0.8rem",
-                        color: "#92400e",
-                      }}
-                    >
+                    <p className="rental-active-note">
                       You already have an active application for this property.
                     </p>
                   </>
                 ) : (
                   <Link
                     to={`/applications?propertyId=${property.id || property._id}`}
-                    className="btn-contact"
-                    style={{ textAlign: "center", width: "100%" }}
+                    className="btn-contact btn-contact-link-center"
                     aria-disabled={checkingApplication}
                     onClick={(event) => {
                       if (checkingApplication) {
@@ -1432,32 +1290,23 @@ export default function PropertyDetailPage() {
             {canManage && (
               <div className="sidebar-card">
                 <h3>{t.propertyDetail.actions}</h3>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
-                  }}
-                >
+                <div className="sidebar-actions">
                   <Link
                     to={`/properties/${property.id || property._id}/edit`}
-                    className="btn-view"
-                    style={{ textAlign: "center" }}
+                    className="btn-view sidebar-action-link"
                   >
                     <EditIcon />
                     {t.propertyDetail.editProperty}
                   </Link>
                   <Link
                     to={`/properties/${property.id || property._id}/images`}
-                    className="btn-edit"
-                    style={{ textAlign: "center" }}
+                    className="btn-edit sidebar-action-link"
                   >
                     {t.propertyDetail.manageImages}
                   </Link>
                   <button
-                    className="btn-delete"
+                    className="btn-delete btn-delete-full"
                     onClick={handleDelete}
-                    style={{ width: "100%" }}
                   >
                     <DeleteIcon />
                     {t.propertyDetail.deleteProperty}
@@ -1509,12 +1358,7 @@ export default function PropertyDetailPage() {
             {canManage && (
               <div className="sidebar-card">
                 <h3>{t.propertyDetail.info}</h3>
-                <div
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
+                <div className="property-meta-info">
                   <p>
                     <strong>{t.propertyDetail.propertyId}:</strong>{" "}
                     {property.id || property._id}
