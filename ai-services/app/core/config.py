@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     price_model_path: str = "./models/pricing"
     image_model_path: str = "./models/image_analysis"
 
+    # Marketing AI - Description generation
+    marketing_generation_model_name: str = "google/flan-t5-base"
+    marketing_translation_model_name: str = "facebook/nllb-200-distilled-600M"
+    marketing_model_device: str = "cpu"  # "cpu" or "cuda"
+    marketing_cache_ttl_seconds: int = 60 * 60 * 24  # 24h
+    marketing_generation_timeout_ms: int = 45000
+
     # Logging
     log_level: str = "DEBUG"
     log_format: str = "json"

@@ -300,6 +300,83 @@ export const propertyService = {
     );
     return response.data;
   },
+
+  /**
+   * Generate AI marketing descriptions via the backend proxy.
+   *
+   * Uses a long per-request timeout because flan-t5 generation on CPU
+   * commonly takes 10-25 seconds and must not be cut off by the default
+   * 10s axios timeout.
+   */
+  async generateAiDescription(
+    request: GenerateDescriptionRequest,
+  ): Promise<GenerateDescriptionResponse> {
+    const response = await api.post<GenerateDescriptionResponse>(
+      "/properties/ai/descriptions/generate",
+      request,
+      { timeout: 90_000 },
+    );
+    return response.data;
+  },
 };
+
+// ===========================================
+// AI description types
+// ===========================================
+
+export type AiDescriptionTone = "professional" | "warm" | "luxury";
+export type AiDescriptionLength = "short" | "medium" | "long";
+
+export interface AiPropertySnapshot {
+  title?: string;
+  propertyType?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  neighborhood?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  areaSqft?: number;
+  yearBuilt?: number;
+  furnished?: boolean;
+  petFriendly?: boolean;
+  parkingSpaces?: number;
+  amenities?: string[];
+  nearby?: string[];
+  price?: number;
+  currency?: string;
+}
+
+export interface GenerateDescriptionRequest {
+  propertyId?: string;
+  propertySnapshot?: AiPropertySnapshot;
+  tone: AiDescriptionTone;
+  lengths: AiDescriptionLength[];
+  sourceLanguage: string;
+  targetLanguages: string[];
+  hintKeywords?: string[];
+}
+
+export interface GeneratedVariant {
+  length: AiDescriptionLength;
+  tone: AiDescriptionTone;
+  language: string;
+  text: string;
+  wordCount: number;
+}
+
+export interface GenerationMetadata {
+  generationId: string;
+  modelName: string;
+  modelVersion: string;
+  cacheHit: boolean;
+  latencyMs: number;
+  propertyId?: string;
+}
+
+export interface GenerateDescriptionResponse {
+  variants: GeneratedVariant[];
+  metadata: GenerationMetadata;
+}
 
 export default propertyService;

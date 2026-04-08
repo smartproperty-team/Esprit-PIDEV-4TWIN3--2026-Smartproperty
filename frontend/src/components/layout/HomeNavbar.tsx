@@ -463,12 +463,7 @@ export default function HomeNavbar() {
             })}
           </div>
 
-          <div className="hidden max-w-full flex-1 flex-wrap items-center justify-end gap-1.5 md:flex">
-            <ReadAloudWidget
-              mode="inline"
-              showLabel={false}
-              className="rounded-full border border-white/25 bg-white/10 px-1.5 text-white"
-            />
+
 
             {user ? (
               <div className="relative" ref={userDropdownRef}>
@@ -751,7 +746,7 @@ export default function HomeNavbar() {
               className="border-white/55 bg-white/10 text-white hover:border-[#FFC570] hover:bg-white/20 hover:text-[#FFC570]"
             />
           </div>
-        </div>
+       
 
         <div
           id="mobile-menu"

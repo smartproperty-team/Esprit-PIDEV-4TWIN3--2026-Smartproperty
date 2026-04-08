@@ -5,7 +5,6 @@
 import { useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
-import ReadAloudWidget from "./components/accessibility/ReadAloudWidget";
 import { ProtectedRoute } from "./components/auth";
 import { PushNotificationTestButton } from "./components/notifications/PushNotificationTestButton";
 import { useLanguageStore } from "./i18n";
@@ -28,7 +27,6 @@ import {
   BranchManagerAgenciesPage,
   BranchManagerAgencyOnboardingPage,
   DashboardPage,
-  SessionsPage,
   VerificationPage,
 } from "./pages/dashboard";
 import { HomePage, PaletteDemoPage } from "./pages/home";
@@ -38,14 +36,12 @@ import {
   ServiceProviderMaintenancePage,
 } from "./pages/maintenance";
 import { PreferencesOnboardingModal } from "./pages/onboarding";
-import { ProfilePage } from "./pages/profile";
 import {
   MyPropertiesPage,
   PropertiesPage,
   PropertyDetailPage,
   PropertyFormPage,
 } from "./pages/properties";
-import TwoFactorPage from "./pages/security/TwoFactorPage";
 import { SettingsPage } from "./pages/settings";
 import { pushNotificationService } from "./services/push-notification.service";
 import { useAuthStore, usePreferencesStore } from "./store";
@@ -62,46 +58,66 @@ import {
   isTenant,
 } from "./utils";
 
-function getPageTitle(pathname: string): string {
+function getSettingsTabTitle(search: string): string {
+  const tab = new URLSearchParams(search).get("tab");
+
+  switch (tab) {
+    case "account":
+      return "Account Settings";
+    case "security":
+      return "Security Settings";
+    case "sessions":
+      return "Session Settings";
+    case "preferences":
+      return "Preference Settings";
+    case "workspace":
+      return "Workspace Settings";
+    default:
+      return "Settings";
+  }
+}
+
+function getPageTitle(path: string, search: string): string {
+  if (path === "/settings") {
+    return `${getSettingsTabTitle(search)} | SmartProperty`;
+  }
+
   const exactTitles: Record<string, string> = {
     "/": "Home",
     "/design/palette": "Design Palette",
-    "/login": "Login",
+    "/login": "Sign In",
     "/register": "Register",
     "/forgot-password": "Forgot Password",
     "/reset-password": "Reset Password",
     "/verify-email": "Verify Email",
-    "/auth/google/callback": "Google Sign-In",
-    "/auth/facebook/callback": "Facebook Sign-In",
     "/dashboard": "Dashboard",
-    "/sessions": "Sessions",
+    "/sessions": "Session Settings",
     "/verification": "Verification",
     "/applications": "My Applications",
-    "/applications/review": "Applications Review",
-    "/super-administrator/verifications": "Verification Review",
-    "/super-administrator/users": "User Management",
+    "/applications/review": "Review Applications",
+    "/super-administrator/verifications": "Admin Verifications",
+    "/super-administrator/users": "Admin Users",
     "/branch-manager/agencies": "My Agencies",
     "/branch-manager/agencies/new": "Agency Onboarding",
-    "/profile": "Profile",
-    "/settings": "Settings",
-    "/security/2fa": "Two-Factor Authentication",
+    "/profile": "Account Settings",
+    "/security/2fa": "Security Settings",
     "/properties": "Properties",
     "/properties/mine": "My Properties",
-    "/properties/new": "Create Property",
+    "/properties/new": "Add Property",
     "/maintenance/requests/new": "Maintenance Request",
     "/maintenance/requests/mine": "My Maintenance Status",
     "/maintenance/requests/assigned": "Assigned Maintenance",
   };
 
-  if (exactTitles[pathname]) {
-    return `${exactTitles[pathname]} | SmartProperty`;
+  if (exactTitles[path]) {
+    return `${exactTitles[path]} | SmartProperty`;
   }
 
-  if (/^\/properties\/[^/]+\/edit$/.test(pathname)) {
+  if (path.startsWith("/properties/") && path.endsWith("/edit")) {
     return "Edit Property | SmartProperty";
   }
 
-  if (/^\/properties\/[^/]+$/.test(pathname)) {
+  if (path.startsWith("/properties/")) {
     return "Property Details | SmartProperty";
   }
 
@@ -115,74 +131,15 @@ function App() {
   const { openOnboarding, getUserPreferences, setUserPreferences } =
     usePreferencesStore();
   const promptedUserRef = useRef<string | null>(null);
-  const showFloatingReadAloud =
-    /^\/(login|register|forgot-password|reset-password|verify-email)$/.test(
-      location.pathname,
-    ) ||
-    location.pathname === "/auth/google/callback" ||
-    location.pathname === "/auth/facebook/callback";
-  const mainContentId = "main-content";
-
+ 
   // Check if user is authenticated on app load
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    const path = location.pathname;
-    let pageTitle = "SmartProperty";
-
-    if (path === "/") pageTitle = "Home | SmartProperty";
-    else if (path === "/login") pageTitle = "Sign In | SmartProperty";
-    else if (path === "/register") pageTitle = "Register | SmartProperty";
-    else if (path === "/forgot-password") {
-      pageTitle = "Forgot Password | SmartProperty";
-    } else if (path === "/reset-password") {
-      pageTitle = "Reset Password | SmartProperty";
-    } else if (path === "/verify-email") {
-      pageTitle = "Verify Email | SmartProperty";
-    } else if (path.startsWith("/properties/new")) {
-      pageTitle = "Add Property | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/new")) {
-      pageTitle = "Maintenance Request | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/mine")) {
-      pageTitle = "My Maintenance Status | SmartProperty";
-    } else if (path.startsWith("/maintenance/requests/assigned")) {
-      pageTitle = "Assigned Maintenance | SmartProperty";
-    } else if (path.startsWith("/properties/mine")) {
-      pageTitle = "My Properties | SmartProperty";
-    } else if (path.startsWith("/properties/") && path.endsWith("/edit")) {
-      pageTitle = "Edit Property | SmartProperty";
-    } else if (path.startsWith("/properties/")) {
-      pageTitle = "Property Details | SmartProperty";
-    } else if (path === "/properties") {
-      pageTitle = "Properties | SmartProperty";
-    } else if (path === "/dashboard") {
-      pageTitle = "Dashboard | SmartProperty";
-    } else if (path === "/profile") {
-      pageTitle = "Profile | SmartProperty";
-    } else if (path === "/settings") {
-      pageTitle = "Settings | SmartProperty";
-    } else if (path === "/sessions") {
-      pageTitle = "Sessions | SmartProperty";
-    } else if (path === "/verification") {
-      pageTitle = "Verification | SmartProperty";
-    } else if (path === "/applications") {
-      pageTitle = "My Applications | SmartProperty";
-    } else if (path === "/applications/review") {
-      pageTitle = "Review Applications | SmartProperty";
-    } else if (path === "/super-administrator/verifications") {
-      pageTitle = "Admin Verifications | SmartProperty";
-    } else if (path === "/super-administrator/users") {
-      pageTitle = "Admin Users | SmartProperty";
-    } else if (path === "/branch-manager/agencies") {
-      pageTitle = "My Agencies | SmartProperty";
-    } else if (path === "/security/2fa") {
-      pageTitle = "Two-Factor Authentication | SmartProperty";
-    }
-
-    document.title = pageTitle;
-  }, [location.pathname]);
+    document.title = getPageTitle(location.pathname, location.search);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -297,7 +254,7 @@ function App() {
           path="/sessions"
           element={
             <ProtectedRoute>
-              <SessionsPage />
+              <Navigate to="/settings?tab=sessions" replace />
             </ProtectedRoute>
           }
         />
@@ -385,7 +342,7 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ProfilePage />
+              <Navigate to="/settings?tab=account" replace />
             </ProtectedRoute>
           }
         />
@@ -401,7 +358,7 @@ function App() {
           path="/security/2fa"
           element={
             <ProtectedRoute>
-              <TwoFactorPage />
+              <Navigate to="/settings?tab=security" replace />
             </ProtectedRoute>
           }
         />
@@ -489,7 +446,6 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <PreferencesOnboardingModal />
-      {showFloatingReadAloud && <ReadAloudWidget mode="floating" />}
       {isAuthenticated && <PushNotificationTestButton />}
     </>
   );

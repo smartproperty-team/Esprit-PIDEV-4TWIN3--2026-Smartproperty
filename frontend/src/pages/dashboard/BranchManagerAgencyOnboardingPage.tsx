@@ -37,6 +37,12 @@ const memberSchema = z.object({
     .min(2, "Last name must be at least 2 characters")
     .optional()
     .or(z.literal("")),
+  personalEmail: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .optional()
+    .or(z.literal("")),
 });
 
 const formSchema = z.object({
@@ -105,10 +111,18 @@ export default function BranchManagerAgencyOnboardingPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       agencyCreationDate: new Date().toISOString().slice(0, 10),
-      accountant: { firstName: "John", lastName: "" },
-      rentalManager: { firstName: "John", lastName: "" },
-      manager: { firstName: "John", lastName: "" },
-      serviceProvider: { firstName: "John", lastName: "" },
+      accountant: { firstName: "John", lastName: "", personalEmail: "" },
+      rentalManager: {
+        firstName: "John",
+        lastName: "",
+        personalEmail: "",
+      },
+      manager: { firstName: "John", lastName: "", personalEmail: "" },
+      serviceProvider: {
+        firstName: "John",
+        lastName: "",
+        personalEmail: "",
+      },
     },
   });
 
@@ -130,18 +144,22 @@ export default function BranchManagerAgencyOnboardingPage() {
         accountant: {
           firstName: values.accountant.firstName,
           lastName: values.accountant.lastName || undefined,
+          personalEmail: values.accountant.personalEmail || undefined,
         },
         rentalManager: {
           firstName: values.rentalManager.firstName,
           lastName: values.rentalManager.lastName || undefined,
+          personalEmail: values.rentalManager.personalEmail || undefined,
         },
         manager: {
           firstName: values.manager.firstName,
           lastName: values.manager.lastName || undefined,
+          personalEmail: values.manager.personalEmail || undefined,
         },
         serviceProvider: {
           firstName: values.serviceProvider.firstName,
           lastName: values.serviceProvider.lastName || undefined,
+          personalEmail: values.serviceProvider.personalEmail || undefined,
         },
       };
 
@@ -184,6 +202,9 @@ export default function BranchManagerAgencyOnboardingPage() {
           `${index + 1}. Role: ${formatRole(account.role)}`,
           `   Email: ${account.email}`,
           `   Temporary password: ${account.temporaryPassword}`,
+          ...(account.notificationEmail
+            ? [`   Credentials sent to: ${account.notificationEmail}`]
+            : []),
         ].join("\n");
       }),
       "",
@@ -294,7 +315,9 @@ export default function BranchManagerAgencyOnboardingPage() {
                   Role Account Seeds
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  Emails are auto-generated as firstname.role@agencyslug.com.
+                  Login emails are auto-generated as
+                  firstname.role@agencyslug.com. If a personal email is
+                  provided, credentials are sent there instead.
                 </p>
               </CardHeader>
               <CardContent>
@@ -314,6 +337,13 @@ export default function BranchManagerAgencyOnboardingPage() {
                       {...register("accountant.lastName")}
                       error={errors.accountant?.lastName?.message}
                     />
+                    <Input
+                      label="Personal email (optional)"
+                      type="email"
+                      {...register("accountant.personalEmail")}
+                      error={errors.accountant?.personalEmail?.message}
+                      placeholder="john.personal@example.com"
+                    />
                   </div>
 
                   <div className="space-y-3 rounded-lg border border-gray-200 p-4">
@@ -330,6 +360,13 @@ export default function BranchManagerAgencyOnboardingPage() {
                       label="Last name"
                       {...register("rentalManager.lastName")}
                       error={errors.rentalManager?.lastName?.message}
+                    />
+                    <Input
+                      label="Personal email (optional)"
+                      type="email"
+                      {...register("rentalManager.personalEmail")}
+                      error={errors.rentalManager?.personalEmail?.message}
+                      placeholder="john.personal@example.com"
                     />
                   </div>
 
@@ -348,6 +385,13 @@ export default function BranchManagerAgencyOnboardingPage() {
                       {...register("manager.lastName")}
                       error={errors.manager?.lastName?.message}
                     />
+                    <Input
+                      label="Personal email (optional)"
+                      type="email"
+                      {...register("manager.personalEmail")}
+                      error={errors.manager?.personalEmail?.message}
+                      placeholder="john.personal@example.com"
+                    />
                   </div>
 
                   <div className="space-y-3 rounded-lg border border-gray-200 p-4">
@@ -364,6 +408,13 @@ export default function BranchManagerAgencyOnboardingPage() {
                       label="Last name"
                       {...register("serviceProvider.lastName")}
                       error={errors.serviceProvider?.lastName?.message}
+                    />
+                    <Input
+                      label="Personal email (optional)"
+                      type="email"
+                      {...register("serviceProvider.personalEmail")}
+                      error={errors.serviceProvider?.personalEmail?.message}
+                      placeholder="john.personal@example.com"
                     />
                   </div>
                 </div>
@@ -415,6 +466,11 @@ export default function BranchManagerAgencyOnboardingPage() {
                           <p className="text-green-800">
                             Temporary password: {account.temporaryPassword}
                           </p>
+                          {account.notificationEmail && (
+                            <p className="text-green-800">
+                              Credentials sent to: {account.notificationEmail}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
