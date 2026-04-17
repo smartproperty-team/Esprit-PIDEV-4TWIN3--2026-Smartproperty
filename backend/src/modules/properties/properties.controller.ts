@@ -41,6 +41,7 @@ import {
 } from '../users/role-groups';
 import { randomUUID } from 'crypto';
 import { AiDescriptionService } from './ai-description.service';
+import { AiPricingService } from './ai-pricing.service';
 import {
   GenerateDescriptionDto,
   GenerateDescriptionResponseDto,
@@ -52,6 +53,7 @@ import {
   PortfolioSummaryQueryDto,
 } from './dto/portfolio.dto';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
+import { SuggestPriceDto } from './dto/suggest-price.dto';
 import {
   PropertyCategory,
   PropertyStatus,
@@ -73,6 +75,7 @@ export class PropertiesController {
     private readonly propertiesService: PropertiesService,
     private readonly configService: ConfigService,
     private readonly aiDescriptionService: AiDescriptionService,
+    private readonly aiPricingService: AiPricingService,
   ) {}
 
   // ===========================================
@@ -244,6 +247,22 @@ export class PropertiesController {
   ): Promise<GenerateDescriptionResponseDto> {
     const requestId = `${userId || 'anon'}:${randomUUID()}`;
     return this.aiDescriptionService.generateDescription(body, requestId);
+  }
+
+  @Post('ai/pricing/suggest')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES, ...PROPERTY_CREATOR_ROLES)
+  @ApiOperation({
+    summary: 'Get AI price suggestion for a Tunisian property',
+    description:
+      'Proxies to ai-services to predict monthly rent in TND ' +
+      'based on property features and Tunisian market data.',
+  })
+  @ApiResponse({ status: 200, description: 'Price suggestion returned' })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 504, description: 'AI service timed out' })
+  @HttpCode(HttpStatus.OK)
+  async suggestPrice(@Body() body: SuggestPriceDto) {
+    return this.aiPricingService.suggestPrice(body);
   }
 
   @Get('ai/model/status')
