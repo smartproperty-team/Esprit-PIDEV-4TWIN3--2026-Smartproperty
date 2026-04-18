@@ -265,12 +265,12 @@ export class AgenciesService {
         !!agency && self.findIndex((item) => item?.id === agency.id) === index,
     );
 
+    const managerIds = mergedAgencies
+      .map((agency) => this.resolveAgencyManagerUserId(agency))
+      .filter((value): value is string => !!value);
+
     const managerObjectIds = Array.from(
-      new Set(
-        mergedAgencies
-          .map((agency) => agency.createdBy)
-          .filter((value) => ObjectId.isValid(value)),
-      ),
+      new Set(managerIds.filter((value) => ObjectId.isValid(value))),
     ).map((value) => new ObjectId(value));
 
     const managers = managerObjectIds.length
@@ -288,7 +288,7 @@ export class AgenciesService {
       name: agency.name,
       slug: agency.slug,
       region: agency.region,
-      managerName: managerNameById.get(agency.createdBy),
+      managerName: managerNameById.get(this.resolveAgencyManagerUserId(agency)),
     }));
   }
 
@@ -337,9 +337,10 @@ export class AgenciesService {
     owner.agencyId = agency.id;
     owner.updatedAt = new Date();
     const savedOwner = await this.usersRepository.save(owner);
+    const effectiveManagerId = this.resolveAgencyManagerUserId(agency);
     await this.syncOwnerPropertiesAgencyManager(
       savedOwner.id,
-      agency.createdBy,
+      effectiveManagerId,
     );
 
     return {
@@ -394,9 +395,10 @@ export class AgenciesService {
     owner.agencyId = agency.id;
     owner.updatedAt = new Date();
     const savedOwner = await this.usersRepository.save(owner);
+    const effectiveManagerId = this.resolveAgencyManagerUserId(agency);
     await this.syncOwnerPropertiesAgencyManager(
       savedOwner.id,
-      agency.createdBy,
+      effectiveManagerId,
     );
 
     return {
@@ -490,6 +492,27 @@ export class AgenciesService {
         updatedAt: new Date(),
       } as Partial<Property>,
     );
+  }
+
+  private resolveAgencyManagerUserId(agency: Agency): string {
+    const members = agency.members || [];
+    const preferredManager = members.find(
+      (member) => member.role === UserRole.REAL_ESTATE_AGENT,
+    );
+
+    if (preferredManager?.userId) {
+      return preferredManager.userId;
+    }
+
+    const rentalManager = members.find(
+      (member) => member.role === UserRole.RENTAL_MANAGER,
+    );
+
+    if (rentalManager?.userId) {
+      return rentalManager.userId;
+    }
+
+    return agency.createdBy;
   }
 
   private async ensureUniqueAgency(slug: string, name: string): Promise<void> {

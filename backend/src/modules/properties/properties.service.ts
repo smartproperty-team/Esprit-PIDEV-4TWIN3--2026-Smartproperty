@@ -192,6 +192,23 @@ export class PropertiesService {
       return undefined;
     }
 
+    const members = agency.members || [];
+    const preferredManager = members.find(
+      (member) => member.role === UserRole.REAL_ESTATE_AGENT,
+    );
+
+    if (preferredManager?.userId) {
+      return preferredManager.userId;
+    }
+
+    const rentalManager = members.find(
+      (member) => member.role === UserRole.RENTAL_MANAGER,
+    );
+
+    if (rentalManager?.userId) {
+      return rentalManager.userId;
+    }
+
     return agency.createdBy;
   }
 
