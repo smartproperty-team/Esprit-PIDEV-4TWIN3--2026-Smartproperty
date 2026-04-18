@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui";
 import {
+  agencyOnboardingService,
   applicationService,
   authService,
   leaseService,
@@ -79,6 +80,14 @@ export default function DashboardPage() {
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [isLoadingOwnerProperties, setIsLoadingOwnerProperties] =
     useState(false);
+  const [ownerAgencyIdInput, setOwnerAgencyIdInput] = useState("");
+  const [ownerLinkedAgencyId, setOwnerLinkedAgencyId] = useState("");
+  const [ownerAgencyActionLoading, setOwnerAgencyActionLoading] =
+    useState(false);
+  const [ownerAgencyMessage, setOwnerAgencyMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [tenantApplications, setTenantApplications] = useState<Application[]>(
     [],
   );
@@ -213,7 +222,38 @@ export default function DashboardPage() {
     });
   };
 
+  const getApiErrorMessage = (error: unknown, fallback: string): string => {
+    const message = (
+      error as {
+        response?: { data?: { message?: string | string[] } };
+      }
+    )?.response?.data?.message;
+
+    if (Array.isArray(message) && typeof message[0] === "string") {
+      return message[0];
+    }
+
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+
+    return fallback;
+  };
+
   // Fetch verification status for tenants
+  useEffect(() => {
+    if (user?.role !== UserRole.OWNER) {
+      setOwnerAgencyIdInput("");
+      setOwnerLinkedAgencyId("");
+      setOwnerAgencyMessage(null);
+      return;
+    }
+
+    const currentAgencyId = user?.agencyId || "";
+    setOwnerLinkedAgencyId(currentAgencyId);
+    setOwnerAgencyIdInput((previous) => previous || currentAgencyId);
+  }, [user?.agencyId, user?.role]);
+
   useEffect(() => {
     if (isTenant(user)) {
       verificationService
@@ -836,6 +876,75 @@ export default function DashboardPage() {
   const handleLeaseCardClick = () => {
     if (canAccessLeases(user)) {
       navigate("/leases");
+    }
+  };
+
+  const handleOwnerLinkAgency = async () => {
+    const agencyId = ownerAgencyIdInput.trim();
+    if (!agencyId) {
+      setOwnerAgencyMessage({
+        type: "error",
+        text: "Please paste your agency ID first.",
+      });
+      return;
+    }
+
+    setOwnerAgencyActionLoading(true);
+    setOwnerAgencyMessage(null);
+
+    try {
+      const response =
+        await agencyOnboardingService.linkCurrentOwnerToAgency(agencyId);
+      setOwnerLinkedAgencyId(response.agencyId);
+      setOwnerAgencyIdInput(response.agencyId);
+      setOwnerAgencyMessage({
+        type: "success",
+        text: "You are now linked to this agency.",
+      });
+    } catch (error) {
+      setOwnerAgencyMessage({
+        type: "error",
+        text: getApiErrorMessage(
+          error,
+          "Unable to link your account to the agency.",
+        ),
+      });
+    } finally {
+      setOwnerAgencyActionLoading(false);
+    }
+  };
+
+  const handleOwnerUnlinkAgency = async () => {
+    const agencyId = ownerLinkedAgencyId || ownerAgencyIdInput.trim();
+    if (!agencyId) {
+      setOwnerAgencyMessage({
+        type: "error",
+        text: "No linked agency found to remove.",
+      });
+      return;
+    }
+
+    setOwnerAgencyActionLoading(true);
+    setOwnerAgencyMessage(null);
+
+    try {
+      await agencyOnboardingService.unlinkCurrentOwnerFromAgency(agencyId);
+      setOwnerLinkedAgencyId("");
+      setOwnerAgencyIdInput("");
+      setOwnerAgencyMessage({
+        type: "success",
+        text: "Your agency link has been removed.",
+      });
+    } catch (error) {
+      setOwnerAgencyMessage({
+        type: "error",
+        text: getApiErrorMessage(
+          error,
+          "Unable to remove your agency link right now.",
+        ),
+      });
+    } finally {
+      setOwnerAgencyActionLoading(false);
     }
   };
 
@@ -1467,6 +1576,65 @@ export default function DashboardPage() {
                       })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {user?.role === UserRole.OWNER && (
+            <Card className="mb-8">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center">
+                  <Building2 className="mr-2 h-5 w-5 text-emerald-600" />
+                  Agency Connection
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Paste the agency ID you received, then click Join. No
+                  technical setup needed.
+                </p>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {ownerAgencyMessage && (
+                  <div className="mb-3">
+                    <Alert
+                      type={ownerAgencyMessage.type}
+                      message={ownerAgencyMessage.text}
+                      onClose={() => setOwnerAgencyMessage(null)}
+                    />
+                  </div>
+                )}
+
+                <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
+                  <label className="text-sm text-gray-700">
+                    Agency ID
+                    <input
+                      value={ownerAgencyIdInput}
+                      onChange={(event) =>
+                        setOwnerAgencyIdInput(event.target.value)
+                      }
+                      placeholder="Example: 69e3e9230c16026dc31dce02"
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                  </label>
+                  <Button
+                    onClick={() => void handleOwnerLinkAgency()}
+                    disabled={ownerAgencyActionLoading}
+                  >
+                    {ownerAgencyActionLoading
+                      ? "Please wait..."
+                      : "Join Agency"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => void handleOwnerUnlinkAgency()}
+                    disabled={ownerAgencyActionLoading || !ownerLinkedAgencyId}
+                  >
+                    Leave Agency
+                  </Button>
+                </div>
+
+                <p className="mt-3 text-xs text-gray-500">
+                  Current link: {ownerLinkedAgencyId || "Not linked yet"}
+                </p>
               </CardContent>
             </Card>
           )}
