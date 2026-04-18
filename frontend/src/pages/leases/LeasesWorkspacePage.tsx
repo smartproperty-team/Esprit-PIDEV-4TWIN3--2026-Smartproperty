@@ -12,7 +12,7 @@ import {
 } from "@/types/lease";
 import { canManageLeases, isOwner, isPlatformAdmin } from "@/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 const LEASE_WORKSPACE_DRAFT_PREFIX = "lease-workspace-draft";
 
@@ -199,9 +199,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function LeasesWorkspacePage() {
-  const { leaseId: leaseIdFromPath = "" } = useParams<{ leaseId?: string }>();
   const [searchParams] = useSearchParams();
-  const leaseIdFromQuery = searchParams.get("leaseId") || leaseIdFromPath;
   const applicationIdFromQuery = searchParams.get("applicationId") || "";
 
   const { user } = useAuthStore();
@@ -494,10 +492,6 @@ export default function LeasesWorkspacePage() {
         setStatusFilter(draft.statusFilter);
       }
 
-      if (draft.selectedLeaseId) {
-        setSelectedLeaseId(draft.selectedLeaseId);
-      }
-
       if (draft.createForm) {
         setCreateForm((previous) => ({
           ...previous,
@@ -593,11 +587,6 @@ export default function LeasesWorkspacePage() {
           : await leaseService.getMine({ page: 1, limit: 100 });
       setLeases(response.items);
       if (
-        leaseIdFromQuery &&
-        response.items.some((lease) => lease.id === leaseIdFromQuery)
-      ) {
-        setSelectedLeaseId(leaseIdFromQuery);
-      } else if (
         selectedLeaseId &&
         !response.items.some((lease) => lease.id === selectedLeaseId)
       ) {
@@ -653,7 +642,7 @@ export default function LeasesWorkspacePage() {
 
   useEffect(() => {
     void loadLeases();
-  }, [viewMode, leaseIdFromQuery]);
+  }, [viewMode]);
 
   useEffect(() => {
     void loadApprovedApplications();
