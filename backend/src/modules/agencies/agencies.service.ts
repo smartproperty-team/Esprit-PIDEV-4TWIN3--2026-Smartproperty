@@ -230,6 +230,34 @@ export class AgenciesService {
     return agencies.map((agency) => agency.toJSON());
   }
 
+  async searchAgencies(query?: string) {
+    const normalizedQuery = query?.trim();
+
+    const where =
+      normalizedQuery && normalizedQuery.length > 0
+        ? {
+            $or: [
+              { name: { $regex: normalizedQuery, $options: 'i' } },
+              { region: { $regex: normalizedQuery, $options: 'i' } },
+              { slug: { $regex: normalizedQuery, $options: 'i' } },
+            ],
+          }
+        : {};
+
+    const agencies = await this.agenciesRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 20,
+    });
+
+    return agencies.map((agency) => ({
+      id: agency.id,
+      name: agency.name,
+      slug: agency.slug,
+      region: agency.region,
+    }));
+  }
+
   async findById(id: string) {
     if (!ObjectId.isValid(id)) {
       throw new NotFoundException('Agency not found');

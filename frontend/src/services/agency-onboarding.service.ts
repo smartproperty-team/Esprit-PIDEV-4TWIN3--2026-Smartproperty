@@ -70,6 +70,13 @@ export interface AgencyListItem {
   }>;
 }
 
+export interface AgencySearchItem {
+  id: string;
+  name: string;
+  slug: string;
+  region: string;
+}
+
 export interface OwnerAgencyLinkResponse {
   agencyId: string;
   owner: {
@@ -112,6 +119,13 @@ export const agencyOnboardingService = {
     const response = await api.delete<OwnerAgencyUnlinkResponse>(
       `/agencies/${agencyId}/owners/me`,
     );
+    return response.data;
+  },
+
+  async searchAgencies(query: string) {
+    const response = await api.get<AgencySearchItem[]>("/agencies/search", {
+      params: { q: query },
+    });
     return response.data;
   },
 };

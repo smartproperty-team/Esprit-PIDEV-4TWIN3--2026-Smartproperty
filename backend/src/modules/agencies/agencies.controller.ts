@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -66,6 +67,13 @@ export class AgenciesController {
   @ApiOperation({ summary: 'List agencies created by current branch manager' })
   findMine(@CurrentUser('id') currentUserId: string) {
     return this.agenciesService.findMyAgencies(currentUserId);
+  }
+
+  @Get('search')
+  @Roles(UserRole.OWNER, UserRole.BRANCH_MANAGER)
+  @ApiOperation({ summary: 'Search agencies by name, region, or slug' })
+  findSearch(@Query('q') query?: string) {
+    return this.agenciesService.searchAgencies(query);
   }
 
   @Get(':id')

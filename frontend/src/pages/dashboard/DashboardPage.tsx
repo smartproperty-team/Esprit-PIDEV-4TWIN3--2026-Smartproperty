@@ -19,6 +19,7 @@ import {
   notificationService,
   propertyService,
   verificationService,
+  type AgencySearchItem,
 } from "@/services";
 import { useAuthStore } from "@/store";
 import { ApplicationStatus, type Application } from "@/types/application";
@@ -82,6 +83,12 @@ export default function DashboardPage() {
     useState(false);
   const [ownerAgencyIdInput, setOwnerAgencyIdInput] = useState("");
   const [ownerLinkedAgencyId, setOwnerLinkedAgencyId] = useState("");
+  const [ownerAgencyQuery, setOwnerAgencyQuery] = useState("");
+  const [ownerAgencySuggestions, setOwnerAgencySuggestions] = useState<
+    AgencySearchItem[]
+  >([]);
+  const [ownerAgencySearchLoading, setOwnerAgencySearchLoading] =
+    useState(false);
   const [ownerAgencyActionLoading, setOwnerAgencyActionLoading] =
     useState(false);
   const [ownerAgencyMessage, setOwnerAgencyMessage] = useState<{
@@ -252,7 +259,38 @@ export default function DashboardPage() {
     const currentAgencyId = user?.agencyId || "";
     setOwnerLinkedAgencyId(currentAgencyId);
     setOwnerAgencyIdInput((previous) => previous || currentAgencyId);
+    setOwnerAgencyQuery((previous) => previous || currentAgencyId);
   }, [user?.agencyId, user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== UserRole.OWNER) {
+      setOwnerAgencySuggestions([]);
+      setOwnerAgencySearchLoading(false);
+      return;
+    }
+
+    const searchText = ownerAgencyQuery.trim();
+    if (!searchText || searchText.length < 2) {
+      setOwnerAgencySuggestions([]);
+      setOwnerAgencySearchLoading(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      setOwnerAgencySearchLoading(true);
+      try {
+        const results =
+          await agencyOnboardingService.searchAgencies(searchText);
+        setOwnerAgencySuggestions(results);
+      } catch {
+        setOwnerAgencySuggestions([]);
+      } finally {
+        setOwnerAgencySearchLoading(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [ownerAgencyQuery, user?.role]);
 
   useEffect(() => {
     if (isTenant(user)) {
@@ -1588,7 +1626,7 @@ export default function DashboardPage() {
                   Agency Connection
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  Paste the agency ID you received, then click Join. No
+                  Search by agency name, select it, then click Join. No
                   technical setup needed.
                 </p>
               </CardHeader>
@@ -1605,15 +1643,49 @@ export default function DashboardPage() {
 
                 <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
                   <label className="text-sm text-gray-700">
-                    Agency ID
+                    Agency Name or ID
                     <input
-                      value={ownerAgencyIdInput}
-                      onChange={(event) =>
-                        setOwnerAgencyIdInput(event.target.value)
-                      }
-                      placeholder="Example: 69e3e9230c16026dc31dce02"
+                      value={ownerAgencyQuery}
+                      onChange={(event) => {
+                        setOwnerAgencyQuery(event.target.value);
+                        setOwnerAgencyIdInput(event.target.value.trim());
+                      }}
+                      placeholder="Type agency name (example: Alpha Immo)"
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
                     />
+                    {ownerAgencySearchLoading && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Searching agencies...
+                      </p>
+                    )}
+                    {ownerAgencySuggestions.length > 0 && (
+                      <div className="mt-2 max-h-44 overflow-auto rounded-md border border-gray-200 bg-white">
+                        {ownerAgencySuggestions.map((agency) => (
+                          <button
+                            key={agency.id}
+                            type="button"
+                            className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm last:border-b-0 hover:bg-gray-50"
+                            onClick={() => {
+                              setOwnerAgencyIdInput(agency.id);
+                              setOwnerAgencyQuery(
+                                `${agency.name} (${agency.region})`,
+                              );
+                              setOwnerAgencySuggestions([]);
+                            }}
+                          >
+                            <span className="font-medium text-gray-900">
+                              {agency.name}
+                            </span>
+                            <span className="ml-2 text-xs text-gray-500">
+                              {agency.region}
+                            </span>
+                            <p className="text-xs text-gray-500">
+                              ID: {agency.id}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </label>
                   <Button
                     onClick={() => void handleOwnerLinkAgency()}
