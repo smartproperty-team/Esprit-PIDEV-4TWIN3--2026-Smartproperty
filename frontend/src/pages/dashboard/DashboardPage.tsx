@@ -57,7 +57,7 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const ACTIVE_APPLICATION_STATUSES = new Set<ApplicationStatus>([
@@ -81,6 +81,14 @@ export default function DashboardPage() {
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [isLoadingOwnerProperties, setIsLoadingOwnerProperties] =
     useState(false);
+  const [managedAgencyProperties, setManagedAgencyProperties] = useState<
+    Property[]
+  >([]);
+  const [
+    isLoadingManagedAgencyProperties,
+    setIsLoadingManagedAgencyProperties,
+  ] = useState(false);
+  const [selectedManagedOwnerId, setSelectedManagedOwnerId] = useState("");
   const [ownerAgencyIdInput, setOwnerAgencyIdInput] = useState("");
   const [ownerLinkedAgencyId, setOwnerLinkedAgencyId] = useState("");
   const [ownerLinkedAgencyName, setOwnerLinkedAgencyName] = useState("");
@@ -189,6 +197,8 @@ export default function DashboardPage() {
   const canAccessPortfolioDashboard =
     canManageProperties(user) ||
     user?.role === UserRole.ACCOUNTANT_ADMIN_ASSISTANT;
+  const canViewAgencyOwnersPanel =
+    canManageProperties(user) && user?.role !== UserRole.OWNER;
   const canRequestMaintenance = canCreateMaintenanceRequest(user);
   const canTrackOwnMaintenance = canTrackMaintenanceRequests(user);
   const canManageMaintenanceAsProvider = canManageAssignedMaintenance(user);
@@ -356,6 +366,79 @@ export default function DashboardPage() {
 
     void loadOwnerProperties();
   }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!canViewAgencyOwnersPanel || !user?.id) {
+      setManagedAgencyProperties([]);
+      setSelectedManagedOwnerId("");
+      return;
+    }
+
+    const loadManagedAgencyProperties = async () => {
+      setIsLoadingManagedAgencyProperties(true);
+      try {
+        const response = await propertyService.getProperties({
+          managerId: user.id,
+          page: 1,
+          limit: 200,
+        });
+        setManagedAgencyProperties(response.properties);
+      } catch {
+        setManagedAgencyProperties([]);
+      } finally {
+        setIsLoadingManagedAgencyProperties(false);
+      }
+    };
+
+    void loadManagedAgencyProperties();
+  }, [canViewAgencyOwnersPanel, user?.id]);
+
+  const managedOwners = useMemo(() => {
+    const ownerMap = new Map<
+      string,
+      {
+        ownerId: string;
+        ownerName: string;
+        properties: Property[];
+      }
+    >();
+
+    managedAgencyProperties.forEach((property) => {
+      const ownerId = property.ownerId;
+      if (!ownerId) {
+        return;
+      }
+
+      const existing = ownerMap.get(ownerId);
+      const ownerName = property.owner?.name || `Owner ${ownerId.slice(-6)}`;
+
+      if (!existing) {
+        ownerMap.set(ownerId, {
+          ownerId,
+          ownerName,
+          properties: [property],
+        });
+        return;
+      }
+
+      existing.properties.push(property);
+    });
+
+    return Array.from(ownerMap.values()).sort((a, b) =>
+      a.ownerName.localeCompare(b.ownerName),
+    );
+  }, [managedAgencyProperties]);
+
+  const selectedManagedOwner = useMemo(() => {
+    if (!selectedManagedOwnerId) {
+      return null;
+    }
+
+    return (
+      managedOwners.find((owner) => owner.ownerId === selectedManagedOwnerId) ||
+      null
+    );
+  }, [managedOwners, selectedManagedOwnerId]);
 
   useEffect(() => {
     if (!isTenant(user)) {
@@ -1851,6 +1934,146 @@ export default function DashboardPage() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {canViewAgencyOwnersPanel && (
+            <Card className="mb-8">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center">
+                  <Users className="mr-2 h-5 w-5 text-indigo-600" />
+                  Agency Owners & Properties
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Click an owner name to display all properties linked to that
+                  owner.
+                </p>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {isLoadingManagedAgencyProperties ? (
+                  <p className="text-sm text-gray-600">
+                    Loading agency owners and properties...
+                  </p>
+                ) : managedOwners.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600">
+                    No owner properties found for your agency yet.
+                  </div>
+                ) : (
+                  <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+                    <div className="space-y-2 rounded-lg border border-gray-200 p-3">
+                      {managedOwners.map((owner) => {
+                        const isSelected =
+                          selectedManagedOwnerId === owner.ownerId;
+
+                        return (
+                          <button
+                            key={owner.ownerId}
+                            type="button"
+                            onClick={() =>
+                              setSelectedManagedOwnerId(owner.ownerId)
+                            }
+                            className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
+                              isSelected
+                                ? "border-indigo-300 bg-indigo-50 text-indigo-900"
+                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <p className="font-medium">{owner.ownerName}</p>
+                            <p className="text-xs text-gray-500">
+                              {owner.properties.length} propert
+                              {owner.properties.length > 1 ? "ies" : "y"}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 p-4">
+                      {!selectedManagedOwner ? (
+                        <p className="text-sm text-gray-600">
+                          Select an owner from the list to show properties.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedManagedOwner.ownerName} -{" "}
+                            {selectedManagedOwner.properties.length} propert
+                            {selectedManagedOwner.properties.length > 1
+                              ? "ies"
+                              : "y"}
+                          </p>
+
+                          {selectedManagedOwner.properties.map((property) => {
+                            const propertyId = property.id || property._id;
+                            const primaryImage =
+                              property.images?.find((img) => img.isPrimary) ||
+                              property.images?.[0];
+                            const imageUrl =
+                              primaryImage?.url || "/placeholder-property.svg";
+
+                            return (
+                              <div
+                                key={propertyId}
+                                className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                              >
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <img
+                                    src={imageUrl}
+                                    alt={property.title}
+                                    className="h-14 w-20 rounded-md object-cover"
+                                    onError={(event) => {
+                                      (
+                                        event.currentTarget as HTMLImageElement
+                                      ).src = "/placeholder-property.svg";
+                                    }}
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="truncate font-medium text-gray-900">
+                                      {property.title}
+                                    </p>
+                                    <p className="truncate text-sm text-gray-600">
+                                      {property.address.city},{" "}
+                                      {property.address.country}
+                                    </p>
+                                    <p className="mt-1 text-sm text-indigo-600">
+                                      {property.price.toLocaleString()}{" "}
+                                      {property.currency}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {propertyId && (
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        navigate(`/properties/${propertyId}`)
+                                      }
+                                    >
+                                      View
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        navigate(
+                                          `/properties/${propertyId}/edit`,
+                                        )
+                                      }
+                                    >
+                                      Edit
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
