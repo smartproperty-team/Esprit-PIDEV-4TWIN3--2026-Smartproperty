@@ -1,12 +1,15 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'mongodb';
 import { MongoRepository } from 'typeorm';
 import { generateTemporaryPassword } from '../../common/utils/password.generator';
@@ -136,20 +139,36 @@ export class AgenciesService {
       const firstName = spec.seed.firstName.trim();
       const lastName = spec.seed.lastName?.trim() || spec.fallbackLastName;
 
-      const createdUser = this.usersRepository.create({
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
+      const now = new Date();
+
+      const insertResult = await this.usersRepository.insertOne({
         email,
-        password: temporaryPassword,
+        password: hashedPassword,
         firstName,
         lastName,
         role: spec.role,
         status: UserStatus.ACTIVE,
         authProvider: AuthProvider.LOCAL,
         isEmailVerified: true,
+        loginAttempts: 0,
+        twoFactorEnabled: false,
         agencyId: savedAgency.id,
         mustChangePassword: true,
+        permanentlyDeleted: false,
+        createdAt: now,
+        updatedAt: now,
       });
 
-      const savedUser = await this.usersRepository.save(createdUser);
+      const savedUser = await this.usersRepository.findOne({
+        where: { _id: insertResult.insertedId },
+      });
+
+      if (!savedUser) {
+        throw new InternalServerErrorException(
+          'Failed to load provisioned account after creation',
+        );
+      }
       members.push({
         userId: savedUser.id,
         role: spec.role,
@@ -224,7 +243,168 @@ export class AgenciesService {
       throw new NotFoundException('Agency not found');
     }
 
-    return agency.toJSON();
+    const owners = await this.usersRepository.find({
+      where: {
+        role: UserRole.OWNER,
+        agencyId: agency.id,
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      ...agency.toJSON(),
+      owners: owners.map((owner) => ({
+        id: owner.id,
+        email: owner.email,
+        firstName: owner.firstName,
+        lastName: owner.lastName,
+        status: owner.status,
+      })),
+    };
+  }
+
+  async linkOwner(agencyId: string, ownerId: string, requesterId: string) {
+    const agency = await this.getAgencyOrFail(agencyId);
+    this.ensureAgencyManager(agency, requesterId);
+
+    const owner = await this.getUserOrFail(ownerId);
+    if (owner.role !== UserRole.OWNER) {
+      throw new ConflictException('Selected user is not an owner');
+    }
+
+    owner.agencyId = agency.id;
+    owner.updatedAt = new Date();
+    const savedOwner = await this.usersRepository.save(owner);
+
+    return {
+      agencyId: agency.id,
+      owner: {
+        id: savedOwner.id,
+        email: savedOwner.email,
+        firstName: savedOwner.firstName,
+        lastName: savedOwner.lastName,
+        status: savedOwner.status,
+      },
+    };
+  }
+
+  async unlinkOwner(agencyId: string, ownerId: string, requesterId: string) {
+    const agency = await this.getAgencyOrFail(agencyId);
+    this.ensureAgencyManager(agency, requesterId);
+
+    const owner = await this.getUserOrFail(ownerId);
+    if (owner.role !== UserRole.OWNER) {
+      throw new ConflictException('Selected user is not an owner');
+    }
+
+    if (owner.agencyId !== agency.id) {
+      throw new ConflictException('This owner is not linked to the agency');
+    }
+
+    await this.usersRepository.updateOne(
+      { _id: owner._id },
+      {
+        $unset: { agencyId: '' },
+        $set: { updatedAt: new Date() },
+      },
+    );
+
+    return {
+      agencyId: agency.id,
+      ownerId,
+      unlinked: true,
+    };
+  }
+
+  async linkCurrentOwner(agencyId: string, ownerUserId: string) {
+    const agency = await this.getAgencyOrFail(agencyId);
+    const owner = await this.getUserOrFail(ownerUserId);
+
+    if (owner.role !== UserRole.OWNER) {
+      throw new ForbiddenException('Only owners can self-link to an agency');
+    }
+
+    owner.agencyId = agency.id;
+    owner.updatedAt = new Date();
+    const savedOwner = await this.usersRepository.save(owner);
+
+    return {
+      agencyId: agency.id,
+      owner: {
+        id: savedOwner.id,
+        email: savedOwner.email,
+        firstName: savedOwner.firstName,
+        lastName: savedOwner.lastName,
+        status: savedOwner.status,
+      },
+    };
+  }
+
+  async unlinkCurrentOwner(agencyId: string, ownerUserId: string) {
+    const agency = await this.getAgencyOrFail(agencyId);
+    const owner = await this.getUserOrFail(ownerUserId);
+
+    if (owner.role !== UserRole.OWNER) {
+      throw new ForbiddenException('Only owners can unlink themselves');
+    }
+
+    if (owner.agencyId !== agency.id) {
+      throw new ConflictException('You are not linked to this agency');
+    }
+
+    await this.usersRepository.updateOne(
+      { _id: owner._id },
+      {
+        $unset: { agencyId: '' },
+        $set: { updatedAt: new Date() },
+      },
+    );
+
+    return {
+      agencyId: agency.id,
+      ownerId: owner.id,
+      unlinked: true,
+    };
+  }
+
+  private async getAgencyOrFail(id: string): Promise<Agency> {
+    if (!ObjectId.isValid(id)) {
+      throw new NotFoundException('Agency not found');
+    }
+
+    const agency = await this.agenciesRepository.findOne({
+      where: { _id: new ObjectId(id) },
+    });
+
+    if (!agency) {
+      throw new NotFoundException('Agency not found');
+    }
+
+    return agency;
+  }
+
+  private async getUserOrFail(id: string): Promise<User> {
+    if (!ObjectId.isValid(id)) {
+      throw new NotFoundException('User not found');
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(id) },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  private ensureAgencyManager(agency: Agency, requesterId: string): void {
+    if (agency.createdBy !== requesterId) {
+      throw new ForbiddenException(
+        'Only the branch manager who created the agency can manage owner links',
+      );
+    }
   }
 
   private async ensureUniqueAgency(slug: string, name: string): Promise<void> {

@@ -35,6 +35,8 @@ type LeaseWorkspaceDraft = {
   signatureForm?: {
     method: LeaseSignatureMethod;
     note: string;
+    signerName?: string;
+    acceptedTerms?: boolean;
   };
   renewalForm?: {
     endDate: string;
@@ -79,6 +81,19 @@ function toIsoDate(value: string): string {
     return "";
   }
   return new Date(`${value}T00:00:00.000Z`).toISOString();
+}
+
+function toDisplayDate(value?: string): string {
+  if (!value) {
+    return "-";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString();
 }
 
 function getApiErrorMessage(error: unknown, fallback: string): string {
@@ -152,7 +167,12 @@ export default function LeasesWorkspacePage() {
   const [signatureForm, setSignatureForm] = useState({
     method: LeaseSignatureMethod.E_SIGNATURE,
     note: "",
+    signerName: "",
+    acceptedTerms: false,
   });
+  const [signatureProofFile, setSignatureProofFile] = useState<File | null>(
+    null,
+  );
 
   const [renewalForm, setRenewalForm] = useState({
     endDate: "",
@@ -407,17 +427,90 @@ export default function LeasesWorkspacePage() {
       return;
     }
 
+    if (!signatureForm.signerName.trim()) {
+      setError("Please type your full name before signing.");
+      return;
+    }
+
+    if (!signatureForm.acceptedTerms) {
+      setError(
+        "Please confirm agreement with the contract terms before signing.",
+      );
+      return;
+    }
+
     try {
+      let signatureProofDocumentId: string | undefined;
+
+      if (signatureProofFile) {
+        const leaseWithUploadedProof = await leaseService.uploadDocument(
+          selectedLease.id,
+          signatureProofFile,
+          LeaseDocumentType.SIGNATURE_PROOF,
+          `Signature proof uploaded by ${signatureForm.signerName.trim()}`,
+        );
+
+        const proofDocuments = (leaseWithUploadedProof.documents || []).filter(
+          (document) => document.type === LeaseDocumentType.SIGNATURE_PROOF,
+        );
+        signatureProofDocumentId = proofDocuments.at(-1)?.id;
+      }
+
       await leaseService.signLease(selectedLease.id, {
         method: signatureForm.method,
-        note: signatureForm.note || undefined,
+        note:
+          signatureForm.note ||
+          `Signed digitally by ${signatureForm.signerName.trim()}`,
+        documentId: signatureProofDocumentId,
       });
       setNotice("Lease signature recorded.");
       setError(null);
+      setSignatureProofFile(null);
       await loadLeases();
     } catch (signError) {
       setError(getApiErrorMessage(signError, "Failed to sign lease."));
     }
+  };
+
+  const handleExportContractPdf = () => {
+    if (!selectedLease) {
+      return;
+    }
+
+    const contractText =
+      selectedLease.generatedTemplate ||
+      "No generated contract template available yet.";
+    const printableHtml = `
+      <html>
+        <head>
+          <title>Lease Contract ${selectedLease.leaseNumber || selectedLease.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 32px; color: #111827; }
+            h1 { margin-bottom: 4px; }
+            .meta { color: #4b5563; margin-bottom: 24px; }
+            .box { border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; white-space: pre-wrap; }
+          </style>
+        </head>
+        <body>
+          <h1>Lease Contract</h1>
+          <p class="meta">${selectedLease.leaseNumber || selectedLease.id}</p>
+          <div class="box">${contractText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+          <script>window.onload = function() { window.print(); };</script>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) {
+      setError(
+        "Unable to open print window. Please allow popups and try again.",
+      );
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(printableHtml);
+    printWindow.document.close();
   };
 
   const handleActivate = async () => {

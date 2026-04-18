@@ -70,6 +70,23 @@ export interface AgencyListItem {
   }>;
 }
 
+export interface OwnerAgencyLinkResponse {
+  agencyId: string;
+  owner: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    status: string;
+  };
+}
+
+export interface OwnerAgencyUnlinkResponse {
+  agencyId: string;
+  ownerId: string;
+  unlinked: boolean;
+}
+
 export const agencyOnboardingService = {
   async createAgencyWithAccounts(data: CreateAgencyOnboardingInput) {
     const response = await api.post<AgencyOnboardingResponse>(
@@ -81,6 +98,20 @@ export const agencyOnboardingService = {
 
   async listMyAgencies() {
     const response = await api.get<AgencyListItem[]>("/agencies/mine");
+    return response.data;
+  },
+
+  async linkCurrentOwnerToAgency(agencyId: string) {
+    const response = await api.post<OwnerAgencyLinkResponse>(
+      `/agencies/${agencyId}/owners/me`,
+    );
+    return response.data;
+  },
+
+  async unlinkCurrentOwnerFromAgency(agencyId: string) {
+    const response = await api.delete<OwnerAgencyUnlinkResponse>(
+      `/agencies/${agencyId}/owners/me`,
+    );
     return response.data;
   },
 };

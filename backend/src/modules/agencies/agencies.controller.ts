@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -65,5 +73,54 @@ export class AgenciesController {
   @ApiOperation({ summary: 'Get agency by id' })
   findOne(@Param('id') id: string) {
     return this.agenciesService.findById(id);
+  }
+
+  @Post(':id/owners/:ownerId')
+  @Roles(UserRole.BRANCH_MANAGER)
+  @ApiOperation({ summary: 'Link an owner account to an agency' })
+  @ApiResponse({ status: 200, description: 'Owner linked to agency' })
+  linkOwner(
+    @Param('id') id: string,
+    @Param('ownerId') ownerId: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.agenciesService.linkOwner(id, ownerId, currentUserId);
+  }
+
+  @Delete(':id/owners/:ownerId')
+  @Roles(UserRole.BRANCH_MANAGER)
+  @ApiOperation({ summary: 'Unlink an owner account from an agency' })
+  @ApiResponse({ status: 200, description: 'Owner unlinked from agency' })
+  unlinkOwner(
+    @Param('id') id: string,
+    @Param('ownerId') ownerId: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.agenciesService.unlinkOwner(id, ownerId, currentUserId);
+  }
+
+  @Post(':id/owners/me')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Link current owner account to an agency' })
+  @ApiResponse({ status: 200, description: 'Current owner linked to agency' })
+  linkCurrentOwner(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.agenciesService.linkCurrentOwner(id, currentUserId);
+  }
+
+  @Delete(':id/owners/me')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Unlink current owner account from an agency' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current owner unlinked from agency',
+  })
+  unlinkCurrentOwner(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.agenciesService.unlinkCurrentOwner(id, currentUserId);
   }
 }
