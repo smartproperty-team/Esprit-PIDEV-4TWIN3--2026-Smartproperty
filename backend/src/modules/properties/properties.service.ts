@@ -11,9 +11,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import * as QRCode from 'qrcode';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import * as XLSX from 'xlsx';
-import { UserRole } from '../users/entities/user.entity';
+import { Agency } from '../agencies/entities/agency.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { hasPlatformAdminRole } from '../users/role-groups';
 import {
   PortfolioConnectorId,
@@ -162,7 +163,118 @@ export class PropertiesService {
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
+    @InjectRepository(User)
+    private readonly usersRepository: MongoRepository<User>,
+    @InjectRepository(Agency)
+    private readonly agenciesRepository: MongoRepository<Agency>,
   ) {}
+
+  private async getAgencyManagerIdForOwner(
+    ownerId: string,
+  ): Promise<string | undefined> {
+    if (!ObjectId.isValid(ownerId)) {
+      return undefined;
+    }
+
+    const owner = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(ownerId) },
+    });
+
+    if (!owner?.agencyId || !ObjectId.isValid(owner.agencyId)) {
+      return undefined;
+    }
+
+    const agency = await this.agenciesRepository.findOne({
+      where: { _id: new ObjectId(owner.agencyId) },
+    });
+
+    if (!agency?.createdBy) {
+      return undefined;
+    }
+
+    const members = agency.members || [];
+    const preferredManager = members.find(
+      (member) => member.role === UserRole.REAL_ESTATE_AGENT,
+    );
+
+    if (preferredManager?.userId) {
+      return preferredManager.userId;
+    }
+
+    const rentalManager = members.find(
+      (member) => member.role === UserRole.RENTAL_MANAGER,
+    );
+
+    if (rentalManager?.userId) {
+      return rentalManager.userId;
+    }
+
+    return agency.createdBy;
+  }
+
+  private async getAgencyOwnerIdsForManager(
+    managerId?: string,
+  ): Promise<string[]> {
+    if (!managerId || !ObjectId.isValid(managerId)) {
+      return [];
+    }
+
+    const manager = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(managerId) },
+    });
+
+    if (!manager?.agencyId || !ObjectId.isValid(manager.agencyId)) {
+      return [];
+    }
+
+    const owners = await this.usersRepository.find({
+      where: {
+        agencyId: manager.agencyId,
+        role: UserRole.OWNER,
+        deletedAt: null as any,
+      },
+    });
+
+    return Array.from(new Set(owners.map((owner) => owner.id)));
+  }
+
+  private async mapPropertiesWithOwnerSummary(properties: Property[]) {
+    if (!properties.length) {
+      return [];
+    }
+
+    const ownerIds = Array.from(
+      new Set(properties.map((property) => property.ownerId).filter(Boolean)),
+    ).filter((ownerId) => ObjectId.isValid(ownerId));
+
+    const owners = await this.usersRepository.find({
+      where: {
+        _id: { $in: ownerIds.map((ownerId) => new ObjectId(ownerId)) } as any,
+      },
+    });
+
+    const ownersById = new Map(
+      owners.map((owner) => [
+        owner.id,
+        {
+          id: owner.id,
+          name: owner.fullName,
+          email: owner.email,
+        },
+      ]),
+    );
+
+    return properties.map((property) => {
+      const json = property.toJSON() as any;
+      const owner = ownersById.get(property.ownerId);
+
+      if (owner) {
+        json.owner = owner;
+      }
+
+      return json;
+    });
+  }
 
   // ===========================================
   // Helpers
@@ -224,11 +336,11 @@ export class PropertiesService {
     );
   }
 
-  private buildScopedWhere(
+  private async buildScopedWhere(
     currentUserId: string,
     currentUserRole: UserRole,
     scope?: 'owner' | 'manager' | 'all',
-  ): Record<string, any> {
+  ): Promise<Record<string, any>> {
     const where: Record<string, any> = {
       deletedAt: null,
     };
@@ -255,7 +367,28 @@ export class PropertiesService {
       currentUserRole === UserRole.REAL_ESTATE_AGENT ||
       currentUserRole === UserRole.RENTAL_MANAGER
     ) {
-      where.managerId = currentUserId;
+      const agencyOwnerIds =
+        await this.getAgencyOwnerIdsForManager(currentUserId);
+
+      if (scope === 'owner') {
+        if (agencyOwnerIds.length > 0) {
+          where.ownerId = { $in: agencyOwnerIds };
+        } else {
+          where.ownerId = '__none__';
+        }
+
+        return where;
+      }
+
+      if (agencyOwnerIds.length > 0) {
+        where.$or = [
+          { managerId: currentUserId },
+          { ownerId: { $in: agencyOwnerIds } },
+        ];
+      } else {
+        where.managerId = currentUserId;
+      }
+
       return where;
     }
 
@@ -754,9 +887,13 @@ export class PropertiesService {
       currentUserRole === UserRole.REAL_ESTATE_AGENT ||
       currentUserRole === UserRole.RENTAL_MANAGER;
 
-    const managerId =
+    let managerId =
       requestedManagerId ||
       (shouldAutoAssignManager ? currentUserId : undefined);
+
+    if (!managerId && currentUserRole === UserRole.OWNER) {
+      managerId = await this.getAgencyManagerIdForOwner(currentUserId);
+    }
 
     // Build a clean object without undefined values – MongoDB's $jsonSchema
     // validator does not recognise "undefined" as a BSON type, so sending
@@ -810,6 +947,10 @@ export class PropertiesService {
     const where: Record<string, any> = {
       deletedAt: null,
     };
+
+    const managerAgencyOwnerIds = await this.getAgencyOwnerIdsForManager(
+      options.managerId,
+    );
 
     if (options.type) {
       where.type = options.type;
@@ -867,11 +1008,36 @@ export class PropertiesService {
       ];
     }
 
+    let effectiveWhere: Record<string, any> = where;
+
+    if (options.managerId && managerAgencyOwnerIds.length > 0) {
+      const managerScopeOr = [
+        { managerId: options.managerId },
+        { ownerId: { $in: managerAgencyOwnerIds } },
+      ];
+
+      const baseWhere = { ...where };
+      const existingSearchOr = baseWhere.$or;
+      delete baseWhere.$or;
+      delete baseWhere.managerId;
+
+      if (existingSearchOr) {
+        effectiveWhere = {
+          $and: [baseWhere, { $or: existingSearchOr }, { $or: managerScopeOr }],
+        };
+      } else {
+        effectiveWhere = {
+          ...baseWhere,
+          $or: managerScopeOr,
+        };
+      }
+    }
+
     const hasNearbyFilter = nearLat !== undefined && nearLng !== undefined;
 
     if (hasNearbyFilter) {
       const allMatching = await this.propertyRepository.find({
-        where,
+        where: effectiveWhere,
         order: { createdAt: 'DESC' },
       });
 
@@ -889,8 +1055,11 @@ export class PropertiesService {
       const total = filtered.length;
       const properties = filtered.slice(skip, skip + limit);
 
+      const serializedProperties =
+        await this.mapPropertiesWithOwnerSummary(properties);
+
       return {
-        properties: properties.map((property) => property.toJSON() as Property),
+        properties: serializedProperties as Property[],
         total,
         page,
         limit,
@@ -898,14 +1067,17 @@ export class PropertiesService {
     }
 
     const [properties, total] = await this.propertyRepository.findAndCount({
-      where,
+      where: effectiveWhere,
       skip,
       take: limit,
       order: { createdAt: 'DESC' },
     });
 
+    const serializedProperties =
+      await this.mapPropertiesWithOwnerSummary(properties);
+
     return {
-      properties: properties.map((property) => property.toJSON() as Property),
+      properties: serializedProperties as Property[],
       total,
       page,
       limit,
@@ -1027,7 +1199,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1142,7 +1314,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1225,7 +1397,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1476,7 +1648,7 @@ export class PropertiesService {
       );
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       payload.scope,
