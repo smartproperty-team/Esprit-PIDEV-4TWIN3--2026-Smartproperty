@@ -7,6 +7,8 @@
 import { HomeFooter, Navbar } from "@/components/layout";
 import { useTranslation } from "@/i18n";
 import { propertyService } from "@/services/property.service";
+import { useAuthStore, usePreferencesStore } from "@/store";
+import { UserRole } from "@/types/auth";
 import type { Property as BackendProperty } from "@/types/property";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -323,6 +325,10 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
 
 export default function HomePage() {
   const t = useTranslation();
+  const { isAuthenticated, user } = useAuthStore();
+  const currentUserPreferences = usePreferencesStore((state) =>
+    user?.id ? state.preferencesByUser[user.id] : undefined,
+  );
   const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
   const [searchQuery, setSearchQuery] = useState("");
   const [propertyType, setPropertyType] = useState("");
@@ -333,20 +339,62 @@ export default function HomePage() {
   const [rentalProperties, setRentalProperties] = useState<BackendProperty[]>(
     [],
   );
+  const [showBestMatch, setShowBestMatch] = useState(false);
   const [rentalLoading, setRentalLoading] = useState(true);
   const [rentalError, setRentalError] = useState<string | null>(null);
 
-  // Fetch rental properties from backend
+  // Fetch personalized recommendations first, fallback to recent rentals.
   useEffect(() => {
     const fetchRentals = async () => {
       try {
         setRentalLoading(true);
         setRentalError(null);
+
+        const preferencesCompleted =
+          !!currentUserPreferences?.completed || !!user?.preferences?.completed;
+
+        const canUsePreferences =
+          isAuthenticated &&
+          user?.role === UserRole.TENANT &&
+          !!user?.id &&
+          preferencesCompleted;
+
+        // Keep the section in "Best Match" mode for eligible tenants, even when
+        // we need to fallback to regular rental results.
+        setShowBestMatch(canUsePreferences);
+
+        if (canUsePreferences) {
+          try {
+            const recommendationResponse =
+              await propertyService.getBestMatchRecommendations(6);
+            const recommendedProperties = (
+              recommendationResponse.recommendations || []
+            )
+              .map((item) => item.property)
+              .filter(Boolean);
+
+            if (recommendedProperties.length > 0) {
+              setShowBestMatch(true);
+              setRentalProperties(recommendedProperties);
+              return;
+            }
+          } catch {
+            // Silent fallback to default rental feed.
+          }
+        }
+
+        const budgetRange = currentUserPreferences?.budgetRange;
+        const hasBudgetRange =
+          canUsePreferences &&
+          Array.isArray(budgetRange) &&
+          budgetRange.length === 2;
+
         const response = await propertyService.getProperties({
           status: "available",
           limit: 6,
+          minPrice: hasBudgetRange ? budgetRange[0] : undefined,
+          maxPrice: hasBudgetRange ? budgetRange[1] : undefined,
         });
-        // Filter for rented/available properties — show all available since status is 'available'
         setRentalProperties(response.properties || []);
       } catch (err) {
         console.error("Failed to fetch rental properties:", err);
@@ -355,8 +403,8 @@ export default function HomePage() {
         setRentalLoading(false);
       }
     };
-    fetchRentals();
-  }, []);
+    void fetchRentals();
+  }, [currentUserPreferences, isAuthenticated, user]);
 
   useEffect(() => {
     const loadHomeProperties = async () => {
@@ -609,9 +657,13 @@ export default function HomePage() {
             <header className="section-header">
               <span className="section-tag">{t.home.forRent}</span>
               <h2 id="rent-title" className="section-title">
-                {t.home.recentRentTitle}
+                {showBestMatch ? t.home.bestMatchTitle : t.home.recentRentTitle}
               </h2>
-              <p className="section-subtitle">{t.home.recentRentSubtitle}</p>
+              <p className="section-subtitle">
+                {showBestMatch
+                  ? t.home.bestMatchSubtitle
+                  : t.home.recentRentSubtitle}
+              </p>
             </header>
             {rentalLoading ? (
               <div

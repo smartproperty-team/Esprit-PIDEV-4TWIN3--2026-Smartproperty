@@ -29,6 +29,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { randomUUID } from 'crypto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -38,9 +39,10 @@ import { UserRole } from '../users/entities/user.entity';
 import {
   PROPERTY_CREATOR_ROLES,
   PROPERTY_MANAGEMENT_ROLES,
+  TENANT_ONLY_ROLES,
 } from '../users/role-groups';
-import { randomUUID } from 'crypto';
 import { AiDescriptionService } from './ai-description.service';
+import { AiRecommendationService } from './ai-recommendation.service';
 import {
   GenerateDescriptionDto,
   GenerateDescriptionResponseDto,
@@ -73,6 +75,7 @@ export class PropertiesController {
     private readonly propertiesService: PropertiesService,
     private readonly configService: ConfigService,
     private readonly aiDescriptionService: AiDescriptionService,
+    private readonly aiRecommendationService: AiRecommendationService,
   ) {}
 
   // ===========================================
@@ -252,6 +255,57 @@ export class PropertiesController {
   @ApiResponse({ status: 200, description: 'Model status payload' })
   async getAiModelStatus() {
     return this.aiDescriptionService.getModelStatus();
+  }
+
+  @Get('ai/recommendations/best-match')
+  @Roles(...TENANT_ONLY_ROLES)
+  @ApiOperation({
+    summary: 'Get best property matches for the current tenant',
+    description:
+      'Returns preference-based property recommendations from ai-services.',
+  })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Best-match recommendations' })
+  @HttpCode(HttpStatus.OK)
+  async getBestMatchRecommendations(
+    @CurrentUser('id') userId: string,
+    @Query('limit') limit?: number,
+  ) {
+    const safeLimit =
+      Number.isInteger(Number(limit)) && Number(limit) > 0
+        ? Math.min(Number(limit), 20)
+        : 6;
+
+    const aiResult = await this.aiRecommendationService.getUserRecommendations(
+      userId,
+      safeLimit,
+    );
+
+    const hydrated = await Promise.all(
+      (aiResult.recommendations || []).map(async (item) => {
+        try {
+          const property = await this.propertiesService.findById(
+            item.property_id,
+          );
+          return {
+            ...item,
+            property: property.toJSON(),
+          };
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    const recommendations = hydrated.filter(
+      (entry): entry is NonNullable<typeof entry> => !!entry,
+    );
+
+    return {
+      ...aiResult,
+      recommendations,
+      total_count: recommendations.length,
+    };
   }
 
   // ===========================================
