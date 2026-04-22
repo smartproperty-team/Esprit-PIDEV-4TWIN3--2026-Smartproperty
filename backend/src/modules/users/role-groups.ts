@@ -20,6 +20,14 @@ export const PROPERTY_MANAGEMENT_ROLES: UserRole[] = [
   ...PLATFORM_ADMIN_ROLES,
 ];
 
+// Listing media uploads are restricted to publishing actors.
+export const PROPERTY_MEDIA_UPLOAD_ROLES: UserRole[] = [
+  UserRole.OWNER,
+  UserRole.BRANCH_MANAGER,
+  UserRole.REAL_ESTATE_AGENT,
+  ...PLATFORM_ADMIN_ROLES,
+];
+
 export const STORAGE_FILE_DELETE_ROLES: UserRole[] = [
   UserRole.OWNER,
   UserRole.BRANCH_MANAGER,

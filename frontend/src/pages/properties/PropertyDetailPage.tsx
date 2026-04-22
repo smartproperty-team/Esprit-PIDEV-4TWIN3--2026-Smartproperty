@@ -4,6 +4,7 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
+import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
 import { useTranslation } from "@/i18n";
 import applicationService from "@/services/application.service";
 import {
@@ -1009,6 +1010,8 @@ export default function PropertyDetailPage() {
             </div>
           </div>
         </div>
+
+        <VirtualTourViewer url={property.virtualTour} />
 
         {/* Image Gallery */}
         <ImageGallery images={property.images || []} />

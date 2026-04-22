@@ -99,6 +99,61 @@ const CloseIcon = () => (
   </svg>
 );
 
+function detectVirtualTourProvider(url: string): {
+  label: string;
+  canEmbed: boolean;
+} | null {
+  if (!url.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(url.trim());
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+      return { label: "YouTube", canEmbed: true };
+    }
+
+    if (hostname.includes("matterport.com")) {
+      return { label: "Matterport", canEmbed: true };
+    }
+
+    if (hostname.includes("3dvista.com")) {
+      return { label: "3DVista", canEmbed: true };
+    }
+
+    return { label: parsed.hostname, canEmbed: false };
+  } catch {
+    return null;
+  }
+}
+
+const VIRTUAL_TOUR_MIN_IMAGES = 8;
+const VIRTUAL_TOUR_MIN_WIDTH = 1600;
+const VIRTUAL_TOUR_MIN_HEIGHT = 900;
+
+function readImageDimensions(
+  file: File,
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Unable to read image dimensions"));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
 // ===========================================
 // Form Data Interface
 // ===========================================
@@ -111,6 +166,8 @@ interface FormData {
   status: PropertyStatus;
   price: string;
   currency: string;
+  virtualTour: string;
+  generateVirtualTourFromPhotos: boolean;
   address: AddressData;
   bedrooms: string;
   bathrooms: string;
@@ -131,6 +188,8 @@ const initialFormData: FormData = {
   status: "available",
   price: "",
   currency: "TND",
+  virtualTour: "",
+  generateVirtualTourFromPhotos: false,
   address: {
     street: "",
     city: "",
@@ -191,6 +250,38 @@ export default function PropertyFormPage() {
   const [priceSuggestError, setPriceSuggestError] = useState<string | null>(
     null,
   );
+  const virtualTourPreview = detectVirtualTourProvider(formData.virtualTour);
+
+  const validateVirtualTourPhotoRules = async (): Promise<string | null> => {
+    if (!formData.generateVirtualTourFromPhotos) {
+      return null;
+    }
+
+    if (images.length < VIRTUAL_TOUR_MIN_IMAGES) {
+      return t.properties.form.image.virtualTour.minPhotosError.replace(
+        "{{count}}",
+        String(VIRTUAL_TOUR_MIN_IMAGES),
+      );
+    }
+
+    for (const file of images) {
+      try {
+        const dimensions = await readImageDimensions(file);
+        if (
+          dimensions.width < VIRTUAL_TOUR_MIN_WIDTH ||
+          dimensions.height < VIRTUAL_TOUR_MIN_HEIGHT
+        ) {
+          return t.properties.form.image.virtualTour.minResolutionError
+            .replace("{{width}}", String(VIRTUAL_TOUR_MIN_WIDTH))
+            .replace("{{height}}", String(VIRTUAL_TOUR_MIN_HEIGHT));
+        }
+      } catch {
+        return t.properties.form.image.virtualTour.readError;
+      }
+    }
+
+    return null;
+  };
 
   const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
     const amenitiesList = formData.amenities
@@ -297,6 +388,7 @@ export default function PropertyFormPage() {
         status: property.status,
         price: property.price.toString(),
         currency: property.currency,
+        virtualTour: property.virtualTour || "",
         address: {
           street: property.address.street,
           city: property.address.city,
@@ -515,6 +607,12 @@ export default function PropertyFormPage() {
 
     if (!validate()) return;
 
+    const virtualTourValidationError = await validateVirtualTourPhotoRules();
+    if (virtualTourValidationError) {
+      alert(virtualTourValidationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -526,6 +624,7 @@ export default function PropertyFormPage() {
         status: formData.status,
         price: parseFloat(formData.price),
         currency: formData.currency,
+        virtualTour: formData.virtualTour.trim() || undefined,
         address: {
           street: formData.address.street,
           city: formData.address.city,
@@ -574,7 +673,9 @@ export default function PropertyFormPage() {
 
       // Upload new images if any
       if (images.length > 0) {
-        await propertyService.uploadImages(propertyId, images);
+        await propertyService.uploadImages(propertyId, images, {
+          generateVirtualTour: formData.generateVirtualTourFromPhotos,
+        });
       }
 
       navigate(`/properties/${propertyId}`);
@@ -683,6 +784,36 @@ export default function PropertyFormPage() {
                   </option>
                   <option value="sale">{t.properties.form.labels.sale}</option>
                 </select>
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="virtualTour">
+                  {t.properties.form.labels.virtualTour}
+                </label>
+                <input
+                  id="virtualTour"
+                  name="virtualTour"
+                  type="url"
+                  value={formData.virtualTour}
+                  onChange={handleChange}
+                  placeholder={t.properties.form.placeholders.virtualTour}
+                />
+                <p className="form-helper-text">
+                  {t.properties.form.help.virtualTour}
+                </p>
+                {virtualTourPreview && (
+                  <p className="form-helper-text">
+                    {virtualTourPreview.canEmbed
+                      ? t.properties.form.help.virtualTourEmbedded.replace(
+                          "{{provider}}",
+                          virtualTourPreview.label,
+                        )
+                      : t.properties.form.help.virtualTourLinkOnly.replace(
+                          "{{provider}}",
+                          virtualTourPreview.label,
+                        )}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1129,6 +1260,37 @@ export default function PropertyFormPage() {
                 onChange={handleImageChange}
                 style={{ display: "none" }}
               />
+            </div>
+
+            <div className="virtual-tour-upload-rules">
+              <label className="virtual-tour-upload-rules-label">
+                <input
+                  type="checkbox"
+                  name="generateVirtualTourFromPhotos"
+                  checked={formData.generateVirtualTourFromPhotos}
+                  onChange={handleChange}
+                />
+                <span>
+                  {t.properties.form.image.virtualTour.enableFromPhotos}
+                </span>
+              </label>
+
+              {formData.generateVirtualTourFromPhotos && (
+                <ul className="virtual-tour-upload-rules-list">
+                  <li>
+                    {t.properties.form.image.virtualTour.ruleMinPhotos.replace(
+                      "{{count}}",
+                      String(VIRTUAL_TOUR_MIN_IMAGES),
+                    )}
+                  </li>
+                  <li>
+                    {t.properties.form.image.virtualTour.ruleResolution
+                      .replace("{{width}}", String(VIRTUAL_TOUR_MIN_WIDTH))
+                      .replace("{{height}}", String(VIRTUAL_TOUR_MIN_HEIGHT))}
+                  </li>
+                  <li>{t.properties.form.image.virtualTour.ruleOverlap}</li>
+                </ul>
+              )}
             </div>
 
             {images.length > 0 && (

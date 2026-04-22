@@ -145,6 +145,13 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.form-helper-text {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-muted, #64748b);
+}
+
 .btn-filter {
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-sm, 8px);
@@ -1283,6 +1290,82 @@
   margin-bottom: 1.5rem;
 }
 
+.property-virtual-tour {
+  margin-bottom: 1.5rem;
+}
+
+.property-virtual-tour-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.property-virtual-tour-header p {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.6;
+}
+
+.property-virtual-tour-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--color-primary, #3b82f6);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.property-virtual-tour-card {
+  overflow: hidden;
+  border-radius: var(--radius-md, 16px);
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.property-virtual-tour-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  background: #0f172a;
+}
+
+.property-virtual-tour-fallback {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+.property-virtual-tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.65rem;
+}
+
+.property-virtual-tour-link {
+  color: var(--color-primary, #3b82f6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.property-virtual-tour-link:hover {
+  text-decoration: underline;
+}
+
 .property-description h3 {
   font-size: 1.125rem;
   font-weight: 600;
@@ -1931,6 +2014,31 @@
 .image-upload-zone p {
   font-size: 0.875rem;
   color: var(--color-text-muted, #64748b);
+}
+
+.virtual-tour-upload-rules {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: #f8fafc;
+  border-radius: var(--radius-sm, 8px);
+  padding: 0.9rem 1rem;
+}
+
+.virtual-tour-upload-rules-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text, #1e293b);
+}
+
+.virtual-tour-upload-rules-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.84rem;
+  line-height: 1.6;
 }
 
 .image-preview-grid {

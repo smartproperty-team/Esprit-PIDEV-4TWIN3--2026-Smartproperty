@@ -27,6 +27,10 @@ export interface PropertyShareData {
   qrCode: string;
 }
 
+export interface UploadImageOptions {
+  generateVirtualTour?: boolean;
+}
+
 // ===========================================
 // Property CRUD Operations
 // ===========================================
@@ -232,6 +236,7 @@ export const propertyService = {
   async uploadImages(
     propertyId: string,
     files: File[],
+    options: UploadImageOptions = {},
   ): Promise<{
     property: Property;
     addedImages: PropertyImage[];
@@ -241,6 +246,10 @@ export const propertyService = {
     files.forEach((file) => {
       formData.append("images", file);
     });
+
+    if (options.generateVirtualTour) {
+      formData.append("generateVirtualTour", "true");
+    }
 
     const response = await api.post(
       `/properties/${propertyId}/images`,

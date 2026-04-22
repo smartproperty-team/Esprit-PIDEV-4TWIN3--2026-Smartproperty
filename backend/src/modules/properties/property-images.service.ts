@@ -33,6 +33,12 @@ export interface AddImagesResult {
   property: Property;
   addedImages: UploadedFile[];
   totalImages: number;
+  virtualTourGeneration?: {
+    requested: boolean;
+    status: 'requested';
+    message: string;
+    eligibleImageCount: number;
+  };
 }
 
 // ===========================================
@@ -41,6 +47,12 @@ export interface AddImagesResult {
 @Injectable()
 export class PropertyImagesService {
   private readonly logger = new Logger(PropertyImagesService.name);
+  private static readonly VIRTUAL_TOUR_MIN_IMAGES = 8;
+  private static readonly VIRTUAL_TOUR_ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ]);
 
   constructor(
     @InjectRepository(Property)
@@ -60,12 +72,17 @@ export class PropertyImagesService {
     files: Express.Multer.File[],
     userId: string,
     userRole: UserRole,
+    generateVirtualTour = false,
   ): Promise<AddImagesResult> {
     // Find the property
     const property = await this.findPropertyOrFail(propertyId);
 
     // Check authorization
     this.checkAuthorization(property, userId, userRole);
+
+    if (generateVirtualTour) {
+      this.validateVirtualTourGenerationInput(property, files);
+    }
 
     // Upload files to MinIO
     const uploadedFiles = await this.minioService.uploadFiles(files, {
@@ -95,11 +112,55 @@ export class PropertyImagesService {
       `Added ${uploadedFiles.length} images to property ${propertyId}`,
     );
 
-    return {
+    const result: AddImagesResult = {
       property,
       addedImages: uploadedFiles,
       totalImages: property.images?.length || 0,
     };
+
+    if (generateVirtualTour) {
+      const eligibleImageCount = property.images?.length || 0;
+      this.logger.log(
+        `Virtual tour generation requested for property ${propertyId} with ${eligibleImageCount} images`,
+      );
+
+      result.virtualTourGeneration = {
+        requested: true,
+        status: 'requested',
+        message:
+          'Virtual tour generation request accepted. Processing pipeline integration pending.',
+        eligibleImageCount,
+      };
+    }
+
+    return result;
+  }
+
+  private validateVirtualTourGenerationInput(
+    property: Property,
+    newFiles: Express.Multer.File[],
+  ): void {
+    const totalEligibleImages =
+      (property.images?.length || 0) + newFiles.length;
+
+    if (totalEligibleImages < PropertyImagesService.VIRTUAL_TOUR_MIN_IMAGES) {
+      throw new BadRequestException(
+        `Virtual tour generation requires at least ${PropertyImagesService.VIRTUAL_TOUR_MIN_IMAGES} images.`,
+      );
+    }
+
+    const invalidFile = newFiles.find(
+      (file) =>
+        !PropertyImagesService.VIRTUAL_TOUR_ALLOWED_MIME_TYPES.has(
+          file.mimetype,
+        ),
+    );
+
+    if (invalidFile) {
+      throw new BadRequestException(
+        'Virtual tour generation supports only JPEG, PNG, and WebP images.',
+      );
+    }
   }
 
   // ===========================================

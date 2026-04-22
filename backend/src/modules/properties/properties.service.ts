@@ -135,6 +135,14 @@ export interface PortfolioConnectorSyncResult {
 
 @Injectable()
 export class PropertiesService {
+  private static readonly privateIpv4Patterns = [
+    /^10\./,
+    /^127\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^172\.(1[6-9]|2\d|3[0-1])\./,
+  ];
+
   private readonly portfolioConnectorCatalog: PortfolioConnectorDefinition[] = [
     {
       id: PortfolioConnectorId.SELOGER,
@@ -303,6 +311,56 @@ export class PropertiesService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return earthRadiusKm * c;
+  }
+
+  private isPrivateOrLocalHost(hostname: string): boolean {
+    const normalized = hostname.toLowerCase();
+
+    if (
+      normalized === 'localhost' ||
+      normalized === '::1' ||
+      normalized.endsWith('.localhost')
+    ) {
+      return true;
+    }
+
+    return PropertiesService.privateIpv4Patterns.some((pattern) =>
+      pattern.test(normalized),
+    );
+  }
+
+  private sanitizeVirtualTourUrl(url?: string): string | undefined {
+    if (url === undefined) {
+      return undefined;
+    }
+
+    const normalizedUrl = url.trim();
+    if (!normalizedUrl) {
+      return undefined;
+    }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(normalizedUrl);
+    } catch {
+      throw new BadRequestException('virtualTour must be a valid URL');
+    }
+
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      throw new BadRequestException(
+        'virtualTour must use http or https protocol',
+      );
+    }
+
+    if (this.isPrivateOrLocalHost(parsedUrl.hostname)) {
+      throw new BadRequestException(
+        'virtualTour cannot point to local or private network hosts',
+      );
+    }
+
+    parsedUrl.hash = '';
+
+    return parsedUrl.toString();
   }
 
   private canManage(
@@ -895,6 +953,10 @@ export class PropertiesService {
       managerId = await this.getAgencyManagerIdForOwner(currentUserId);
     }
 
+    createPropertyDto.virtualTour = this.sanitizeVirtualTourUrl(
+      createPropertyDto.virtualTour,
+    );
+
     // Build a clean object without undefined values – MongoDB's $jsonSchema
     // validator does not recognise "undefined" as a BSON type, so sending
     // keys with undefined values causes "Document failed validation" (code 121).
@@ -1155,6 +1217,14 @@ export class PropertiesService {
         ...property.features,
         ...updatePropertyDto.features,
       };
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(updatePropertyDto, 'virtualTour')
+    ) {
+      updatePropertyDto.virtualTour = this.sanitizeVirtualTourUrl(
+        updatePropertyDto.virtualTour,
+      );
     }
 
     const remainingUpdates = { ...updatePropertyDto };

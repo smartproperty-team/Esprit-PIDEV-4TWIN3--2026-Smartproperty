@@ -240,6 +240,7 @@ export const fr: Translations = {
         furnished: "Meublé",
         petFriendly: "Animaux acceptés",
         amenities: "Équipements (séparés par des virgules)",
+        virtualTour: "URL de visite virtuelle",
         price: "Prix",
         currency: "Devise",
         availableFrom: "Disponible à partir du",
@@ -253,7 +254,15 @@ export const fr: Translations = {
         area: "Surface en m2",
         parkingSpaces: "Nombre de places",
         amenities: "Ex: Piscine, Jardin, Climatisation, Terrasse",
+        virtualTour: "https://example.com/visite-virtuelle",
         price: "Prix",
+      },
+      help: {
+        virtualTour: "Collez un lien public Matterport, YouTube ou 3DVista.",
+        virtualTourEmbedded:
+          "{{provider}} s'ouvrira dans la visionneuse intégrée.",
+        virtualTourLinkOnly:
+          "{{provider}} s'ouvrira sous forme de lien au lieu d'être intégré.",
       },
       aiDescription: {
         cta: "Générer une description IA",
@@ -296,6 +305,22 @@ export const fr: Translations = {
         dropTitle: "Glissez-déposez vos images ici",
         dropSubtitle:
           "ou cliquez pour sélectionner (JPEG, PNG, WebP - max 10MB)",
+        virtualTour: {
+          enableFromPhotos:
+            "Générer une visite virtuelle à partir des photos téléversées",
+          ruleMinPhotos:
+            "Téléversez au moins {{count}} photos pour cette propriété.",
+          ruleResolution:
+            "Chaque photo doit avoir une résolution minimale de {{width}}x{{height}}.",
+          ruleOverlap:
+            "Utilisez des photos de pièce avec recouvrement (environ 30%-50%) pour de meilleurs résultats.",
+          minPhotosError:
+            "Pour générer une visite virtuelle, téléversez au moins {{count}} photos.",
+          minResolutionError:
+            "Une ou plusieurs photos sont en dessous de la résolution minimale {{width}}x{{height}}.",
+          readError:
+            "Impossible d'analyser une ou plusieurs photos. Essayez avec d'autres images.",
+        },
       },
       addressHelper: {
         mapButton: "Choisir l'adresse sur la carte interactive",
@@ -414,6 +439,14 @@ export const fr: Translations = {
     },
     openStreetMap: "OpenStreetMap",
     googleMaps: "Google Maps",
+    virtualTour: {
+      title: "Visite virtuelle",
+      subtitle: "Explorez la propriété via une visite interactive intégrée.",
+      openInNewTab: "Ouvrir la visite dans un nouvel onglet",
+      iframeTitle: "Visionneuse de visite virtuelle",
+      fallback:
+        "Cette visite ne peut pas être intégrée ici. Ouvrez-la dans un nouvel onglet pour la consulter.",
+    },
     galleryPlaceholder: "Aucune image disponible",
     galleryAlt: "Photo de la propriété",
     morePhotos: "+{{count}} photos",

@@ -32,7 +32,10 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
-import { PROPERTY_MANAGEMENT_ROLES } from '../users/role-groups';
+import {
+  PROPERTY_MANAGEMENT_ROLES,
+  PROPERTY_MEDIA_UPLOAD_ROLES,
+} from '../users/role-groups';
 import {
   PropertyImage,
   PropertyImagesService,
@@ -70,7 +73,7 @@ export class PropertyImagesController {
   // ===========================================
 
   @Post()
-  @Roles(...PROPERTY_MANAGEMENT_ROLES)
+  @Roles(...PROPERTY_MEDIA_UPLOAD_ROLES)
   @UseInterceptors(FilesInterceptor('images', 20))
   @ApiOperation({ summary: 'Upload images for a property' })
   @ApiConsumes('multipart/form-data')
@@ -101,14 +104,21 @@ export class PropertyImagesController {
   async uploadImages(
     @Param('propertyId') propertyId: string,
     @UploadedFiles() files: Express.Multer.File[],
+    @Body('generateVirtualTour') generateVirtualTour?: string | boolean,
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: UserRole,
   ) {
+    const shouldGenerateVirtualTour =
+      generateVirtualTour === true ||
+      generateVirtualTour === 'true' ||
+      generateVirtualTour === '1';
+
     return this.propertyImagesService.uploadImages(
       propertyId,
       files,
       userId,
       userRole,
+      shouldGenerateVirtualTour,
     );
   }
 
