@@ -8,7 +8,13 @@ import {
 } from "@/services";
 import type { Notification } from "@/services/notification.service";
 import { useAuthStore, usePreferencesStore } from "@/store";
-import { isOwner, isTenant, prefetchRoute } from "@/utils";
+import {
+  canManageFavorites,
+  canModerateReviews,
+  isOwner,
+  isTenant,
+  prefetchRoute,
+} from "@/utils";
 import {
   BellRing,
   ChevronDown,
@@ -556,6 +562,38 @@ export default function HomeNavbar() {
                     <Settings className="mr-3 h-4 w-4" />
                     {t.nav.settings}
                   </button>
+                  {canManageFavorites(user) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        navigate("/favorites");
+                      }}
+                      onMouseEnter={() => handleRoutePrefetch("/favorites")}
+                      onFocus={() => handleRoutePrefetch("/favorites")}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <span className="mr-3">★</span>
+                      My Favorites
+                    </button>
+                  )}
+                  {canModerateReviews(user) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        navigate("/reviews/moderation");
+                      }}
+                      onMouseEnter={() =>
+                        handleRoutePrefetch("/reviews/moderation")
+                      }
+                      onFocus={() => handleRoutePrefetch("/reviews/moderation")}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <span className="mr-3">🛡</span>
+                      Review Moderation
+                    </button>
+                  )}
                   <div className="border-t border-gray-100">
                     <button
                       type="button"
