@@ -24,7 +24,9 @@ import { ReviewsFavoritesService } from './reviews-favorites.service';
 @Controller('favorites')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FavoritesController {
-  constructor(private readonly reviewsFavoritesService: ReviewsFavoritesService) {}
+  constructor(
+    private readonly reviewsFavoritesService: ReviewsFavoritesService,
+  ) {}
 
   @Get('mine')
   @Roles(...FAVORITES_ROLES)

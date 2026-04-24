@@ -1,10 +1,10 @@
-import type { Property } from './property';
+import type { Property } from "./property";
 
 export type PropertyReviewStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'hidden';
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "hidden";
 
 export interface PropertyReviewAuthor {
   id: string | null;
@@ -75,7 +75,7 @@ export interface UpdatePropertyReviewDto {
 }
 
 export interface ModerateReviewDto {
-  status: Exclude<PropertyReviewStatus, 'pending'>;
+  status: Exclude<PropertyReviewStatus, "pending">;
   reason?: string;
 }
 

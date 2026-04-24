@@ -39,7 +39,9 @@ import { ReviewsFavoritesService } from './reviews-favorites.service';
 @Controller('reviews')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ReviewsController {
-  constructor(private readonly reviewsFavoritesService: ReviewsFavoritesService) {}
+  constructor(
+    private readonly reviewsFavoritesService: ReviewsFavoritesService,
+  ) {}
 
   @Public()
   @Get('property/:propertyId')
@@ -63,7 +65,10 @@ export class ReviewsController {
   @Post('property/:propertyId')
   @Roles(...REVIEW_AUTHOR_ROLES)
   @ApiOperation({ summary: 'Create a new property review (tenant only)' })
-  @ApiResponse({ status: 201, description: 'Review created and pending moderation' })
+  @ApiResponse({
+    status: 201,
+    description: 'Review created and pending moderation',
+  })
   createReview(
     @Param('propertyId') propertyId: string,
     @Body() dto: CreatePropertyReviewDto,
@@ -81,13 +86,20 @@ export class ReviewsController {
     @CurrentUser('role') role: UserRole,
     @Query() query: ReviewModerationQueryDto,
   ) {
-    return this.reviewsFavoritesService.listModerationQueue(userId, role, query);
+    return this.reviewsFavoritesService.listModerationQueue(
+      userId,
+      role,
+      query,
+    );
   }
 
   @Patch(':reviewId')
   @Roles(...REVIEW_AUTHOR_ROLES)
   @ApiOperation({ summary: 'Update my own review' })
-  @ApiResponse({ status: 200, description: 'Review updated and reset to pending' })
+  @ApiResponse({
+    status: 200,
+    description: 'Review updated and reset to pending',
+  })
   updateOwnReview(
     @Param('reviewId') reviewId: string,
     @Body() dto: UpdatePropertyReviewDto,
@@ -117,12 +129,19 @@ export class ReviewsController {
     @CurrentUser('id') userId: string,
     @CurrentUser('role') role: UserRole,
   ) {
-    return this.reviewsFavoritesService.moderateReview(reviewId, dto, userId, role);
+    return this.reviewsFavoritesService.moderateReview(
+      reviewId,
+      dto,
+      userId,
+      role,
+    );
   }
 
   @Post(':reviewId/response')
   @Roles(...REVIEW_MODERATION_ROLES)
-  @ApiOperation({ summary: 'Publish an official response to an approved review' })
+  @ApiOperation({
+    summary: 'Publish an official response to an approved review',
+  })
   @ApiResponse({ status: 201, description: 'Review response published' })
   respondToReview(
     @Param('reviewId') reviewId: string,
@@ -130,6 +149,11 @@ export class ReviewsController {
     @CurrentUser('id') userId: string,
     @CurrentUser('role') role: UserRole,
   ) {
-    return this.reviewsFavoritesService.respondToReview(reviewId, dto, userId, role);
+    return this.reviewsFavoritesService.respondToReview(
+      reviewId,
+      dto,
+      userId,
+      role,
+    );
   }
 }

@@ -8,18 +8,22 @@ import type {
   PropertyReviewListResponse,
   RespondToReviewDto,
   UpdatePropertyReviewDto,
-} from '@/types/reviews-favorites';
-import { api } from './api';
+} from "@/types/reviews-favorites";
+import { api } from "./api";
 
 export const reviewsFavoritesService = {
-  async getPropertyReviews(propertyId: string): Promise<PropertyReviewListResponse> {
+  async getPropertyReviews(
+    propertyId: string,
+  ): Promise<PropertyReviewListResponse> {
     const response = await api.get<PropertyReviewListResponse>(
       `/reviews/property/${propertyId}`,
     );
     return response.data;
   },
 
-  async getMyPropertyReview(propertyId: string): Promise<PropertyReview | null> {
+  async getMyPropertyReview(
+    propertyId: string,
+  ): Promise<PropertyReview | null> {
     const response = await api.get<PropertyReview | null>(
       `/reviews/property/${propertyId}/mine`,
     );
@@ -41,11 +45,16 @@ export const reviewsFavoritesService = {
     reviewId: string,
     payload: UpdatePropertyReviewDto,
   ): Promise<PropertyReview> {
-    const response = await api.patch<PropertyReview>(`/reviews/${reviewId}`, payload);
+    const response = await api.patch<PropertyReview>(
+      `/reviews/${reviewId}`,
+      payload,
+    );
     return response.data;
   },
 
-  async deletePropertyReview(reviewId: string): Promise<{ id: string; deleted: boolean }> {
+  async deletePropertyReview(
+    reviewId: string,
+  ): Promise<{ id: string; deleted: boolean }> {
     const response = await api.delete<{ id: string; deleted: boolean }>(
       `/reviews/${reviewId}`,
     );
@@ -53,9 +62,12 @@ export const reviewsFavoritesService = {
   },
 
   async getModerationQueue(status?: string): Promise<ModerationQueueResponse> {
-    const response = await api.get<ModerationQueueResponse>('/reviews/moderation/queue', {
-      params: status ? { status } : undefined,
-    });
+    const response = await api.get<ModerationQueueResponse>(
+      "/reviews/moderation/queue",
+      {
+        params: status ? { status } : undefined,
+      },
+    );
     return response.data;
   },
 
@@ -82,7 +94,7 @@ export const reviewsFavoritesService = {
   },
 
   async listMyFavorites(): Promise<FavoriteListResponse> {
-    const response = await api.get<FavoriteListResponse>('/favorites/mine');
+    const response = await api.get<FavoriteListResponse>("/favorites/mine");
     return response.data;
   },
 

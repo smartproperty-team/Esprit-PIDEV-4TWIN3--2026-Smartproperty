@@ -25,7 +25,13 @@ import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "./properties.css";
 
@@ -839,13 +845,7 @@ export default function PropertyDetailPage() {
     } finally {
       setReviewsLoading(false);
     }
-  }, [
-    canUseFavorites,
-    hydrateReviewForm,
-    property?._id,
-    property?.id,
-    user,
-  ]);
+  }, [canUseFavorites, hydrateReviewForm, property?._id, property?.id, user]);
 
   useEffect(() => {
     void loadEngagement();
@@ -1186,6 +1186,12 @@ export default function PropertyDetailPage() {
               {property.address.state} {property.address.zipCode},{" "}
               {property.address.country}
             </p>
+            {property.agency?.name && (
+              <p className="property-detail-address">
+                <strong>{t.propertyDetail.agency}:</strong>{" "}
+                {property.agency.name}
+              </p>
+            )}
           </div>
           <div className="property-detail-header-meta">
             <div className="property-detail-price">
@@ -1437,13 +1443,19 @@ export default function PropertyDetailPage() {
                   </label>
 
                   {myReview && (
-                    <p className={`review-status-note review-status-${myReview.status}`}>
+                    <p
+                      className={`review-status-note review-status-${myReview.status}`}
+                    >
                       Current status: {myReview.status}
                     </p>
                   )}
 
                   <div className="review-form-actions">
-                    <button type="submit" className="btn-view" disabled={reviewBusy}>
+                    <button
+                      type="submit"
+                      className="btn-view"
+                      disabled={reviewBusy}
+                    >
                       {reviewBusy
                         ? "Saving..."
                         : myReview
@@ -1479,11 +1491,14 @@ export default function PropertyDetailPage() {
                           <h4>{review.title || "Tenant feedback"}</h4>
                           <p>{review.author.name}</p>
                         </div>
-                        <span>{"★".repeat(Math.max(1, Math.min(5, review.rating)))}</span>
+                        <span>
+                          {"★".repeat(Math.max(1, Math.min(5, review.rating)))}
+                        </span>
                       </div>
                       <p className="review-item-comment">{review.comment}</p>
                       <p className="review-item-date">
-                        Published {new Date(review.createdAt).toLocaleDateString()}
+                        Published{" "}
+                        {new Date(review.createdAt).toLocaleDateString()}
                       </p>
 
                       {review.ownerResponse && (
@@ -1528,7 +1543,8 @@ export default function PropertyDetailPage() {
               <div className="sidebar-card">
                 <h3>Favorites</h3>
                 <p className="share-description">
-                  Save this property and access it later from your favorites workspace.
+                  Save this property and access it later from your favorites
+                  workspace.
                 </p>
                 <div className="share-actions">
                   <button
@@ -1713,6 +1729,12 @@ export default function PropertyDetailPage() {
               <div className="sidebar-card">
                 <h3>{t.propertyDetail.info}</h3>
                 <div className="property-meta-info">
+                  {property.agency?.name && (
+                    <p>
+                      <strong>{t.propertyDetail.agency}:</strong>{" "}
+                      {property.agency.name}
+                    </p>
+                  )}
                   <p>
                     <strong>{t.propertyDetail.propertyId}:</strong>{" "}
                     {property.id || property._id}

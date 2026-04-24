@@ -1,18 +1,18 @@
-import { HomeFooter, Navbar } from '@/components/layout';
-import reviewsFavoritesService from '@/services/reviews-favorites.service';
+import { HomeFooter, Navbar } from "@/components/layout";
+import reviewsFavoritesService from "@/services/reviews-favorites.service";
 import type {
   ModerateReviewDto,
   ModerationQueueItem,
   PropertyReviewStatus,
-} from '@/types/reviews-favorites';
-import { useEffect, useMemo, useState } from 'react';
-import '../properties/properties.css';
+} from "@/types/reviews-favorites";
+import { useEffect, useMemo, useState } from "react";
+import "../properties/properties.css";
 
 const STATUS_OPTIONS: PropertyReviewStatus[] = [
-  'pending',
-  'approved',
-  'rejected',
-  'hidden',
+  "pending",
+  "approved",
+  "rejected",
+  "hidden",
 ];
 
 function formatDate(value: string): string {
@@ -25,7 +25,8 @@ function formatDate(value: string): string {
 }
 
 export default function ReviewModerationPage() {
-  const [selectedStatus, setSelectedStatus] = useState<PropertyReviewStatus>('pending');
+  const [selectedStatus, setSelectedStatus] =
+    useState<PropertyReviewStatus>("pending");
   const [reviews, setReviews] = useState<ModerationQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export default function ReviewModerationPage() {
       const response = await reviewsFavoritesService.getModerationQueue(status);
       setReviews(response.reviews);
     } catch {
-      setError('Unable to load review moderation queue.');
+      setError("Unable to load review moderation queue.");
     } finally {
       setLoading(false);
     }
@@ -55,8 +56,7 @@ export default function ReviewModerationPage() {
       total > 0
         ? Number(
             (
-              reviews.reduce((sum, review) => sum + review.rating, 0) /
-              total
+              reviews.reduce((sum, review) => sum + review.rating, 0) / total
             ).toFixed(2),
           )
         : 0;
@@ -74,14 +74,14 @@ export default function ReviewModerationPage() {
       await reviewsFavoritesService.moderateReview(review.id, payload);
       await loadQueue(selectedStatus);
     } catch {
-      setError('Unable to save moderation action.');
+      setError("Unable to save moderation action.");
     } finally {
       setBusyReviewId(null);
     }
   };
 
   const addResponse = async (review: ModerationQueueItem) => {
-    const message = window.prompt('Official response to this review:');
+    const message = window.prompt("Official response to this review:");
 
     if (!message || !message.trim()) {
       return;
@@ -95,7 +95,7 @@ export default function ReviewModerationPage() {
       });
       await loadQueue(selectedStatus);
     } catch {
-      setError('Unable to publish review response.');
+      setError("Unable to publish review response.");
     } finally {
       setBusyReviewId(null);
     }
@@ -120,7 +120,9 @@ export default function ReviewModerationPage() {
                 <select
                   value={selectedStatus}
                   onChange={(event) =>
-                    setSelectedStatus(event.target.value as PropertyReviewStatus)
+                    setSelectedStatus(
+                      event.target.value as PropertyReviewStatus,
+                    )
                   }
                 >
                   {STATUS_OPTIONS.map((status) => (
@@ -165,18 +167,25 @@ export default function ReviewModerationPage() {
                 <article key={review.id} className="review-moderation-card">
                   <div className="review-moderation-head">
                     <div>
-                      <h3>{review.property?.title || 'Unknown property'}</h3>
+                      <h3>{review.property?.title || "Unknown property"}</h3>
                       <p>
-                        {review.property?.city || 'Unknown city'} · {review.author.name}
+                        {review.property?.city || "Unknown city"} ·{" "}
+                        {review.author.name}
                       </p>
                     </div>
-                    <span className={`review-status-chip review-status-${review.status}`}>
+                    <span
+                      className={`review-status-chip review-status-${review.status}`}
+                    >
                       {review.status}
                     </span>
                   </div>
 
-                  <p className="review-rating-line">Rating: {review.rating}/5</p>
-                  {review.title && <h4 className="review-title-line">{review.title}</h4>}
+                  <p className="review-rating-line">
+                    Rating: {review.rating}/5
+                  </p>
+                  {review.title && (
+                    <h4 className="review-title-line">{review.title}</h4>
+                  )}
                   <p className="review-comment-line">{review.comment}</p>
 
                   <p className="review-meta-line">
@@ -197,7 +206,7 @@ export default function ReviewModerationPage() {
                       disabled={isBusy}
                       onClick={() =>
                         void moderate(review, {
-                          status: 'approved',
+                          status: "approved",
                         })
                       }
                     >
@@ -208,9 +217,11 @@ export default function ReviewModerationPage() {
                       className="btn-edit"
                       disabled={isBusy}
                       onClick={() => {
-                        const reason = window.prompt('Rejection reason (optional):') || undefined;
+                        const reason =
+                          window.prompt("Rejection reason (optional):") ||
+                          undefined;
                         void moderate(review, {
-                          status: 'rejected',
+                          status: "rejected",
                           reason,
                         });
                       }}
@@ -222,9 +233,10 @@ export default function ReviewModerationPage() {
                       className="btn-delete"
                       disabled={isBusy}
                       onClick={() => {
-                        const reason = window.prompt('Hide reason (optional):') || undefined;
+                        const reason =
+                          window.prompt("Hide reason (optional):") || undefined;
                         void moderate(review, {
-                          status: 'hidden',
+                          status: "hidden",
                           reason,
                         });
                       }}
@@ -234,7 +246,7 @@ export default function ReviewModerationPage() {
                     <button
                       type="button"
                       className="btn-share"
-                      disabled={isBusy || review.status !== 'approved'}
+                      disabled={isBusy || review.status !== "approved"}
                       onClick={() => void addResponse(review)}
                     >
                       Respond

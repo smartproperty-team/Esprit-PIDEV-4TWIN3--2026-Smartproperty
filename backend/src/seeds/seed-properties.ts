@@ -83,9 +83,7 @@ async function seedProperties() {
         return rankDiff;
       }
 
-      return (
-        (a.createdAt?.getTime?.() || 0) - (b.createdAt?.getTime?.() || 0)
-      );
+      return (a.createdAt?.getTime?.() || 0) - (b.createdAt?.getTime?.() || 0);
     });
 
     const ownersForAssignment =

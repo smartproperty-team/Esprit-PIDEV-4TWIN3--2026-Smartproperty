@@ -1,9 +1,9 @@
-import { HomeFooter, Navbar } from '@/components/layout';
-import reviewsFavoritesService from '@/services/reviews-favorites.service';
-import type { FavoriteItem } from '@/types/reviews-favorites';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../properties/properties.css';
+import { HomeFooter, Navbar } from "@/components/layout";
+import reviewsFavoritesService from "@/services/reviews-favorites.service";
+import type { FavoriteItem } from "@/types/reviews-favorites";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import "../properties/properties.css";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -19,7 +19,7 @@ export default function FavoritesPage() {
       const response = await reviewsFavoritesService.listMyFavorites();
       setFavorites(response.favorites);
     } catch {
-      setError('Unable to load favorites right now.');
+      setError("Unable to load favorites right now.");
     } finally {
       setLoading(false);
     }
@@ -34,9 +34,11 @@ export default function FavoritesPage() {
 
     try {
       await reviewsFavoritesService.removeFavorite(propertyId);
-      setFavorites((prev) => prev.filter((item) => item.propertyId !== propertyId));
+      setFavorites((prev) =>
+        prev.filter((item) => item.propertyId !== propertyId),
+      );
     } catch {
-      setError('Unable to remove this favorite right now.');
+      setError("Unable to remove this favorite right now.");
     } finally {
       setBusyPropertyId(null);
     }
@@ -70,7 +72,10 @@ export default function FavoritesPage() {
           <div className="empty-state">
             <h3>Could not load favorites</h3>
             <p>{error}</p>
-            <button className="btn-filter primary" onClick={() => void loadFavorites()}>
+            <button
+              className="btn-filter primary"
+              onClick={() => void loadFavorites()}
+            >
               Retry
             </button>
           </div>
@@ -86,17 +91,23 @@ export default function FavoritesPage() {
           <div className="properties-grid">
             {favorites.map((favorite) => {
               const property = favorite.property;
-              const image = property.images?.[0]?.url || '/placeholder-property.svg';
+              const image =
+                property.images?.[0]?.url || "/placeholder-property.svg";
 
               return (
-                <article key={favorite.id} className="property-card" aria-label={property.title}>
+                <article
+                  key={favorite.id}
+                  className="property-card"
+                  aria-label={property.title}
+                >
                   <div className="property-card-image">
                     <img
                       src={image}
                       alt={property.title}
                       loading="lazy"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-property.svg';
+                        (e.target as HTMLImageElement).src =
+                          "/placeholder-property.svg";
                       }}
                     />
                     <span className={`property-badge ${property.status}`}>
@@ -111,12 +122,17 @@ export default function FavoritesPage() {
                     </p>
 
                     <div className="property-price">
-                      <span className="price">{property.price.toLocaleString()}</span>
+                      <span className="price">
+                        {property.price.toLocaleString()}
+                      </span>
                       <span className="currency">{property.currency}</span>
                     </div>
 
                     <div className="property-card-actions">
-                      <Link to={`/properties/${property.id || property._id}`} className="btn-view">
+                      <Link
+                        to={`/properties/${property.id || property._id}`}
+                        className="btn-view"
+                      >
                         View
                       </Link>
                       <button
@@ -125,7 +141,9 @@ export default function FavoritesPage() {
                         onClick={() => void handleRemove(favorite.propertyId)}
                         disabled={busyPropertyId === favorite.propertyId}
                       >
-                        {busyPropertyId === favorite.propertyId ? 'Removing...' : 'Remove'}
+                        {busyPropertyId === favorite.propertyId
+                          ? "Removing..."
+                          : "Remove"}
                       </button>
                     </div>
                   </div>

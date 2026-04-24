@@ -26,7 +26,10 @@ import {
   UpdatePropertyReviewDto,
 } from './dto/reviews-favorites.dto';
 import { Favorite } from './entities/favorite.entity';
-import { PropertyReview, PropertyReviewStatus } from './entities/property-review.entity';
+import {
+  PropertyReview,
+  PropertyReviewStatus,
+} from './entities/property-review.entity';
 
 @Injectable()
 export class ReviewsFavoritesService {
@@ -338,7 +341,9 @@ export class ReviewsFavoritesService {
   ) {
     const review = await this.findReviewOrFail(reviewId);
 
-    if (this.normalizeUserId(review.authorId) !== this.normalizeUserId(userId)) {
+    if (
+      this.normalizeUserId(review.authorId) !== this.normalizeUserId(userId)
+    ) {
       throw new ForbiddenException('You can only edit your own review');
     }
 
@@ -380,7 +385,9 @@ export class ReviewsFavoritesService {
   async deleteOwnReview(reviewId: string, userId: string) {
     const review = await this.findReviewOrFail(reviewId);
 
-    if (this.normalizeUserId(review.authorId) !== this.normalizeUserId(userId)) {
+    if (
+      this.normalizeUserId(review.authorId) !== this.normalizeUserId(userId)
+    ) {
       throw new ForbiddenException('You can only delete your own review');
     }
 
@@ -434,7 +441,9 @@ export class ReviewsFavoritesService {
       } as any,
     });
 
-    const propertiesById = new Map(properties.map((property) => [property.id, property]));
+    const propertiesById = new Map(
+      properties.map((property) => [property.id, property]),
+    );
 
     const visibleReviews = reviews.filter((review) => {
       const property = propertiesById.get(review.propertyId);
@@ -584,7 +593,9 @@ export class ReviewsFavoritesService {
       } as any,
     });
 
-    const propertyMap = new Map(properties.map((property) => [property.id, property]));
+    const propertyMap = new Map(
+      properties.map((property) => [property.id, property]),
+    );
 
     const payload = favorites
       .map((favorite) => {

@@ -137,6 +137,9 @@ export const en = {
     reset: "Reset",
     myProperties: "My Properties",
     myPropertiesDesc: "Properties you own and can manage.",
+    myAgencyProperties: "My Agency Properties",
+    myAgencyPropertiesDesc:
+      "Properties linked to your agency and visible to your agency roles.",
     loading: "Loading properties...",
     retry: "Retry",
     noProperties: "No properties found",
@@ -467,6 +470,7 @@ export const en = {
     deleteConfirm: "Are you sure you want to delete this property?",
     deleteError: "Unable to delete the property. Please try again.",
     owner: "Owner",
+    agency: "Agency",
     ownerFallback: "Owner",
     contactOwner: "Contact",
     info: "Information",

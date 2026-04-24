@@ -141,6 +141,9 @@ export const fr: Translations = {
     myProperties: "Mes propriétés",
     myPropertiesDesc:
       "Propriétés qui vous appartiennent et que vous pouvez modifier.",
+    myAgencyProperties: "Propriétés de mon agence",
+    myAgencyPropertiesDesc:
+      "Propriétés liées à votre agence et visibles par les rôles de votre agence.",
     loading: "Chargement des propriétés...",
     retry: "Réessayer",
     noProperties: "Aucune propriété trouvée",
@@ -480,6 +483,7 @@ export const fr: Translations = {
     deleteConfirm: "Êtes-vous sûr de vouloir supprimer cette propriété ?",
     deleteError: "Impossible de supprimer la propriété. Veuillez réessayer.",
     owner: "Propriétaire",
+    agency: "Agence",
     ownerFallback: "Propriétaire",
     contactOwner: "Contacter",
     info: "Informations",
