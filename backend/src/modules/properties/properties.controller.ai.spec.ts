@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Reflector } from '@nestjs/core';
 import { AiDescriptionService } from './ai-description.service';
+import { AiPricingService } from './ai-pricing.service';
 import { GenerateDescriptionDto } from './dto/ai-description.dto';
 import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
@@ -27,6 +28,7 @@ describe('PropertiesController (AI description)', () => {
         { provide: PropertiesService, useValue: {} },
         { provide: ConfigService, useValue: { get: () => '' } },
         { provide: AiDescriptionService, useValue: aiService },
+        { provide: AiPricingService, useValue: {} },
       ],
     })
       // Override guards to allow direct controller calls

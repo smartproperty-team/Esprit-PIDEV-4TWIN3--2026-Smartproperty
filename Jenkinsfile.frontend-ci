@@ -40,18 +40,6 @@ pipeline {
                     sh 'npm run test:cov'
                 }
             }
-            post {
-                always {
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'frontend/coverage/lcov-report',
-                        reportFiles: 'index.html',
-                        reportName: 'Frontend Coverage Report'
-                    ])
-                }
-            }
         }
 
         stage('SonarQube Analysis') {
