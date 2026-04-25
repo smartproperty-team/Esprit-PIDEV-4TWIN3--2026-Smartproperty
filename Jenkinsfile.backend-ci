@@ -47,7 +47,9 @@ pipeline {
                 dir('backend') {
                     withSonarQubeEnv('SonarQube') {
                         sh """
+                            echo "SONAR_HOST_URL=\$SONAR_HOST_URL"
                             ${SCANNER_HOME}/bin/sonar-scanner \
+                              -Dsonar.host.url=http://smartproperty-sonarqube:9000 \
                               -Dsonar.projectKey=smartproperty-backend \
                               -Dsonar.projectName=SmartProperty-Backend \
                               -Dsonar.sources=src \

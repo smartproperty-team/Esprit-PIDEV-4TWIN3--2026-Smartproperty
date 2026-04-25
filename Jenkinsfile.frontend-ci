@@ -48,6 +48,7 @@ pipeline {
                     withSonarQubeEnv('SonarQube') {
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
+                              -Dsonar.host.url=http://smartproperty-sonarqube:9000 \
                               -Dsonar.projectKey=smartproperty-frontend \
                               -Dsonar.projectName=SmartProperty-Frontend \
                               -Dsonar.sources=src \
