@@ -29,6 +29,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { randomUUID } from 'crypto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -39,7 +40,6 @@ import {
   PROPERTY_CREATOR_ROLES,
   PROPERTY_MANAGEMENT_ROLES,
 } from '../users/role-groups';
-import { randomUUID } from 'crypto';
 import { AiDescriptionService } from './ai-description.service';
 import { AiPricingService } from './ai-pricing.service';
 import {
@@ -308,8 +308,7 @@ export class PropertiesController {
   @ApiResponse({ status: 200, description: 'Property data' })
   @ApiResponse({ status: 404, description: 'Property not found' })
   async findOne(@Param('id') id: string) {
-    const property = await this.propertiesService.findById(id);
-    return property.toJSON();
+    return this.propertiesService.findByIdView(id);
   }
 
   // ===========================================
@@ -331,7 +330,7 @@ export class PropertiesController {
       role,
     );
 
-    return property.toJSON();
+    return this.propertiesService.findByIdView(property.id);
   }
 
   // ===========================================
@@ -355,7 +354,7 @@ export class PropertiesController {
       role,
     );
 
-    return property.toJSON();
+    return this.propertiesService.findByIdView(property.id);
   }
 
   // ===========================================
