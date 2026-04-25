@@ -64,6 +64,8 @@ export const fr: Translations = {
       "Découvrez des propriétés dans les meilleurs endroits",
     properties: "Propriétés",
     forRent: "À louer",
+    bestMatchTitle: "Meilleure correspondance pour vous",
+    bestMatchSubtitle: "Biens sélectionnés selon vos préférences",
     recentRentTitle: "Propriétés récentes à louer",
     recentRentSubtitle: "Trouvez votre logement idéal aujourd'hui",
     loadingProperties: "Chargement des propriétés...",

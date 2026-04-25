@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Reflector } from '@nestjs/core';
 import { AiDescriptionService } from './ai-description.service';
+import { AiRecommendationService } from './ai-recommendation.service';
 import { GenerateDescriptionDto } from './dto/ai-description.dto';
 import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
@@ -27,6 +28,10 @@ describe('PropertiesController (AI description)', () => {
         { provide: PropertiesService, useValue: {} },
         { provide: ConfigService, useValue: { get: () => '' } },
         { provide: AiDescriptionService, useValue: aiService },
+        {
+          provide: AiRecommendationService,
+          useValue: { getUserRecommendations: jest.fn() },
+        },
       ],
     })
       // Override guards to allow direct controller calls
@@ -69,7 +74,9 @@ describe('PropertiesController (AI description)', () => {
   });
 
   it('exposes model status via aiService', async () => {
-    aiService.getModelStatus.mockResolvedValue({ generation: { loaded: false } });
+    aiService.getModelStatus.mockResolvedValue({
+      generation: { loaded: false },
+    });
     const result = await controller.getAiModelStatus();
     expect(result).toEqual({ generation: { loaded: false } });
   });

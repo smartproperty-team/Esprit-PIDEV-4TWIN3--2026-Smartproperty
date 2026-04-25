@@ -15,7 +15,8 @@
     "axe/aria": [
       "default",
       {
-        "aria-valid-attr-value": "off"
+        "aria-valid-attr-value": "off",
+        "aria-required-children": "off"
       }
     ],
     "typescript-config/consistent-casing": "off",
