@@ -183,6 +183,11 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   useEffect(() => {
     document.title = getPageTitle(location.pathname, location.search);
   }, [location.pathname, location.search]);
