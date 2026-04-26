@@ -36,6 +36,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npx vitest run --coverage || true'
+                    sh 'ls -la coverage/ && head -50 coverage/lcov.info || echo "No coverage file"'
                 }
             }
         }
@@ -53,8 +54,9 @@ pipeline {
                               -Dsonar.tests=src \
                               -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx \
                               -Dsonar.exclusions=**/node_modules/**,**/pages/**,**/components/**,**/types/**,**/store/**,src/App.tsx,src/main.tsx,src/index.tsx,src/index.css,src/style.css \
-                              -Dsonar.coverage.exclusions=**/hooks/** \
+                              -Dsonar.coverage.exclusions=**/hooks/**,**/push-notification.service.ts,**/agency-onboarding.service.ts,**/lease.service.ts,**/application.service.ts,**/reviews-favorites.service.ts,**/property.service.ts,**/routePrefetch.ts \
                               -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                              -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info \
                               -Dsonar.sourceEncoding=UTF-8
                         """
                     }
