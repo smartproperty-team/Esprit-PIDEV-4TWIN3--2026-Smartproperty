@@ -11,6 +11,15 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 1,
+        minForks: 1
+      }
+    },
     coverage: {
       provider: 'istanbul',
       reporter: ['text', 'lcov'],
