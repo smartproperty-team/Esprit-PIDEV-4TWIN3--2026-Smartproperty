@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install dependencies only (cached layer)
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Development stage with Vite HMR
 FROM base AS dev
