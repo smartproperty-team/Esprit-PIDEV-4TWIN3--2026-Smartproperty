@@ -536,7 +536,7 @@ export class AgenciesService {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/(^-)|(-$)/g, '');
 
     if (!slug) {
       throw new ConflictException('Agency name cannot generate a valid slug');

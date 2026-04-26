@@ -204,7 +204,7 @@ export class VerificationService {
       const tenant = await this.usersService.findById(userId);
       const tenantName = `${tenant?.firstName ?? ''} ${tenant?.lastName ?? ''}`
         .trim()
-        .replace(/^\s+|\s+$/g, '');
+        .replace(/(^\s+)|(\s+$)/g, '');
       const label = tenantName || tenant?.email || userId;
 
       const superAdmins = await this.usersService.findByRole(
