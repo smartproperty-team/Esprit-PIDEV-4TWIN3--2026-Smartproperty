@@ -152,7 +152,7 @@ export const USER_STATUS_DESCRIPTIONS: Record<string, string> = {
  * Validation Rules
  */
 export const VALIDATION_RULES = {
-  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  EMAIL_REGEX: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PASSWORD_REGEX:
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
   PHONE_REGEX: /^\+?[1-9]\d{1,14}$/,
