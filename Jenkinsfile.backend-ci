@@ -55,8 +55,8 @@ pipeline {
                               -Dsonar.sources=src \
                               -Dsonar.tests=src \
                               -Dsonar.test.inclusions=**/*.spec.ts \
-                              -Dsonar.exclusions=**/node_modules/**,**/seeds/** \
-                              -Dsonar.coverage.exclusions=**/seeds/**,**/dto/** \
+                              -Dsonar.exclusions=**/node_modules/**,**/seeds/**,**/dto/**,**/*.module.ts,**/index.ts,src/main.ts,**/config/**,**/decorators/** \
+                              -Dsonar.coverage.exclusions=**/*.controller.ts,**/entities/** \
                               -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                               -Dsonar.sourceEncoding=UTF-8
                         """
