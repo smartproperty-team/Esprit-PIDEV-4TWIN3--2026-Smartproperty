@@ -58,6 +58,7 @@ pipeline {
                               -Dsonar.exclusions=**/node_modules/**,**/seeds/**,**/dto/**,**/*.module.ts,**/index.ts,src/main.ts,**/config/**,**/decorators/** \
                               -Dsonar.coverage.exclusions=**/*.controller.ts,**/entities/**,**/properties.service.ts,**/property-images.service.ts,**/leases.service.ts,**/auth.service.ts,**/applications.service.ts,**/agencies.service.ts,**/maintenance.service.ts,**/reviews-favorites.service.ts,**/verification.service.ts,**/notifications.service.ts,**/notifications.gateway.ts,**/ai-pricing.service.ts,**/guards/**,**/strategies/**,**/minio.service.ts,**/upload.controller.ts \
                               -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                              -Dsonar.typescript.tsconfigPaths=tsconfig.sonar.json \
                               -Dsonar.sourceEncoding=UTF-8
                         """
                     }
