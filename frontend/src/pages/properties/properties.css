@@ -1309,54 +1309,117 @@
   font-size: 0.75rem;
 }
 
+/* ── 360° Modal viewer ─────────────────────────────── */
+
 .property-rooms-360-modal {
   position: fixed;
   inset: 0;
   z-index: 1100;
-  background: rgba(10, 18, 35, 0.88);
+  background: #0a0e1a;
+  display: flex;
+  flex-direction: column;
+}
+
+.property-rooms-360-modal.is-fullscreen {
+  border-radius: 0;
+}
+
+/* ── Toolbar ── */
+
+.vr360-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.property-rooms-360-viewer {
-  width: min(980px, 100%);
-  position: relative;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.property-rooms-360-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 2;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.72);
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
   color: #fff;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
+  pointer-events: none;
 }
+
+.vr360-toolbar > * {
+  pointer-events: auto;
+}
+
+.vr360-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vr360-toolbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vr360-toolbar-count {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.vr360-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.vr360-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.vr360-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Viewer area ── */
+
+.vr360-viewer-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.vr360-viewer-area canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Prev / Next arrows ── */
 
 .property-rooms-360-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 2;
+  z-index: 8;
   width: 46px;
   height: 46px;
   border: 0;
   border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
   color: #fff;
   font-size: 1.05rem;
   cursor: pointer;
+  transition: background 0.15s;
+}
+
+.property-rooms-360-arrow:hover {
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .property-rooms-360-arrow-left {
@@ -1367,17 +1430,127 @@
   right: 1rem;
 }
 
-.property-rooms-360-title {
+/* ── Room selector side panel ── */
+
+.vr360-room-panel {
   position: absolute;
-  left: 0;
+  top: 0;
   right: 0;
   bottom: 0;
-  z-index: 1;
-  padding: 0.8rem 1rem;
-  color: #fff;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.65));
+  z-index: 12;
+  width: 240px;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
+  flex-direction: column;
+  animation: vr360-panel-slide-in 0.2s ease-out;
+}
+
+@keyframes vr360-panel-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.vr360-room-panel-header {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vr360-room-panel-close {
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  opacity: 0.7;
+}
+
+.vr360-room-panel-close:hover {
+  opacity: 1;
+}
+
+.vr360-room-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vr360-room-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.vr360-room-panel-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vr360-room-panel-item.is-active {
+  border-color: var(--color-primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.vr360-room-panel-item img {
+  width: 52px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.vr360-room-panel-item span {
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+/* ── Sphere viewer shared styles ── */
+
+.sphere360-container {
+  position: relative;
+  background: #000;
+}
+
+.sphere360-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 4px 12px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.sphere360-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  color: #ef4444;
+  background: #0a0e1a;
+  font-size: 0.9rem;
 }
 
 .virtual-visit-builder {
@@ -1418,12 +1591,18 @@
 }
 
 .virtual-visit-room-card {
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 2px solid var(--color-border, #e2e8f0);
   border-radius: 14px;
   padding: 1rem;
   margin-bottom: 0.85rem;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(2, 6, 23, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.virtual-visit-room-card.is-drag-over {
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .virtual-visit-room-head {
@@ -1459,6 +1638,73 @@
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.virtual-visit-preview-toggle {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--color-primary, #3b82f6);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.virtual-visit-preview-toggle:hover {
+  background: #eef2ff;
+}
+
+.virtual-visit-360-preview {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.virtual-visit-360-loading {
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0e1a;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+/* ── Drag & drop zone ── */
+
+.virtual-visit-dropzone {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  border: 2px dashed var(--color-border, #cbd5e1);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.82rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.virtual-visit-dropzone:hover {
+  border-color: var(--color-primary, #3b82f6);
+  background: #eef2ff;
+}
+
+.virtual-visit-dropzone.is-active {
+  border-color: var(--color-primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.virtual-visit-dropzone-icon {
+  color: var(--color-primary, #3b82f6);
+  opacity: 0.7;
 }
 
 .virtual-visit-add-room {
@@ -2557,6 +2803,14 @@
 
   .property-rooms-360-arrow-right {
     right: 0.5rem;
+  }
+
+  .vr360-room-panel {
+    width: 200px;
+  }
+
+  .vr360-toolbar-title {
+    font-size: 0.85rem;
   }
 
   .property-content {

@@ -4,7 +4,7 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
-import PanoramicPanViewer from "@/components/properties/PanoramicPanViewer";
+import Sphere360Viewer from "@/components/properties/Sphere360Viewer";
 import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
 import PropertyReviewsSection from "@/components/reviews/PropertyReviewsSection";
 import { useTranslation } from "@/i18n";
@@ -717,6 +717,9 @@ const isMarkedPanoramaRoom = (image: PropertyImage): boolean =>
 
 function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [roomPanelOpen, setRoomPanelOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const sortedRooms = [...rooms].sort((a, b) => {
     if (a.isPrimary) return -1;
@@ -727,39 +730,71 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   const activeRoom =
     activeIndex === null ? null : (sortedRooms[activeIndex] ?? sortedRooms[0]);
 
-  const closeViewer = () => setActiveIndex(null);
+  const closeViewer = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+    setActiveIndex(null);
+    setRoomPanelOpen(false);
+  }, []);
 
-  const showPreviousRoom = () => {
+  const showPreviousRoom = useCallback(() => {
     setActiveIndex((current) => {
       if (current === null) return 0;
       return current === 0 ? sortedRooms.length - 1 : current - 1;
     });
-  };
+  }, [sortedRooms.length]);
 
-  const showNextRoom = () => {
+  const showNextRoom = useCallback(() => {
     setActiveIndex((current) => {
       if (current === null) return 0;
       return current >= sortedRooms.length - 1 ? 0 : current + 1;
     });
-  };
+  }, [sortedRooms.length]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!modalRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      modalRef.current.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  // Sync fullscreen state
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
 
   useEffect(() => {
     if (activeIndex === null) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (document.fullscreenElement) {
+          // Let browser handle exiting fullscreen; don't close modal
+          return;
+        }
         closeViewer();
       }
-      if (event.key === "ArrowLeft") {
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
         showPreviousRoom();
       }
-      if (event.key === "ArrowRight") {
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
         showNextRoom();
+      }
+      if (event.key === "f" || event.key === "F") {
+        toggleFullscreen();
+      }
+      if (event.key === "r" || event.key === "R") {
+        setRoomPanelOpen((prev) => !prev);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeIndex]);
+  }, [activeIndex, closeViewer, showPreviousRoom, showNextRoom, toggleFullscreen]);
 
   if (rooms.length === 0) {
     return null;
@@ -768,8 +803,8 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   return (
     <section className="property-rooms-360">
       <div className="property-rooms-360-header">
-        <h3>3D Virtual Tour</h3>
-        <p>Click a room to open the full-screen 360 viewer.</p>
+        <h3>360° Virtual Tour</h3>
+        <p>Click a room to explore in immersive 360° view.</p>
       </div>
 
       <div className="property-rooms-360-grid">
@@ -779,57 +814,152 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
             type="button"
             className="property-rooms-360-card"
             onClick={() => setActiveIndex(index)}
-            aria-label={`Open ${getRoomDisplayName(room)} in panoramic viewer`}
+            aria-label={`Open ${getRoomDisplayName(room)} in 360° viewer`}
           >
             <img src={room.url} alt={getRoomDisplayName(room)} />
             <span>{getRoomDisplayName(room)}</span>
-            <small>Panoramic 360 room</small>
+            <small>360° panoramic room</small>
           </button>
         ))}
       </div>
 
       {activeRoom && (
         <div
-          className="property-rooms-360-modal"
+          ref={modalRef}
+          className={`property-rooms-360-modal${isFullscreen ? " is-fullscreen" : ""}`}
           role="dialog"
           aria-modal="true"
         >
-          <button
-            type="button"
-            className="property-rooms-360-close"
-            onClick={closeViewer}
-            aria-label="Close 360 viewer"
-          >
-            ×
-          </button>
-          <button
-            type="button"
-            className="property-rooms-360-arrow property-rooms-360-arrow-left"
-            onClick={showPreviousRoom}
-            aria-label="Previous room"
-          >
-            ◀
-          </button>
-          <button
-            type="button"
-            className="property-rooms-360-arrow property-rooms-360-arrow-right"
-            onClick={showNextRoom}
-            aria-label="Next room"
-          >
-            ▶
-          </button>
-          <div className="property-rooms-360-viewer">
-            <PanoramicPanViewer
-              src={activeRoom.url}
-              altText={getRoomDisplayName(activeRoom)}
-            />
-            <div className="property-rooms-360-title">
-              <strong>{getRoomDisplayName(activeRoom)}</strong>
-              <span>
+          {/* ── Toolbar ── */}
+          <div className="vr360-toolbar">
+            <div className="vr360-toolbar-left">
+              <strong className="vr360-toolbar-title">
+                {getRoomDisplayName(activeRoom)}
+              </strong>
+              <span className="vr360-toolbar-count">
                 {(activeIndex ?? 0) + 1} / {sortedRooms.length}
               </span>
             </div>
+            <div className="vr360-toolbar-right">
+              {sortedRooms.length > 1 && (
+                <button
+                  type="button"
+                  className="vr360-toolbar-btn"
+                  onClick={() => setRoomPanelOpen((p) => !p)}
+                  aria-label="Toggle room list"
+                  title="Room list (R)"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
+                </button>
+              )}
+              <button
+                type="button"
+                className="vr360-toolbar-btn"
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title="Fullscreen (F)"
+              >
+                {isFullscreen ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 14 10 14 10 20" />
+                    <polyline points="20 10 14 10 14 4" />
+                    <line x1="14" y1="10" x2="21" y2="3" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                className="vr360-toolbar-btn"
+                onClick={closeViewer}
+                aria-label="Close viewer"
+                title="Close (Esc)"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {/* ── Previous / Next arrows ── */}
+          {sortedRooms.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="property-rooms-360-arrow property-rooms-360-arrow-left"
+                onClick={showPreviousRoom}
+                aria-label="Previous room"
+              >
+                &#9664;
+              </button>
+              <button
+                type="button"
+                className="property-rooms-360-arrow property-rooms-360-arrow-right"
+                onClick={showNextRoom}
+                aria-label="Next room"
+              >
+                &#9654;
+              </button>
+            </>
+          )}
+
+          {/* ── 360° Viewer ── */}
+          <div className="vr360-viewer-area">
+            <Sphere360Viewer
+              key={activeRoom.key || activeRoom.url}
+              src={activeRoom.url}
+              altText={getRoomDisplayName(activeRoom)}
+              autoRotate
+              autoRotateSpeed={0.4}
+              height="100%"
+            />
+          </div>
+
+          {/* ── Room selector panel ── */}
+          {roomPanelOpen && sortedRooms.length > 1 && (
+            <div className="vr360-room-panel">
+              <div className="vr360-room-panel-header">
+                <strong>Rooms</strong>
+                <button
+                  type="button"
+                  className="vr360-room-panel-close"
+                  onClick={() => setRoomPanelOpen(false)}
+                  aria-label="Close room panel"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="vr360-room-panel-list">
+                {sortedRooms.map((room, index) => (
+                  <button
+                    key={room.key || index}
+                    type="button"
+                    className={`vr360-room-panel-item${index === activeIndex ? " is-active" : ""}`}
+                    onClick={() => {
+                      setActiveIndex(index);
+                    }}
+                  >
+                    <img src={room.url} alt={getRoomDisplayName(room)} />
+                    <span>{getRoomDisplayName(room)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>
