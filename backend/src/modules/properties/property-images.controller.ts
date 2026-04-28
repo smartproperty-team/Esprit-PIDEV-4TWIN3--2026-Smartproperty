@@ -12,6 +12,7 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -26,13 +27,17 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
-import { PROPERTY_MANAGEMENT_ROLES } from '../users/role-groups';
+import {
+  PROPERTY_MANAGEMENT_ROLES,
+  PROPERTY_MEDIA_UPLOAD_ROLES,
+} from '../users/role-groups';
 import {
   PropertyImage,
   PropertyImagesService,
@@ -70,7 +75,7 @@ export class PropertyImagesController {
   // ===========================================
 
   @Post()
-  @Roles(...PROPERTY_MANAGEMENT_ROLES)
+  @Roles(...PROPERTY_MEDIA_UPLOAD_ROLES)
   @UseInterceptors(FilesInterceptor('images', 20))
   @ApiOperation({ summary: 'Upload images for a property' })
   @ApiConsumes('multipart/form-data')
@@ -103,12 +108,19 @@ export class PropertyImagesController {
     @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser('id') userId: string,
     @CurrentUser('role') userRole: UserRole,
+    @Body('generateVirtualTour') generateVirtualTour?: string | boolean,
   ) {
+    const shouldGenerateVirtualTour =
+      generateVirtualTour === true ||
+      generateVirtualTour === 'true' ||
+      generateVirtualTour === '1';
+
     return this.propertyImagesService.uploadImages(
       propertyId,
       files,
       userId,
       userRole,
+      shouldGenerateVirtualTour,
     );
   }
 
@@ -294,5 +306,67 @@ export class PropertyImagesController {
       userId,
       userRole,
     );
+  }
+
+  // ===========================================
+  // Get Virtual Tour Panorama
+  // ===========================================
+
+  @Get('virtual-tour/panorama')
+  @Public()
+  @ApiOperation({ summary: 'Get virtual tour panorama image (public)' })
+  @ApiParam({ name: 'propertyId', description: 'Property ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Panorama image stream',
+    content: { 'image/jpeg': {} },
+  })
+  @ApiResponse({ status: 404, description: 'Property or panorama not found' })
+  async getPanorama(
+    @Param('propertyId') propertyId: string,
+    @Res() res: Response,
+  ) {
+    const imageStream =
+      await this.propertyImagesService.getPanorama(propertyId);
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24h cache
+    imageStream.pipe(res);
+  }
+
+  @Post('virtual-tour/generate')
+  @Roles(...PROPERTY_MANAGEMENT_ROLES)
+  @ApiOperation({ summary: 'Trigger virtual tour generation for a property' })
+  @ApiParam({ name: 'propertyId', description: 'Property ID' })
+  @ApiBody({
+    schema: { type: 'object', properties: { processNow: { type: 'boolean' } } },
+  })
+  @ApiResponse({ status: 200, description: 'Generation job queued' })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  async generateVirtualTour(
+    @Param('propertyId') propertyId: string,
+    @Body('processNow') processNow: boolean,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') userRole: UserRole,
+  ) {
+    return this.propertyImagesService.triggerVirtualTourGeneration(
+      propertyId,
+      userId,
+      userRole,
+      Boolean(processNow),
+    );
+  }
+
+  // ===========================================
+  // Virtual Tour Status
+  // ===========================================
+
+  @Get('virtual-tour/status')
+  @Public()
+  @ApiOperation({ summary: 'Get virtual tour job status for a property' })
+  @ApiParam({ name: 'propertyId', description: 'Property ID' })
+  @ApiResponse({ status: 200, description: 'Virtual tour job status' })
+  @ApiResponse({ status: 404, description: 'No virtual tour job found' })
+  async getVirtualTourStatus(@Param('propertyId') propertyId: string) {
+    return this.propertyImagesService.getVirtualTourStatus(propertyId);
   }
 }

@@ -245,6 +245,7 @@ export const fr: Translations = {
         furnished: "Meublé",
         petFriendly: "Animaux acceptés",
         amenities: "Équipements (séparés par des virgules)",
+        virtualTour: "URL de visite virtuelle",
         price: "Prix",
         currency: "Devise",
         availableFrom: "Disponible à partir du",
@@ -258,7 +259,15 @@ export const fr: Translations = {
         area: "Surface en m2",
         parkingSpaces: "Nombre de places",
         amenities: "Ex: Piscine, Jardin, Climatisation, Terrasse",
+        virtualTour: "https://example.com/visite-virtuelle",
         price: "Prix",
+      },
+      help: {
+        virtualTour: "Collez un lien public Matterport, YouTube ou 3DVista.",
+        virtualTourEmbedded:
+          "{{provider}} s'ouvrira dans la visionneuse intégrée.",
+        virtualTourLinkOnly:
+          "{{provider}} s'ouvrira sous forme de lien au lieu d'être intégré.",
       },
       aiDescription: {
         cta: "Générer une description IA",
@@ -301,6 +310,35 @@ export const fr: Translations = {
         dropTitle: "Glissez-déposez vos images ici",
         dropSubtitle:
           "ou cliquez pour sélectionner (JPEG, PNG, WebP - max 10MB)",
+        virtualTour: {
+          enableFromPhotos:
+            "Générer une visite virtuelle à partir des photos téléversées",
+          captureGuideTitle: "Guide photo pour le propriétaire",
+          captureGuideIntro:
+            "Prenez des photos pour que notre IA puisse assembler une panoramique 360° propre. Suivez ces conseils pratiques :",
+          guideStep1:
+            "Placez-vous au même endroit et prenez une série de photos horizontales tout autour (12–20 recommandées).",
+          guideStep2:
+            "Assurez ~30%–50% de recouvrement ; résolution {{width}}×{{height}} minimale recommandée.",
+          guideStep3:
+            "Gardez l'appareil à niveau, utilisez une focale fixe (pas de zoom) et verrouillez l'exposition/la balance des blancs si possible.",
+          guideStep4:
+            "Évitez les personnes/objets en mouvement dans les zones de recouvrement ; ajoutez des vues intermédiaires si nécessaire.",
+          ruleMinPhotos:
+            "Téléversez au moins {{count}} photos pour cette propriété.",
+          ruleResolution:
+            "Chaque photo doit avoir une résolution minimale de {{width}}x{{height}}.",
+          ruleOverlap:
+            "Assurez ~30%–50% de recouvrement entre les photos voisines pour garantir l'assemblage.",
+          diagramAlt:
+            "Diagramme illustrant une série de prises de vue circulaires avec recouvrement",
+          minPhotosError:
+            "Pour générer une visite virtuelle, téléversez au moins {{count}} photos.",
+          minResolutionError:
+            "Une ou plusieurs photos sont en dessous de la résolution minimale {{width}}x{{height}}.",
+          readError:
+            "Impossible d'analyser une ou plusieurs photos. Essayez avec d'autres images.",
+        },
       },
       addressHelper: {
         mapButton: "Choisir l'adresse sur la carte interactive",
@@ -419,6 +457,14 @@ export const fr: Translations = {
     },
     openStreetMap: "OpenStreetMap",
     googleMaps: "Google Maps",
+    virtualTour: {
+      title: "Visite virtuelle",
+      subtitle: "Explorez la propriété via une visite interactive intégrée.",
+      openInNewTab: "Ouvrir la visite dans un nouvel onglet",
+      iframeTitle: "Visionneuse de visite virtuelle",
+      fallback:
+        "Cette visite ne peut pas être intégrée ici. Ouvrez-la dans un nouvel onglet pour la consulter.",
+    },
     galleryPlaceholder: "Aucune image disponible",
     galleryAlt: "Photo de la propriété",
     morePhotos: "+{{count}} photos",

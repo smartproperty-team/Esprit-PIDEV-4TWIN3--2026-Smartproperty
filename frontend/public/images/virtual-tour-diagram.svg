@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400" aria-hidden="false">
+  <defs>
+    <style>
+      .dot { fill: #3b82f6; }
+      .cam { fill: #0f172a; }
+      .circle { fill: none; stroke: #e2e8f0; stroke-width: 2; }
+      .arrow { fill: none; stroke: #94a3b8; stroke-width: 1.5; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <g transform="translate(100,100)">
+    <circle r="72" class="circle" />
+    <!-- 12 dots around circle -->
+    <!-- Calculate positions -->
+    <g>
+      <!-- generate 12 dots -->
+      <circle class="dot" cx="0" cy="-72" r="4" />
+      <circle class="dot" cx="36" cy="-62" r="4" />
+      <circle class="dot" cx="62" cy="-36" r="4" />
+      <circle class="dot" cx="72" cy="0" r="4" />
+      <circle class="dot" cx="62" cy="36" r="4" />
+      <circle class="dot" cx="36" cy="62" r="4" />
+      <circle class="dot" cx="0" cy="72" r="4" />
+      <circle class="dot" cx="-36" cy="62" r="4" />
+      <circle class="dot" cx="-62" cy="36" r="4" />
+      <circle class="dot" cx="-72" cy="0" r="4" />
+      <circle class="dot" cx="-62" cy="-36" r="4" />
+      <circle class="dot" cx="-36" cy="-62" r="4" />
+    </g>
+
+    <!-- small camera icon at top-left for legend -->
+    <g transform="translate(-90,-90) scale(0.9)">
+      <rect x="2" y="6" width="18" height="12" rx="2" class="cam" />
+      <circle cx="11" cy="12" r="3" fill="#ffffff" />
+    </g>
+
+    <!-- circular arrow to indicate rotation -->
+    <path class="arrow" d="M50,-62 A72,72 0 0,1 62,-50" />
+    <path class="arrow" d="M62,50 A72,72 0 0,1 50,62" />
+  </g>
+</svg>

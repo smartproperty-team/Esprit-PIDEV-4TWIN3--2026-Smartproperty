@@ -1,8 +1,5 @@
-# API v1 endpoints
-from app.api.v1.endpoints import (
-    recommendations,
-    pricing,
-    image_analysis,
-    search,
-    analytics,
-)
+"""API v1 endpoints package.
+
+Keep this file import-light so individual endpoint modules can be loaded
+independently without requiring every optional dependency.
+"""

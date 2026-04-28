@@ -238,6 +238,7 @@ export const en = {
         furnished: "Furnished",
         petFriendly: "Pet friendly",
         amenities: "Amenities (comma separated)",
+        virtualTour: "Virtual tour URL",
         price: "Price",
         currency: "Currency",
         availableFrom: "Available from",
@@ -251,7 +252,15 @@ export const en = {
         area: "Area in m2",
         parkingSpaces: "Number of spaces",
         amenities: "e.g. Pool, Garden, Air conditioning, Terrace",
+        virtualTour: "https://example.com/virtual-tour",
         price: "Price",
+      },
+      help: {
+        virtualTour:
+          "Paste a public Matterport, YouTube, or 3DVista tour link.",
+        virtualTourEmbedded: "{{provider}} will open in the embedded viewer.",
+        virtualTourLinkOnly:
+          "{{provider}} will open as a link instead of embedding.",
       },
       aiDescription: {
         cta: "Generate AI description",
@@ -293,6 +302,33 @@ export const en = {
         uploadAriaLabel: "Upload property images",
         dropTitle: "Drag and drop your images here",
         dropSubtitle: "or click to select (JPEG, PNG, WebP - max 10MB)",
+        virtualTour: {
+          enableFromPhotos: "Generate virtual tour from uploaded photos",
+          captureGuideTitle: "Owner photo capture guide",
+          captureGuideIntro:
+            "Capture photos so our AI can reliably stitch a clean 360° panorama. Follow these practical tips:",
+          guideStep1:
+            "Stand in one spot and take a full circle of evenly spaced horizontal photos (recommended 12–20).",
+          guideStep2:
+            "Ensure about 30%–50% overlap between adjacent photos; min {{width}}×{{height}} resolution recommended.",
+          guideStep3:
+            "Keep the camera level, use a fixed focal length (no zoom), and lock exposure/white balance if possible.",
+          guideStep4:
+            "Avoid moving people or objects in overlapping areas; add extra intermediate shots if unsure.",
+          ruleMinPhotos: "Upload at least {{count}} photos for this property.",
+          ruleResolution:
+            "Each uploaded photo should be at least {{width}}x{{height}}.",
+          ruleOverlap:
+            "Ensure ~30%–50% overlap between neighboring photos for reliable stitching.",
+          diagramAlt:
+            "Illustration showing evenly spaced circular shots with overlap",
+          minPhotosError:
+            "To generate a virtual tour, upload at least {{count}} photos.",
+          minResolutionError:
+            "One or more photos are below the minimum resolution of {{width}}x{{height}}.",
+          readError:
+            "Unable to analyze one or more photos. Please try with different images.",
+        },
       },
       addressHelper: {
         mapButton: "Choose address on the interactive map",
@@ -408,6 +444,14 @@ export const en = {
     },
     openStreetMap: "OpenStreetMap",
     googleMaps: "Google Maps",
+    virtualTour: {
+      title: "Virtual tour",
+      subtitle: "Explore the property through an embedded interactive visit.",
+      openInNewTab: "Open tour in a new tab",
+      iframeTitle: "Virtual tour viewer",
+      fallback:
+        "This tour can’t be embedded here. Open it in a new tab to view it.",
+    },
     galleryPlaceholder: "No image available",
     galleryAlt: "Property image",
     morePhotos: "+{{count}} photos",

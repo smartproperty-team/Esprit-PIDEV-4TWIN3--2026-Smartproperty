@@ -10,6 +10,7 @@ import { User } from '../users/entities/user.entity';
 import { AiDescriptionService } from './ai-description.service';
 import { AiPricingService } from './ai-pricing.service';
 import { AiRecommendationService } from './ai-recommendation.service';
+import { AiVirtualTourService } from './ai-virtual-tour.service';
 import { Property } from './entities/property.entity';
 import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
@@ -26,6 +27,7 @@ import { PropertyImagesService } from './property-images.service';
     PropertyImagesService,
     AiDescriptionService,
     AiPricingService,
+    AiVirtualTourService,
     AiRecommendationService,
   ],
   controllers: [PropertiesController, PropertyImagesController],

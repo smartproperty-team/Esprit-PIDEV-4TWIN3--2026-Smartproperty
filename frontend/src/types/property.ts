@@ -132,6 +132,7 @@ export interface CreatePropertyDto {
   currency?: string;
   address: PropertyAddress;
   features?: PropertyFeatures;
+  virtualTour?: string;
 }
 
 export interface UpdatePropertyDto extends Partial<CreatePropertyDto> {}

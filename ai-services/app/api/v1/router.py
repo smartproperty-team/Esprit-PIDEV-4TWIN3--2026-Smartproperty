@@ -2,52 +2,32 @@
 # SmartProperty AI Services - API Router
 # ===========================================
 
-from fastapi import APIRouter
+from importlib import import_module
 
-from app.api.v1.endpoints import (
-    recommendations,
-    pricing,
-    image_analysis,
-    search,
-    analytics,
-    marketing,
-)
+from fastapi import APIRouter
+from loguru import logger
 
 api_router = APIRouter()
 
-# Include all endpoint routers
-api_router.include_router(
-    recommendations.router,
-    prefix="/recommendations",
-    tags=["Recommendations"],
-)
+_ENDPOINTS = [
+    ("recommendations", "/recommendations", ["Recommendations"]),
+    ("pricing", "/pricing", ["Price Prediction"]),
+    ("image_analysis", "/images", ["Image Analysis"]),
+    ("search", "/search", ["Smart Search"]),
+    ("analytics", "/analytics", ["Market Analytics"]),
+    ("marketing", "/marketing", ["Marketing & Distribution"]),
+    ("virtual_tour", "/virtual-tour", ["Virtual Tour"]),
+]
 
-api_router.include_router(
-    pricing.router,
-    prefix="/pricing",
-    tags=["Price Prediction"],
-)
-
-api_router.include_router(
-    image_analysis.router,
-    prefix="/images",
-    tags=["Image Analysis"],
-)
-
-api_router.include_router(
-    search.router,
-    prefix="/search",
-    tags=["Smart Search"],
-)
-
-api_router.include_router(
-    analytics.router,
-    prefix="/analytics",
-    tags=["Market Analytics"],
-)
-
-api_router.include_router(
-    marketing.router,
-    prefix="/marketing",
-    tags=["Marketing & Distribution"],
-)
+# Load endpoint routers defensively so core features can still boot
+# when optional ML dependencies are unavailable in local dev.
+for module_name, prefix, tags in _ENDPOINTS:
+    try:
+        module = import_module(f"app.api.v1.endpoints.{module_name}")
+        api_router.include_router(module.router, prefix=prefix, tags=tags)
+    except Exception as exc:  # pragma: no cover - startup resilience
+        logger.warning(
+            "Skipping endpoint module '{}' due to import error: {}",
+            module_name,
+            exc,
+        )
