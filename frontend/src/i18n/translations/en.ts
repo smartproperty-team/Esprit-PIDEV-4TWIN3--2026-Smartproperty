@@ -61,6 +61,8 @@ export const en = {
     exploreCitiesSubtitle: "Discover properties in top locations",
     properties: "Properties",
     forRent: "For Rent",
+    bestMatchTitle: "Best Match for You",
+    bestMatchSubtitle: "Properties selected based on your preferences",
     recentRentTitle: "Recent Properties for Rent",
     recentRentSubtitle: "Find your perfect rental home today",
     loadingProperties: "Loading properties...",
