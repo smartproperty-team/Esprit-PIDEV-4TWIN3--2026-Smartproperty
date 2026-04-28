@@ -299,11 +299,24 @@ export const en = {
         dropSubtitle: "or click to select (JPEG, PNG, WebP - max 10MB)",
         virtualTour: {
           enableFromPhotos: "Generate virtual tour from uploaded photos",
+          captureGuideTitle: "Owner photo capture guide",
+          captureGuideIntro:
+            "Capture photos so our AI can reliably stitch a clean 360° panorama. Follow these practical tips:",
+          guideStep1:
+            "Stand in one spot and take a full circle of evenly spaced horizontal photos (recommended 12–20).",
+          guideStep2:
+            "Ensure about 30%–50% overlap between adjacent photos; min {{width}}×{{height}} resolution recommended.",
+          guideStep3:
+            "Keep the camera level, use a fixed focal length (no zoom), and lock exposure/white balance if possible.",
+          guideStep4:
+            "Avoid moving people or objects in overlapping areas; add extra intermediate shots if unsure.",
           ruleMinPhotos: "Upload at least {{count}} photos for this property.",
           ruleResolution:
             "Each uploaded photo should be at least {{width}}x{{height}}.",
           ruleOverlap:
-            "Use overlapping room photos (around 30%-50%) for better results.",
+            "Ensure ~30%–50% overlap between neighboring photos for reliable stitching.",
+          diagramAlt:
+            "Illustration showing evenly spaced circular shots with overlap",
           minPhotosError:
             "To generate a virtual tour, upload at least {{count}} photos.",
           minResolutionError:

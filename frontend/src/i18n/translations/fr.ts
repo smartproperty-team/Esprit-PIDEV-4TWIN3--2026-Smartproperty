@@ -308,12 +308,25 @@ export const fr: Translations = {
         virtualTour: {
           enableFromPhotos:
             "Générer une visite virtuelle à partir des photos téléversées",
+          captureGuideTitle: "Guide photo pour le propriétaire",
+          captureGuideIntro:
+            "Prenez des photos pour que notre IA puisse assembler une panoramique 360° propre. Suivez ces conseils pratiques :",
+          guideStep1:
+            "Placez-vous au même endroit et prenez une série de photos horizontales tout autour (12–20 recommandées).",
+          guideStep2:
+            "Assurez ~30%–50% de recouvrement ; résolution {{width}}×{{height}} minimale recommandée.",
+          guideStep3:
+            "Gardez l'appareil à niveau, utilisez une focale fixe (pas de zoom) et verrouillez l'exposition/la balance des blancs si possible.",
+          guideStep4:
+            "Évitez les personnes/objets en mouvement dans les zones de recouvrement ; ajoutez des vues intermédiaires si nécessaire.",
           ruleMinPhotos:
             "Téléversez au moins {{count}} photos pour cette propriété.",
           ruleResolution:
             "Chaque photo doit avoir une résolution minimale de {{width}}x{{height}}.",
           ruleOverlap:
-            "Utilisez des photos de pièce avec recouvrement (environ 30%-50%) pour de meilleurs résultats.",
+            "Assurez ~30%–50% de recouvrement entre les photos voisines pour garantir l'assemblage.",
+          diagramAlt:
+            "Diagramme illustrant une série de prises de vue circulaires avec recouvrement",
           minPhotosError:
             "Pour générer une visite virtuelle, téléversez au moins {{count}} photos.",
           minResolutionError:

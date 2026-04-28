@@ -15,6 +15,7 @@ import { Repository } from 'typeorm';
 import { MinioService, UploadedFile } from '../upload/minio.service';
 import { UserRole } from '../users/entities/user.entity';
 import { hasPlatformAdminRole } from '../users/role-groups';
+import { AiVirtualTourService } from './ai-virtual-tour.service';
 import { Property } from './entities/property.entity';
 // ===========================================
 // Interfaces
@@ -35,9 +36,10 @@ export interface AddImagesResult {
   totalImages: number;
   virtualTourGeneration?: {
     requested: boolean;
-    status: 'requested';
+    status: 'queued' | 'processing' | 'completed' | 'failed';
     message: string;
     eligibleImageCount: number;
+    jobId?: string;
   };
 }
 
@@ -58,6 +60,7 @@ export class PropertyImagesService {
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
     private readonly minioService: MinioService,
+    private readonly aiVirtualTourService: AiVirtualTourService,
   ) {}
 
   // ===========================================
@@ -120,17 +123,77 @@ export class PropertyImagesService {
 
     if (generateVirtualTour) {
       const eligibleImageCount = property.images?.length || 0;
-      this.logger.log(
-        `Virtual tour generation requested for property ${propertyId} with ${eligibleImageCount} images`,
-      );
+      try {
+        const aiResult = await this.aiVirtualTourService.requestGeneration({
+          propertyId,
+          requestedBy: userId,
+          processNow: true,
+          images: (property.images || [])
+            .filter(
+              (
+                image,
+              ): image is PropertyImage & {
+                url: string;
+                key: string;
+              } => Boolean(image.url && image.key),
+            )
+            .map((image) => ({
+              url: image.url,
+              key: image.key,
+            })),
+        });
 
-      result.virtualTourGeneration = {
-        requested: true,
-        status: 'requested',
-        message:
-          'Virtual tour generation request accepted. Processing pipeline integration pending.',
-        eligibleImageCount,
-      };
+        this.logger.log(
+          `Virtual tour generation queued for property ${propertyId} (job ${aiResult.jobId})`,
+        );
+
+        result.virtualTourGeneration = {
+          requested: true,
+          status: aiResult.status,
+          message: aiResult.message,
+          eligibleImageCount,
+          jobId: aiResult.jobId,
+        };
+
+        // Persist job id / result to property so UI and admins can inspect status/errors
+        if (aiResult.jobId) {
+          // store job id for later status checks
+          (property as any).virtualTourJobId = aiResult.jobId;
+        }
+
+        if (aiResult.status === 'completed' && aiResult.panoramaPath) {
+          property.virtualTour = aiResult.panoramaPath;
+          // clear any previous error
+          (property as any).virtualTourError = null;
+          await this.propertyRepository.save(property);
+          this.logger.log(
+            `Saved panorama to property ${propertyId}: ${aiResult.panoramaPath}`,
+          );
+        } else if (aiResult.status === 'failed') {
+          // persist error message for visibility in UI/admin
+          (property as any).virtualTourError =
+            aiResult.error || aiResult.message || 'Unknown error';
+          await this.propertyRepository.save(property);
+          this.logger.warn(
+            `Virtual tour generation failed for property ${propertyId} job=${aiResult.jobId} error=${(property as any).virtualTourError}`,
+          );
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Virtual tour AI generation could not be queued.';
+        this.logger.error(
+          `Virtual tour generation queue failed for property ${propertyId}: ${message}`,
+        );
+
+        result.virtualTourGeneration = {
+          requested: false,
+          status: 'failed',
+          message,
+          eligibleImageCount,
+        };
+      }
     }
 
     return result;
@@ -459,5 +522,184 @@ export class PropertyImagesService {
     }
 
     return String(value);
+  }
+
+  /**
+   * Get virtual tour panorama for a property
+   */
+  async getPanorama(propertyId: string) {
+    const property = await this.findPropertyOrFail(propertyId);
+
+    if (!property.virtualTour) {
+      this.logger.warn(
+        `Virtual tour panorama not available for property ${propertyId} (virtualTour field is empty)`,
+      );
+      throw new NotFoundException(
+        'Virtual tour panorama not available for this property',
+      );
+    }
+
+    this.logger.log(
+      `Attempting to retrieve panorama for property ${propertyId} from path: ${property.virtualTour}`,
+    );
+
+    const jobId = this.extractPanoramaJobId(property.virtualTour);
+    if (!jobId) {
+      this.logger.error(
+        `Failed to extract jobId from panoramaPath: ${property.virtualTour}`,
+      );
+      throw new NotFoundException('Failed to retrieve panorama image');
+    }
+
+    this.logger.log(
+      `Extracted jobId=${jobId} for property ${propertyId}. Requesting from AI service...`,
+    );
+
+    try {
+      const panorama = await this.aiVirtualTourService.getPanoramaImage(
+        propertyId,
+        jobId,
+      );
+      this.logger.log(
+        `Successfully retrieved panorama for property ${propertyId}`,
+      );
+      return panorama;
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve panorama for property ${propertyId} jobId=${jobId}: ${
+          (error as Error).message
+        }`,
+      );
+      throw new NotFoundException('Failed to retrieve panorama image');
+    }
+  }
+
+  /**
+   * Return AI virtual tour job status or persisted error for a property
+   */
+  async getVirtualTourStatus(propertyId: string) {
+    const property = await this.findPropertyOrFail(propertyId);
+
+    // If there is an explicit persisted error, return it immediately
+    const persistedError = (property as any).virtualTourError;
+    const persistedJobId = (property as any).virtualTourJobId;
+
+    if (!persistedJobId && !property.virtualTour && !persistedError) {
+      throw new NotFoundException(
+        'No virtual tour job or panorama found for this property',
+      );
+    }
+
+    // If we have a job id persisted, query AI service
+    if (persistedJobId) {
+      try {
+        const jobStatus =
+          await this.aiVirtualTourService.getJobStatus(persistedJobId);
+        return jobStatus;
+      } catch (err) {
+        this.logger.error(
+          `Failed to fetch virtual tour job status for property ${propertyId} job=${persistedJobId}: ${(err as Error).message}`,
+        );
+        throw err;
+      }
+    }
+
+    // If no job id but we have an error persisted, return that
+    if (persistedError) {
+      return {
+        jobId: null,
+        status: 'failed',
+        message: 'Virtual tour generation failed previously',
+        error: persistedError,
+      };
+    }
+
+    // Otherwise, attempt to derive job id from saved panorama path
+    const maybeJobId = this.extractPanoramaJobId(property.virtualTour || '');
+    if (maybeJobId) {
+      try {
+        const jobStatus =
+          await this.aiVirtualTourService.getJobStatus(maybeJobId);
+        return jobStatus;
+      } catch (err) {
+        this.logger.error(
+          `Failed to fetch virtual tour job status for property ${propertyId} job=${maybeJobId}: ${(err as Error).message}`,
+        );
+        throw err;
+      }
+    }
+
+    throw new NotFoundException(
+      'No virtual tour job information available for this property',
+    );
+  }
+
+  /**
+   * Trigger virtual tour generation for an existing property (uses already uploaded images)
+   */
+  async triggerVirtualTourGeneration(
+    propertyId: string,
+    userId: string,
+    userRole: UserRole,
+    processNow = true,
+  ) {
+    const property = await this.findPropertyOrFail(propertyId);
+
+    // Authorization
+    this.checkAuthorization(property, userId, userRole);
+
+    const images = (property.images || []).filter(
+      (img): img is { url: string; key: string } =>
+        Boolean(img && img.url && img.key),
+    );
+
+    if (images.length < PropertyImagesService.VIRTUAL_TOUR_MIN_IMAGES) {
+      throw new BadRequestException(
+        `Virtual tour generation requires at least ${PropertyImagesService.VIRTUAL_TOUR_MIN_IMAGES} images.`,
+      );
+    }
+
+    try {
+      const aiResult = await this.aiVirtualTourService.requestGeneration({
+        propertyId,
+        requestedBy: userId,
+        processNow,
+        images: images.map((i) => ({ url: i.url, key: i.key })),
+      });
+
+      // persist job id / errors similar to upload flow
+      if ((aiResult as any).jobId) {
+        (property as any).virtualTourJobId = (aiResult as any).jobId;
+      }
+
+      if (aiResult.status === 'completed' && aiResult.panoramaPath) {
+        property.virtualTour = aiResult.panoramaPath;
+        (property as any).virtualTourError = null;
+      } else if (aiResult.status === 'failed') {
+        (property as any).virtualTourError =
+          aiResult.error || aiResult.message || 'Unknown error';
+      }
+
+      await this.propertyRepository.save(property);
+
+      return aiResult;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      (property as any).virtualTourError = message;
+      await this.propertyRepository.save(property);
+      this.logger.error(
+        `Failed to queue virtual tour for property ${propertyId}: ${message}`,
+      );
+      throw err;
+    }
+  }
+
+  private extractPanoramaJobId(value: string): string | null {
+    const lastSegment = value.split(/[\\/]/).pop();
+    if (!lastSegment) {
+      return null;
+    }
+
+    return lastSegment.replace(/\.jpg$/i, '');
   }
 }

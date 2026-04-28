@@ -4,22 +4,25 @@
 
 import { useTranslation } from "@/i18n";
 import { useMemo } from "react";
+import PanoramicPanViewer from "./PanoramicPanViewer";
 
 type VirtualTourProvider =
   | "youtube"
   | "matterport"
   | "three-d-vista"
+  | "local-panorama"
   | "external";
 
 interface VirtualTourViewerProps {
   url?: string;
+  propertyId?: string;
 }
 
-interface TourEmbedConfig {
+interface TourViewConfig {
   provider: VirtualTourProvider;
-  embedUrl: string;
   label: string;
-  canEmbed: boolean;
+  kind: "embed" | "image" | "link";
+  sourceUrl: string;
 }
 
 function normalizeUrl(value: string): URL | null {
@@ -69,69 +72,79 @@ function buildYoutubeEmbedUrl(url: URL): string {
   return `https://www.youtube.com/embed/${videoId}`;
 }
 
-function buildEmbedConfig(rawUrl: string): TourEmbedConfig | null {
-  const parsedUrl = normalizeUrl(rawUrl);
-  if (!parsedUrl) {
-    return null;
-  }
+function buildViewConfig(
+  rawUrl: string | undefined,
+  propertyId: string | undefined,
+): TourViewConfig | null {
+  const trimmedUrl = rawUrl?.trim();
 
-  const provider = detectProvider(parsedUrl);
+  if (trimmedUrl) {
+    const parsedUrl = normalizeUrl(trimmedUrl);
+    if (parsedUrl) {
+      const provider = detectProvider(parsedUrl);
 
-  if (provider === "youtube") {
-    return {
-      provider,
-      embedUrl: buildYoutubeEmbedUrl(parsedUrl),
-      label: "YouTube",
-      canEmbed: true,
-    };
-  }
+      if (provider === "youtube") {
+        return {
+          provider,
+          label: "YouTube",
+          kind: "embed",
+          sourceUrl: buildYoutubeEmbedUrl(parsedUrl),
+        };
+      }
 
-  if (provider === "matterport") {
-    return {
-      provider,
-      embedUrl: parsedUrl.toString(),
-      label: "Matterport",
-      canEmbed: true,
-    };
-  }
+      if (provider === "matterport") {
+        return {
+          provider,
+          label: "Matterport",
+          kind: "embed",
+          sourceUrl: parsedUrl.toString(),
+        };
+      }
 
-  if (provider === "three-d-vista") {
-    return {
-      provider,
-      embedUrl: parsedUrl.toString(),
-      label: "3DVista",
-      canEmbed: true,
-    };
-  }
+      if (provider === "three-d-vista") {
+        return {
+          provider,
+          label: "3DVista",
+          kind: "embed",
+          sourceUrl: parsedUrl.toString(),
+        };
+      }
 
-  return {
-    provider,
-    embedUrl: parsedUrl.toString(),
-    label: "External tour",
-    canEmbed: false,
-  };
-}
-
-export default function VirtualTourViewer({ url }: VirtualTourViewerProps) {
-  const t = useTranslation();
-
-  const embedConfig = useMemo(() => {
-    if (!url?.trim()) {
-      return null;
+      return {
+        provider,
+        label: "External tour",
+        kind: "link",
+        sourceUrl: parsedUrl.toString(),
+      };
     }
 
-    return buildEmbedConfig(url.trim());
-  }, [url]);
-
-  if (!embedConfig) {
-    return null;
+    if (propertyId) {
+      return {
+        provider: "local-panorama",
+        label: "Generated panorama",
+        kind: "image",
+        sourceUrl: `/api/properties/${propertyId}/images/virtual-tour/panorama`,
+      };
+    }
   }
 
-  const isEmbeddedProvider =
-    embedConfig.canEmbed &&
-    (embedConfig.provider === "youtube" ||
-      embedConfig.provider === "matterport" ||
-      embedConfig.provider === "three-d-vista");
+  return null;
+}
+
+export default function VirtualTourViewer({
+  url,
+  propertyId,
+}: VirtualTourViewerProps) {
+  const t = useTranslation();
+
+  const viewConfig = useMemo(
+    () => buildViewConfig(url, propertyId),
+    [url, propertyId],
+  );
+
+  if (!viewConfig) {
+    return null;
+  }
 
   return (
     <section className="property-virtual-tour">
@@ -140,13 +153,13 @@ export default function VirtualTourViewer({ url }: VirtualTourViewerProps) {
           <h3>{t.propertyDetail.virtualTour.title}</h3>
           <p>{t.propertyDetail.virtualTour.subtitle}</p>
         </div>
-        <span className="property-virtual-tour-badge">{embedConfig.label}</span>
+        <span className="property-virtual-tour-badge">{viewConfig.label}</span>
       </div>
 
       <div className="property-virtual-tour-card">
-        {isEmbeddedProvider ? (
+        {viewConfig.kind === "embed" ? (
           <iframe
-            src={embedConfig.embedUrl}
+            src={viewConfig.sourceUrl}
             title={t.propertyDetail.virtualTour.iframeTitle}
             className="property-virtual-tour-frame"
             loading="lazy"
@@ -155,12 +168,19 @@ export default function VirtualTourViewer({ url }: VirtualTourViewerProps) {
             allow="fullscreen; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
+        ) : viewConfig.kind === "image" ? (
+          <div className="property-virtual-tour-image-wrap">
+            <PanoramicPanViewer
+              src={viewConfig.sourceUrl}
+              altText={t.propertyDetail.virtualTour.iframeTitle}
+            />
+          </div>
         ) : (
           <div className="property-virtual-tour-fallback">
             <div>
               <p>{t.propertyDetail.virtualTour.fallback}</p>
               <a
-                href={embedConfig.embedUrl}
+                href={viewConfig.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="property-virtual-tour-link"
@@ -172,16 +192,18 @@ export default function VirtualTourViewer({ url }: VirtualTourViewerProps) {
         )}
       </div>
 
-      <div className="property-virtual-tour-actions">
-        <a
-          href={embedConfig.embedUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="property-virtual-tour-link"
-        >
-          {t.propertyDetail.virtualTour.openInNewTab}
-        </a>
-      </div>
+      {viewConfig.kind !== "image" && (
+        <div className="property-virtual-tour-actions">
+          <a
+            href={viewConfig.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="property-virtual-tour-link"
+          >
+            {t.propertyDetail.virtualTour.openInNewTab}
+          </a>
+        </div>
+      )}
     </section>
   );
 }

@@ -300,12 +300,40 @@ export const propertyService = {
     return response.data;
   },
 
+  async updateImageCaption(
+    propertyId: string,
+    imageKey: string,
+    caption: string,
+  ): Promise<Property> {
+    const encodedKey = encodeURIComponent(imageKey);
+    const response = await api.patch<Property>(
+      `/properties/${propertyId}/images/${encodedKey}/caption`,
+      { caption },
+    );
+    return response.data;
+  },
+
   /**
    * Delete all images
    */
   async deleteAllImages(propertyId: string): Promise<Property> {
     const response = await api.delete<Property>(
       `/properties/${propertyId}/images`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Trigger virtual tour generation for a property using already uploaded images
+   */
+  async triggerVirtualTourGeneration(
+    propertyId: string,
+    processNow = true,
+  ): Promise<any> {
+    const response = await api.post(
+      `/properties/${propertyId}/images/virtual-tour/generate`,
+      { processNow },
+      { timeout: 90_000 },
     );
     return response.data;
   },

@@ -99,61 +99,6 @@ const CloseIcon = () => (
   </svg>
 );
 
-function detectVirtualTourProvider(url: string): {
-  label: string;
-  canEmbed: boolean;
-} | null {
-  if (!url.trim()) {
-    return null;
-  }
-
-  try {
-    const parsed = new URL(url.trim());
-    const hostname = parsed.hostname.toLowerCase();
-
-    if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
-      return { label: "YouTube", canEmbed: true };
-    }
-
-    if (hostname.includes("matterport.com")) {
-      return { label: "Matterport", canEmbed: true };
-    }
-
-    if (hostname.includes("3dvista.com")) {
-      return { label: "3DVista", canEmbed: true };
-    }
-
-    return { label: parsed.hostname, canEmbed: false };
-  } catch {
-    return null;
-  }
-}
-
-const VIRTUAL_TOUR_MIN_IMAGES = 8;
-const VIRTUAL_TOUR_MIN_WIDTH = 1600;
-const VIRTUAL_TOUR_MIN_HEIGHT = 900;
-
-function readImageDimensions(
-  file: File,
-): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      resolve({ width: image.naturalWidth, height: image.naturalHeight });
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Unable to read image dimensions"));
-    };
-
-    image.src = objectUrl;
-  });
-}
-
 // ===========================================
 // Form Data Interface
 // ===========================================
@@ -178,6 +123,10 @@ interface FormData {
   amenities: string;
   availableFrom: string;
   availableTo: string;
+}
+
+interface PendingImage {
+  file: File;
 }
 
 const initialFormData: FormData = {
@@ -229,7 +178,7 @@ export default function PropertyFormPage() {
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [existingImages, setExistingImages] = useState<
     { url: string; key: string }[]
   >([]);
@@ -250,39 +199,6 @@ export default function PropertyFormPage() {
   const [priceSuggestError, setPriceSuggestError] = useState<string | null>(
     null,
   );
-  const virtualTourPreview = detectVirtualTourProvider(formData.virtualTour);
-
-  const validateVirtualTourPhotoRules = async (): Promise<string | null> => {
-    if (!formData.generateVirtualTourFromPhotos) {
-      return null;
-    }
-
-    if (images.length < VIRTUAL_TOUR_MIN_IMAGES) {
-      return t.properties.form.image.virtualTour.minPhotosError.replace(
-        "{{count}}",
-        String(VIRTUAL_TOUR_MIN_IMAGES),
-      );
-    }
-
-    for (const file of images) {
-      try {
-        const dimensions = await readImageDimensions(file);
-        if (
-          dimensions.width < VIRTUAL_TOUR_MIN_WIDTH ||
-          dimensions.height < VIRTUAL_TOUR_MIN_HEIGHT
-        ) {
-          return t.properties.form.image.virtualTour.minResolutionError
-            .replace("{{width}}", String(VIRTUAL_TOUR_MIN_WIDTH))
-            .replace("{{height}}", String(VIRTUAL_TOUR_MIN_HEIGHT));
-        }
-      } catch {
-        return t.properties.form.image.virtualTour.readError;
-      }
-    }
-
-    return null;
-  };
-
   const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
     const amenitiesList = formData.amenities
       .split(",")
@@ -389,6 +305,7 @@ export default function PropertyFormPage() {
         price: property.price.toString(),
         currency: property.currency,
         virtualTour: property.virtualTour || "",
+        generateVirtualTourFromPhotos: false,
         address: {
           street: property.address.street,
           city: property.address.city,
@@ -457,7 +374,7 @@ export default function PropertyFormPage() {
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
       return isValid && isValidSize;
     });
-    setImages((prev) => [...prev, ...validFiles]);
+       setImages((prev) => [...prev, ...validFiles]);
   };
 
   // Handle image removal
@@ -607,12 +524,6 @@ export default function PropertyFormPage() {
 
     if (!validate()) return;
 
-    const virtualTourValidationError = await validateVirtualTourPhotoRules();
-    if (virtualTourValidationError) {
-      alert(virtualTourValidationError);
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -673,9 +584,10 @@ export default function PropertyFormPage() {
 
       // Upload new images if any
       if (images.length > 0) {
-        await propertyService.uploadImages(propertyId, images, {
-          generateVirtualTour: formData.generateVirtualTourFromPhotos,
-        });
+        await propertyService.uploadImages(
+          propertyId,
+          images,
+        );
       }
 
       navigate(`/properties/${propertyId}`);
@@ -784,36 +696,6 @@ export default function PropertyFormPage() {
                   </option>
                   <option value="sale">{t.properties.form.labels.sale}</option>
                 </select>
-              </div>
-
-              <div className="form-group full-width">
-                <label htmlFor="virtualTour">
-                  {t.properties.form.labels.virtualTour}
-                </label>
-                <input
-                  id="virtualTour"
-                  name="virtualTour"
-                  type="url"
-                  value={formData.virtualTour}
-                  onChange={handleChange}
-                  placeholder={t.properties.form.placeholders.virtualTour}
-                />
-                <p className="form-helper-text">
-                  {t.properties.form.help.virtualTour}
-                </p>
-                {virtualTourPreview && (
-                  <p className="form-helper-text">
-                    {virtualTourPreview.canEmbed
-                      ? t.properties.form.help.virtualTourEmbedded.replace(
-                          "{{provider}}",
-                          virtualTourPreview.label,
-                        )
-                      : t.properties.form.help.virtualTourLinkOnly.replace(
-                          "{{provider}}",
-                          virtualTourPreview.label,
-                        )}
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -1262,42 +1144,49 @@ export default function PropertyFormPage() {
               />
             </div>
 
-            <div className="virtual-tour-upload-rules">
-              <label className="virtual-tour-upload-rules-label">
-                <input
-                  type="checkbox"
-                  name="generateVirtualTourFromPhotos"
-                  checked={formData.generateVirtualTourFromPhotos}
-                  onChange={handleChange}
+            <div className="virtual-tour-owner-guide">
+              <h4>{t.properties.form.image.virtualTour.captureGuideTitle}</h4>
+              <p>{t.properties.form.image.virtualTour.captureGuideIntro}</p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                }}
+              >
+                <img
+                  src="/images/virtual-tour-diagram.svg"
+                  alt={t.properties.form.image.virtualTour.diagramAlt}
+                  className="virtual-tour-diagram"
+                  style={{ maxWidth: 320, width: "100%", height: "auto" }}
                 />
-                <span>
-                  {t.properties.form.image.virtualTour.enableFromPhotos}
-                </span>
-              </label>
-
-              {formData.generateVirtualTourFromPhotos && (
-                <ul className="virtual-tour-upload-rules-list">
+                <ol>
                   <li>
-                    {t.properties.form.image.virtualTour.ruleMinPhotos.replace(
+                    {t.properties.form.image.virtualTour.guideStep1.replace(
                       "{{count}}",
                       String(VIRTUAL_TOUR_MIN_IMAGES),
                     )}
                   </li>
                   <li>
-                    {t.properties.form.image.virtualTour.ruleResolution
+                    {t.properties.form.image.virtualTour.guideStep2
                       .replace("{{width}}", String(VIRTUAL_TOUR_MIN_WIDTH))
                       .replace("{{height}}", String(VIRTUAL_TOUR_MIN_HEIGHT))}
                   </li>
-                  <li>{t.properties.form.image.virtualTour.ruleOverlap}</li>
-                </ul>
-              )}
+                  <li>{t.properties.form.image.virtualTour.guideStep3}</li>
+                  <li>{t.properties.form.image.virtualTour.guideStep4}</li>
+                </ol>
+              </div>
             </div>
 
             {images.length > 0 && (
               <div className="image-preview-grid">
                 {images.map((file, index) => (
                   <div key={index} className="image-preview-item">
-                    <img src={URL.createObjectURL(file)} alt={file.name} />
+                    <img
+                       src={URL.createObjectURL(file)}
+                       alt={`Preview ${index + 1}`}
+                    />
                     <button
                       type="button"
                       className="image-preview-remove"
@@ -1362,42 +1251,7 @@ export default function PropertyFormPage() {
         );
 
       default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="property-form-page">
-      <Navbar />
-
-      <main className="property-form-container">
-        {/* Header */}
-        <div className="property-form-header">
-          <h1>
-            {isEditing
-              ? t.properties.form.page.editTitle
-              : t.properties.form.page.createTitle}
-          </h1>
-          <p>
-            {isEditing
-              ? t.properties.form.page.editDescription
-              : t.properties.form.page.createDescription}
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="property-form" role="form">
-          <Stepper
-            steps={wizardSteps}
-            currentStep={currentStep}
-            ariaLabel={t.properties.form.stepsAriaLabel}
-            allowStepNavigation
-            onStepChange={handleStepChange}
-            actions={
-              <div className="wizard-nav-actions">
-                <Link to="/properties" className="btn-cancel">
-                  {t.common.cancel}
-                </Link>
+                    </div>
                 <div className="wizard-nav-primary">
                   {currentStep !== PRICING_STEP_INDEX && (
                     <button

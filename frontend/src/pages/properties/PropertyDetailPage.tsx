@@ -4,6 +4,7 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
+import PanoramicPanViewer from "@/components/properties/PanoramicPanViewer";
 import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
 import { useTranslation } from "@/i18n";
 import applicationService from "@/services/application.service";
@@ -622,7 +623,7 @@ function ImageGallery({ images }: ImageGalleryProps) {
   });
 
   const mainImage = sortedImages[selectedIndex] || sortedImages[0];
-  const thumbnails = sortedImages.slice(0, 4);
+  const thumbnails = sortedImages.slice(1, 5);
 
   if (images.length === 0) {
     return (
@@ -643,42 +644,183 @@ function ImageGallery({ images }: ImageGalleryProps) {
         <img
           src={mainImage?.url}
           alt={mainImage?.caption || t.propertyDetail.galleryAlt}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
-          }}
         />
       </div>
       {images.length > 1 && (
         <div className="gallery-thumbnails">
-          {thumbnails.slice(1, 3).map((img, index) => (
+          {thumbnails.map((img, index) => (
             <button
               type="button"
-              key={img.key || index}
-              className="gallery-thumb"
+              key={img.key || index + 1}
+              className={`gallery-thumb ${selectedIndex === index + 1 ? "is-active" : ""}`}
               onClick={() => setSelectedIndex(index + 1)}
               aria-label={`Show image ${index + 2}`}
             >
               <img
                 src={img.url}
-                alt={img.caption || t.propertyDetail.galleryAlt}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "/placeholder-property.svg";
-                }}
+                alt={
+                  img.caption || `${t.propertyDetail.galleryAlt} ${index + 2}`
+                }
               />
-              {index === 1 && images.length > 3 && (
-                <div className="gallery-more">
-                  {t.propertyDetail.morePhotos.replace(
-                    "{{count}}",
-                    String(images.length - 3),
-                  )}
-                </div>
+              {images.length > 5 && index === 3 && (
+                <div className="gallery-more">+{images.length - 5}</div>
               )}
             </button>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+interface VirtualRooms360Props {
+  rooms: PropertyImage[];
+}
+
+const PANORAMA_CAPTION_PREFIX = "__VR360__";
+
+const PANORAMA_RATIO_THRESHOLD = 1.8;
+
+const getImageIdentity = (image: PropertyImage): string =>
+  image.key || image.url;
+
+const isLikelyPanoramaByShape = (width: number, height: number): boolean => {
+  if (!width || !height) return false;
+  return width / height >= PANORAMA_RATIO_THRESHOLD;
+};
+
+const getRoomTitle = (image: PropertyImage): string => {
+  const caption = image.caption?.trim() || "";
+  if (caption.startsWith(PANORAMA_CAPTION_PREFIX)) {
+    return caption.slice(PANORAMA_CAPTION_PREFIX.length).trim();
+  }
+  return caption;
+};
+
+const getRoomDisplayName = (image: PropertyImage): string =>
+  getRoomTitle(image) || "Panoramic room";
+
+const isMarkedPanoramaRoom = (image: PropertyImage): boolean =>
+  Boolean(image.caption?.trim().startsWith(PANORAMA_CAPTION_PREFIX));
+
+function VirtualRooms360({ rooms }: VirtualRooms360Props) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const sortedRooms = [...rooms].sort((a, b) => {
+    if (a.isPrimary) return -1;
+    if (b.isPrimary) return 1;
+    return (a.order || 0) - (b.order || 0);
+  });
+
+  const activeRoom =
+    activeIndex === null ? null : (sortedRooms[activeIndex] ?? sortedRooms[0]);
+
+  const closeViewer = () => setActiveIndex(null);
+
+  const showPreviousRoom = () => {
+    setActiveIndex((current) => {
+      if (current === null) return 0;
+      return current === 0 ? sortedRooms.length - 1 : current - 1;
+    });
+  };
+
+  const showNextRoom = () => {
+    setActiveIndex((current) => {
+      if (current === null) return 0;
+      return current >= sortedRooms.length - 1 ? 0 : current + 1;
+    });
+  };
+
+  useEffect(() => {
+    if (activeIndex === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeViewer();
+      }
+      if (event.key === "ArrowLeft") {
+        showPreviousRoom();
+      }
+      if (event.key === "ArrowRight") {
+        showNextRoom();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex]);
+
+  if (rooms.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="property-rooms-360">
+      <div className="property-rooms-360-header">
+        <h3>3D Virtual Tour</h3>
+        <p>Click a room to open the full-screen 360 viewer.</p>
+      </div>
+
+      <div className="property-rooms-360-grid">
+        {sortedRooms.map((room, index) => (
+          <button
+            key={room.key || index}
+            type="button"
+            className="property-rooms-360-card"
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Open ${getRoomDisplayName(room)} in panoramic viewer`}
+          >
+            <img src={room.url} alt={getRoomDisplayName(room)} />
+            <span>{getRoomDisplayName(room)}</span>
+            <small>Panoramic 360 room</small>
+          </button>
+        ))}
+      </div>
+
+      {activeRoom && (
+        <div
+          className="property-rooms-360-modal"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            className="property-rooms-360-close"
+            onClick={closeViewer}
+            aria-label="Close 360 viewer"
+          >
+            ×
+          </button>
+          <button
+            type="button"
+            className="property-rooms-360-arrow property-rooms-360-arrow-left"
+            onClick={showPreviousRoom}
+            aria-label="Previous room"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            className="property-rooms-360-arrow property-rooms-360-arrow-right"
+            onClick={showNextRoom}
+            aria-label="Next room"
+          >
+            ▶
+          </button>
+          <div className="property-rooms-360-viewer">
+            <PanoramicPanViewer
+              src={activeRoom.url}
+              altText={getRoomDisplayName(activeRoom)}
+            />
+            <div className="property-rooms-360-title">
+              <strong>{getRoomDisplayName(activeRoom)}</strong>
+              <span>
+                {(activeIndex ?? 0) + 1} / {sortedRooms.length}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -702,6 +844,9 @@ export default function PropertyDetailPage() {
   const [checkingApplication, setCheckingApplication] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiSaveError, setAiSaveError] = useState<string | null>(null);
+  const [detectedPanoramaKeys, setDetectedPanoramaKeys] = useState<string[]>(
+    [],
+  );
 
   const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
     if (!property) return {};
@@ -762,6 +907,49 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     loadProperty();
   }, [loadProperty]);
+
+  useEffect(() => {
+    const images = property?.images || [];
+    if (images.length === 0) {
+      setDetectedPanoramaKeys([]);
+      return;
+    }
+
+    const candidates = images.filter((image) => !isMarkedPanoramaRoom(image));
+    if (candidates.length === 0) {
+      setDetectedPanoramaKeys([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    Promise.all(
+      candidates.map(
+        (image) =>
+          new Promise<string | null>((resolve) => {
+            const probe = new Image();
+            probe.onload = () => {
+              resolve(
+                isLikelyPanoramaByShape(probe.naturalWidth, probe.naturalHeight)
+                  ? getImageIdentity(image)
+                  : null,
+              );
+            };
+            probe.onerror = () => resolve(null);
+            probe.src = image.url;
+          }),
+      ),
+    ).then((keys) => {
+      if (isCancelled) return;
+      setDetectedPanoramaKeys(
+        keys.filter((key): key is string => Boolean(key)),
+      );
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [property?.images]);
 
   useEffect(() => {
     const propertyId = property?.id || property?._id;
@@ -972,6 +1160,19 @@ export default function PropertyDetailPage() {
     );
   }
 
+  const allImages = property.images || [];
+  const virtualRooms = allImages.filter(
+    (image) =>
+      isMarkedPanoramaRoom(image) ||
+      detectedPanoramaKeys.includes(getImageIdentity(image)),
+  );
+  const normalImages = allImages.filter(
+    (image) =>
+      !virtualRooms.some(
+        (room) => getImageIdentity(room) === getImageIdentity(image),
+      ),
+  );
+
   return (
     <div className="property-detail-page">
       <Navbar />
@@ -1011,10 +1212,16 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        <VirtualTourViewer url={property.virtualTour} />
+        {virtualRooms.length > 0 && <VirtualRooms360 rooms={virtualRooms} />}
 
-        {/* Image Gallery */}
-        <ImageGallery images={property.images || []} />
+        <ImageGallery images={normalImages} />
+
+        {normalImages.length === 0 && virtualRooms.length === 0 && (
+          <VirtualTourViewer
+            url={property.virtualTour}
+            propertyId={property.id}
+          />
+        )}
 
         {/* Content */}
         <div className="property-content">
@@ -1306,6 +1513,12 @@ export default function PropertyDetailPage() {
                     className="btn-edit sidebar-action-link"
                   >
                     {t.propertyDetail.manageImages}
+                  </Link>
+                  <Link
+                    to={`/properties/${property.id || property._id}/virtual-visit`}
+                    className="btn-view sidebar-action-link"
+                  >
+                    3D Virtual Tour
                   </Link>
                   <button
                     className="btn-delete btn-delete-full"

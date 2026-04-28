@@ -20,6 +20,10 @@ describe('PropertyImagesService', () => {
     uploadFiles: jest.fn(),
   } as any;
 
+  const aiVirtualTourService = {
+    requestGeneration: jest.fn(),
+  } as any;
+
   const buildFile = (name: string, type = 'image/jpeg'): Express.Multer.File =>
     ({
       fieldname: 'images',
@@ -36,7 +40,17 @@ describe('PropertyImagesService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new PropertyImagesService(propertyRepository, minioService);
+    aiVirtualTourService.requestGeneration.mockResolvedValue({
+      jobId: 'vt-job-1',
+      status: 'queued',
+      message: 'Virtual tour generation queued successfully.',
+      acceptedImageCount: 8,
+    });
+    service = new PropertyImagesService(
+      propertyRepository,
+      minioService,
+      aiVirtualTourService,
+    );
   });
 
   it('rejects generation request when total image count is below minimum', async () => {
@@ -94,10 +108,19 @@ describe('PropertyImagesService', () => {
     expect(result.virtualTourGeneration).toEqual(
       expect.objectContaining({
         requested: true,
-        status: 'requested',
+        status: 'queued',
         eligibleImageCount: 8,
+        jobId: 'vt-job-1',
       }),
     );
     expect(result.totalImages).toBe(8);
+    expect(aiVirtualTourService.requestGeneration).toHaveBeenCalledTimes(1);
+    expect(aiVirtualTourService.requestGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        propertyId,
+        requestedBy: 'owner-1',
+        processNow: true,
+      }),
+    );
   });
 });

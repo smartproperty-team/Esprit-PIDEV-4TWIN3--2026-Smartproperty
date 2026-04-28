@@ -66,6 +66,9 @@ const PropertyFormPage = lazy(
 const PropertyDetailPage = lazy(
   () => import("./pages/properties/PropertyDetailPage"),
 );
+const VirtualVisitFormPage = lazy(
+  () => import("./pages/properties/VirtualVisitFormPage"),
+);
 
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
 const MaintenanceRequestFormPage = lazy(
@@ -454,6 +457,18 @@ function App() {
             }
           />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
+          <Route
+            path="/properties/:id/virtual-visit"
+            element={
+              <ProtectedRoute>
+                {canManageProperties(user) ? (
+                  <VirtualVisitFormPage />
+                ) : (
+                  <Navigate to="/properties" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/properties/:id/edit"
             element={
