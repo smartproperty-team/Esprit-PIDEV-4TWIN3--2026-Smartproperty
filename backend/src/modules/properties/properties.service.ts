@@ -246,6 +246,46 @@ export class PropertiesService {
     return Array.from(new Set(owners.map((owner) => owner.id)));
   }
 
+  private async getAgencyIdForUser(
+    userId?: string,
+  ): Promise<string | undefined> {
+    if (!userId || !ObjectId.isValid(userId)) {
+      return undefined;
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(userId) },
+    });
+
+    if (!user?.agencyId || !ObjectId.isValid(user.agencyId)) {
+      return undefined;
+    }
+
+    return user.agencyId;
+  }
+
+  private async resolvePropertyAgencyId(
+    currentUserId: string,
+    ownerId: string,
+    currentUserRole: UserRole,
+  ): Promise<string | undefined> {
+    if (!hasPlatformAdminRole(currentUserRole)) {
+      return this.getAgencyIdForUser(currentUserId);
+    }
+
+    if (ownerId && ObjectId.isValid(ownerId)) {
+      const owner = await this.usersRepository.findOne({
+        where: { _id: new ObjectId(ownerId) },
+      });
+
+      if (owner?.agencyId && ObjectId.isValid(owner.agencyId)) {
+        return owner.agencyId;
+      }
+    }
+
+    return this.getAgencyIdForUser(currentUserId);
+  }
+
   private async mapPropertiesWithOwnerSummary(properties: Property[]) {
     if (!properties.length) {
       return [];
@@ -268,6 +308,41 @@ export class PropertiesService {
           id: owner.id,
           name: owner.fullName,
           email: owner.email,
+          agencyId: owner.agencyId,
+        },
+      ]),
+    );
+
+    const agencyIds = Array.from(
+      new Set(
+        [
+          ...properties.map((property) => property.agencyId),
+          ...owners.map((owner) => owner.agencyId),
+        ]
+          .filter((agencyId): agencyId is string => !!agencyId)
+          .filter((agencyId) => ObjectId.isValid(agencyId)),
+      ),
+    );
+
+    const agencies =
+      agencyIds.length > 0
+        ? await this.agenciesRepository.find({
+            where: {
+              _id: {
+                $in: agencyIds.map((agencyId) => new ObjectId(agencyId)),
+              } as any,
+            } as any,
+          })
+        : [];
+
+    const agenciesById = new Map(
+      agencies.map((agency) => [
+        agency.id,
+        {
+          id: agency.id,
+          name: agency.name,
+          slug: agency.slug,
+          region: agency.region,
         },
       ]),
     );
@@ -278,6 +353,16 @@ export class PropertiesService {
 
       if (owner) {
         json.owner = owner;
+      }
+
+      const resolvedAgencyId = property.agencyId || owner?.agencyId;
+      if (resolvedAgencyId) {
+        json.agencyId = resolvedAgencyId;
+
+        const agency = agenciesById.get(resolvedAgencyId);
+        if (agency) {
+          json.agency = agency;
+        }
       }
 
       return json;
@@ -416,7 +501,14 @@ export class PropertiesService {
     }
 
     if (currentUserRole === UserRole.OWNER) {
-      where.ownerId = currentUserId;
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
+
+      if (agencyId) {
+        where.$or = [{ ownerId: currentUserId }, { agencyId }];
+      } else {
+        where.ownerId = currentUserId;
+      }
+
       return where;
     }
 
@@ -427,6 +519,7 @@ export class PropertiesService {
     ) {
       const agencyOwnerIds =
         await this.getAgencyOwnerIdsForManager(currentUserId);
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
 
       if (scope === 'owner') {
         if (agencyOwnerIds.length > 0) {
@@ -439,10 +532,18 @@ export class PropertiesService {
       }
 
       if (agencyOwnerIds.length > 0) {
-        where.$or = [
+        const scopedOr: Record<string, any>[] = [
           { managerId: currentUserId },
           { ownerId: { $in: agencyOwnerIds } },
         ];
+
+        if (agencyId) {
+          scopedOr.push({ agencyId });
+        }
+
+        where.$or = scopedOr;
+      } else if (agencyId) {
+        where.$or = [{ managerId: currentUserId }, { agencyId }];
       } else {
         where.managerId = currentUserId;
       }
@@ -451,10 +552,12 @@ export class PropertiesService {
     }
 
     if (currentUserRole === UserRole.ACCOUNTANT_ADMIN_ASSISTANT) {
-      if (scope === 'owner') {
-        where.ownerId = currentUserId;
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
+
+      if (agencyId) {
+        where.agencyId = agencyId;
       } else {
-        where.managerId = currentUserId;
+        where.ownerId = '__none__';
       }
 
       return where;
@@ -953,6 +1056,12 @@ export class PropertiesService {
       managerId = await this.getAgencyManagerIdForOwner(currentUserId);
     }
 
+    const agencyId = await this.resolvePropertyAgencyId(
+      currentUserId,
+      ownerId,
+      currentUserRole,
+    );
+
     createPropertyDto.virtualTour = this.sanitizeVirtualTourUrl(
       createPropertyDto.virtualTour,
     );
@@ -964,6 +1073,7 @@ export class PropertiesService {
       ...createPropertyDto,
       ownerId,
       managerId,
+      agencyId,
       status: createPropertyDto.status || PropertyStatus.AVAILABLE,
       currency: createPropertyDto.currency || 'USD',
       createdAt: new Date(),
@@ -1013,6 +1123,7 @@ export class PropertiesService {
     const managerAgencyOwnerIds = await this.getAgencyOwnerIdsForManager(
       options.managerId,
     );
+    const managerAgencyId = await this.getAgencyIdForUser(options.managerId);
 
     if (options.type) {
       where.type = options.type;
@@ -1072,11 +1183,21 @@ export class PropertiesService {
 
     let effectiveWhere: Record<string, any> = where;
 
-    if (options.managerId && managerAgencyOwnerIds.length > 0) {
-      const managerScopeOr = [
+    if (
+      options.managerId &&
+      (managerAgencyOwnerIds.length > 0 || !!managerAgencyId)
+    ) {
+      const managerScopeOr: Record<string, any>[] = [
         { managerId: options.managerId },
-        { ownerId: { $in: managerAgencyOwnerIds } },
       ];
+
+      if (managerAgencyOwnerIds.length > 0) {
+        managerScopeOr.push({ ownerId: { $in: managerAgencyOwnerIds } });
+      }
+
+      if (managerAgencyId) {
+        managerScopeOr.push({ agencyId: managerAgencyId });
+      }
 
       const baseWhere = { ...where };
       const existingSearchOr = baseWhere.$or;
@@ -1164,6 +1285,13 @@ export class PropertiesService {
     }
 
     return property;
+  }
+
+  async findByIdView(id: string): Promise<Record<string, any>> {
+    const property = await this.findById(id);
+    const [serialized] = await this.mapPropertiesWithOwnerSummary([property]);
+
+    return serialized || property.toJSON();
   }
 
   async update(
@@ -1615,6 +1743,11 @@ export class PropertiesService {
         currentUserId,
         currentUserRole,
       );
+      const agencyId = await this.resolvePropertyAgencyId(
+        currentUserId,
+        scopedIds.ownerId,
+        currentUserRole,
+      );
 
       if (skipDuplicates) {
         const duplicate = await this.propertyRepository.findOne({
@@ -1662,6 +1795,7 @@ export class PropertiesService {
         },
         ownerId: scopedIds.ownerId,
         managerId: scopedIds.managerId,
+        agencyId,
       } as Partial<Property>);
 
       try {

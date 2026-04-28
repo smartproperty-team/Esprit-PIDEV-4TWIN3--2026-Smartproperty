@@ -61,6 +61,15 @@ export const LEASE_PARTICIPANT_ROLES: UserRole[] = [
   ...LEASE_MANAGEMENT_ROLES,
 ];
 
+export const FAVORITES_ROLES: UserRole[] = [UserRole.TENANT];
+
+export const REVIEW_AUTHOR_ROLES: UserRole[] = [UserRole.TENANT];
+
+export const REVIEW_MODERATION_ROLES: UserRole[] = [
+  UserRole.OWNER,
+  ...APPLICATION_REVIEW_ROLES,
+];
+
 export const SELF_REGISTRABLE_ROLES: UserRole[] = [
   UserRole.TENANT,
   UserRole.OWNER,

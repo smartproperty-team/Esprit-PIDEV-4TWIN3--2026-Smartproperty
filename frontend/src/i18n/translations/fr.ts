@@ -64,6 +64,8 @@ export const fr: Translations = {
       "Découvrez des propriétés dans les meilleurs endroits",
     properties: "Propriétés",
     forRent: "À louer",
+    bestMatchTitle: "Meilleure correspondance pour vous",
+    bestMatchSubtitle: "Biens sélectionnés selon vos préférences",
     recentRentTitle: "Propriétés récentes à louer",
     recentRentSubtitle: "Trouvez votre logement idéal aujourd'hui",
     loadingProperties: "Chargement des propriétés...",
@@ -141,6 +143,9 @@ export const fr: Translations = {
     myProperties: "Mes propriétés",
     myPropertiesDesc:
       "Propriétés qui vous appartiennent et que vous pouvez modifier.",
+    myAgencyProperties: "Propriétés de mon agence",
+    myAgencyPropertiesDesc:
+      "Propriétés liées à votre agence et visibles par les rôles de votre agence.",
     loading: "Chargement des propriétés...",
     retry: "Réessayer",
     noProperties: "Aucune propriété trouvée",
@@ -526,6 +531,7 @@ export const fr: Translations = {
     deleteConfirm: "Êtes-vous sûr de vouloir supprimer cette propriété ?",
     deleteError: "Impossible de supprimer la propriété. Veuillez réessayer.",
     owner: "Propriétaire",
+    agency: "Agence",
     ownerFallback: "Propriétaire",
     contactOwner: "Contacter",
     info: "Informations",

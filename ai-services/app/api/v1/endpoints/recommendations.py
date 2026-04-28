@@ -6,6 +6,9 @@ from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+from loguru import logger
+
+from app.services.recommendation_service import recommendation_service
 
 router = APIRouter()
 
@@ -80,44 +83,36 @@ async def get_user_recommendations(
     Uses collaborative filtering and content-based filtering
     to suggest properties based on user preferences and behavior.
     """
-    # TODO: Implement ML recommendation logic
-    # For now, return mock data
-    
+    try:
+        results = await recommendation_service.get_user_recommendations(
+            user_id=user_id,
+            limit=limit,
+            include_viewed=include_viewed,
+        )
+    except Exception as exc:
+        logger.warning(f"recommendations lookup failed for user={user_id}: {exc}")
+        results = []
+
+    recommendations = [
+        PropertyRecommendation(
+            property_id=item.get("property_id", ""),
+            title=(item.get("property") or {}).get("title", ""),
+            score=float(item.get("score", 0.0)),
+            price=float((item.get("property") or {}).get("price", 0.0)),
+            property_type=(item.get("property") or {}).get("type", "unknown"),
+            location=((item.get("property") or {}).get("address") or {}).get("city", ""),
+            bedrooms=int(((item.get("property") or {}).get("features") or {}).get("bedrooms", 0) or 0),
+            bathrooms=int(((item.get("property") or {}).get("features") or {}).get("bathrooms", 0) or 0),
+            match_reasons=item.get("match_reasons", []) or [],
+        )
+        for item in results
+    ]
+
     return RecommendationResponse(
         user_id=user_id,
-        recommendations=[
-            PropertyRecommendation(
-                property_id="prop_001",
-                title="Modern 2BR Apartment Downtown",
-                score=0.95,
-                price=1500,
-                property_type="apartment",
-                location="Downtown",
-                bedrooms=2,
-                bathrooms=1,
-                match_reasons=[
-                    "Matches your price range",
-                    "In your preferred location",
-                    "Similar to properties you viewed"
-                ]
-            ),
-            PropertyRecommendation(
-                property_id="prop_002",
-                title="Cozy Studio near University",
-                score=0.87,
-                price=900,
-                property_type="studio",
-                location="University District",
-                bedrooms=0,
-                bathrooms=1,
-                match_reasons=[
-                    "Budget-friendly option",
-                    "Close to public transport"
-                ]
-            ),
-        ],
-        total_count=2,
-        algorithm="collaborative_filtering"
+        recommendations=recommendations,
+        total_count=len(recommendations),
+        algorithm="preference_based",
     )
 
 
@@ -132,13 +127,13 @@ async def get_recommendations_by_preferences(
     
     Can be used for anonymous users or to override user preferences.
     """
-    # TODO: Implement content-based filtering
-    
+    # TODO: use preferences payload as an override source; for now this endpoint
+    # remains available and returns an empty list when no user profile is provided.
     return RecommendationResponse(
         user_id=user_id or "anonymous",
         recommendations=[],
         total_count=0,
-        algorithm="content_based"
+        algorithm="preference_based"
     )
 
 

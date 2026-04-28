@@ -73,6 +73,16 @@ const MAINTENANCE_PROVIDER_ROLES: UserRole[] = [UserRole.SERVICE_PROVIDER];
 
 const AGENCY_ONBOARDING_ROLES: UserRole[] = [UserRole.BRANCH_MANAGER];
 
+const FAVORITES_ROLES: UserRole[] = [UserRole.TENANT];
+
+const REVIEW_MODERATION_ROLES: UserRole[] = [
+  UserRole.SUPER_ADMIN,
+  UserRole.OWNER,
+  UserRole.BRANCH_MANAGER,
+  UserRole.REAL_ESTATE_AGENT,
+  UserRole.RENTAL_MANAGER,
+];
+
 function hasRole(
   user: User | null | undefined,
   allowedRoles: UserRole[],
@@ -189,6 +199,20 @@ export function canManageAgencyOnboarding(
   user: User | null | undefined,
 ): boolean {
   return hasRole(user, AGENCY_ONBOARDING_ROLES);
+}
+
+/**
+ * Can access favorites workspace.
+ */
+export function canManageFavorites(user: User | null | undefined): boolean {
+  return hasRole(user, FAVORITES_ROLES);
+}
+
+/**
+ * Can access review moderation workflows.
+ */
+export function canModerateReviews(user: User | null | undefined): boolean {
+  return hasRole(user, REVIEW_MODERATION_ROLES);
 }
 
 /**

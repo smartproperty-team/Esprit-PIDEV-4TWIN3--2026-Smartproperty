@@ -34,7 +34,9 @@ import {
   canCreateProperties,
   canManageAgencyOnboarding,
   canManageAssignedMaintenance,
+  canManageFavorites,
   canManageProperties,
+  canModerateReviews,
   canReviewApplications,
   canReviewVerifications,
   canTrackMaintenanceRequests,
@@ -79,6 +81,10 @@ const MyMaintenanceRequestsPage = lazy(
 );
 const ServiceProviderMaintenancePage = lazy(
   () => import("./pages/maintenance/ServiceProviderMaintenancePage"),
+);
+const FavoritesPage = lazy(() => import("./pages/favorites/FavoritesPage"));
+const ReviewModerationPage = lazy(
+  () => import("./pages/reviews/ReviewModerationPage"),
 );
 
 function RouteLoadingFallback() {
@@ -135,6 +141,8 @@ function getPageTitle(path: string, search: string): string {
     "/verification": "Verification",
     "/applications": "My Applications",
     "/applications/review": "Review Applications",
+    "/favorites": "My Favorites",
+    "/reviews/moderation": "Review Moderation",
     "/leases": "Leases",
     "/super-administrator/verifications": "Admin Verifications",
     "/super-administrator/users": "Admin Users",
@@ -177,6 +185,11 @@ function App() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     document.title = getPageTitle(location.pathname, location.search);
@@ -327,6 +340,30 @@ function App() {
               <ProtectedRoute>
                 {canReviewApplications(user) ? (
                   <ApplicationsReviewPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              <ProtectedRoute>
+                {canManageFavorites(user) ? (
+                  <FavoritesPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviews/moderation"
+            element={
+              <ProtectedRoute>
+                {canModerateReviews(user) ? (
+                  <ReviewModerationPage />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )}

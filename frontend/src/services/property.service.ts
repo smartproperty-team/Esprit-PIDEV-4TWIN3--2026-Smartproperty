@@ -31,6 +31,26 @@ export interface UploadImageOptions {
   generateVirtualTour?: boolean;
 }
 
+export interface PropertyRecommendationItem {
+  property_id: string;
+  title: string;
+  score: number;
+  price: number;
+  property_type: string;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  match_reasons: string[];
+  property: Property;
+}
+
+export interface PropertyRecommendationResponse {
+  user_id: string;
+  recommendations: PropertyRecommendationItem[];
+  total_count: number;
+  algorithm: string;
+}
+
 // ===========================================
 // Property CRUD Operations
 // ===========================================
@@ -79,6 +99,21 @@ export const propertyService = {
    */
   async getProperty(id: string): Promise<Property> {
     const response = await api.get<Property>(`/properties/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Get personalized best-match property recommendations for current tenant.
+   */
+  async getBestMatchRecommendations(
+    limit = 6,
+  ): Promise<PropertyRecommendationResponse> {
+    const response = await api.get<PropertyRecommendationResponse>(
+      "/properties/ai/recommendations/best-match",
+      {
+        params: { limit },
+      },
+    );
     return response.data;
   },
 
