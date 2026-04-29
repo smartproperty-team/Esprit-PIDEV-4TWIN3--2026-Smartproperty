@@ -4,6 +4,8 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
+import HotspotEditor from "@/components/properties/HotspotEditor";
+import VirtualStagingPanel from "@/components/properties/VirtualStagingPanel";
 import Sphere360Viewer from "@/components/properties/Sphere360Viewer";
 import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
 import PropertyReviewsSection from "@/components/reviews/PropertyReviewsSection";
@@ -687,6 +689,10 @@ function ImageGallery({ images }: ImageGalleryProps) {
 
 interface VirtualRooms360Props {
   rooms: PropertyImage[];
+  virtualTourConfig?: import("@/types/property").VirtualTourConfig;
+  canManage?: boolean;
+  propertyId?: string;
+  onConfigSaved?: (config: import("@/types/property").VirtualTourConfig) => void;
 }
 
 const PANORAMA_CAPTION_PREFIX = "__VR360__";
@@ -715,11 +721,20 @@ const getRoomDisplayName = (image: PropertyImage): string =>
 const isMarkedPanoramaRoom = (image: PropertyImage): boolean =>
   Boolean(image.caption?.trim().startsWith(PANORAMA_CAPTION_PREFIX));
 
-function VirtualRooms360({ rooms }: VirtualRooms360Props) {
+function VirtualRooms360({
+  rooms,
+  virtualTourConfig,
+  canManage,
+  propertyId,
+  onConfigSaved,
+}: VirtualRooms360Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(false);
+  const [fading, setFading] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const pendingRoomIndex = useRef<number | null>(null);
 
   const sortedRooms = [...rooms].sort((a, b) => {
     if (a.isPrimary) return -1;
@@ -730,6 +745,41 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   const activeRoom =
     activeIndex === null ? null : (sortedRooms[activeIndex] ?? sortedRooms[0]);
 
+  // Hotspots for the currently active room
+  const activeRoomKey = activeRoom?.key;
+  const roomHotspots = (virtualTourConfig?.hotspots ?? []).filter(
+    (hs) => hs.sourceRoomKey === activeRoomKey,
+  );
+
+  // Fade transition: fade out → swap room → fade in
+  const navigateToRoom = useCallback(
+    (targetIndex: number) => {
+      if (targetIndex === activeIndex || fading) return;
+      setFading(true);
+      pendingRoomIndex.current = targetIndex;
+      // After fade-out (300ms), swap the room
+      setTimeout(() => {
+        setActiveIndex(pendingRoomIndex.current);
+        pendingRoomIndex.current = null;
+        // After a brief moment, fade back in
+        setTimeout(() => setFading(false), 50);
+      }, 300);
+    },
+    [activeIndex, fading],
+  );
+
+  const handleHotspotClick = useCallback(
+    (hotspot: { targetRoomKey: string }) => {
+      const targetIdx = sortedRooms.findIndex(
+        (r) => r.key === hotspot.targetRoomKey,
+      );
+      if (targetIdx !== -1) {
+        navigateToRoom(targetIdx);
+      }
+    },
+    [sortedRooms, navigateToRoom],
+  );
+
   const closeViewer = useCallback(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
@@ -739,18 +789,16 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   }, []);
 
   const showPreviousRoom = useCallback(() => {
-    setActiveIndex((current) => {
-      if (current === null) return 0;
-      return current === 0 ? sortedRooms.length - 1 : current - 1;
-    });
-  }, [sortedRooms.length]);
+    const current = activeIndex ?? 0;
+    const prev = current === 0 ? sortedRooms.length - 1 : current - 1;
+    navigateToRoom(prev);
+  }, [activeIndex, sortedRooms.length, navigateToRoom]);
 
   const showNextRoom = useCallback(() => {
-    setActiveIndex((current) => {
-      if (current === null) return 0;
-      return current >= sortedRooms.length - 1 ? 0 : current + 1;
-    });
-  }, [sortedRooms.length]);
+    const current = activeIndex ?? 0;
+    const next = current >= sortedRooms.length - 1 ? 0 : current + 1;
+    navigateToRoom(next);
+  }, [activeIndex, sortedRooms.length, navigateToRoom]);
 
   const toggleFullscreen = useCallback(() => {
     if (!modalRef.current) return;
@@ -772,10 +820,7 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
     if (activeIndex === null) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (document.fullscreenElement) {
-          // Let browser handle exiting fullscreen; don't close modal
-          return;
-        }
+        if (document.fullscreenElement) return;
         closeViewer();
       }
       if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
@@ -803,8 +848,19 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
   return (
     <section className="property-rooms-360">
       <div className="property-rooms-360-header">
-        <h3>360° Virtual Tour</h3>
-        <p>Click a room to explore in immersive 360° view.</p>
+        <div>
+          <h3>360° Virtual Tour</h3>
+          <p>Click a room to explore in immersive 360° view.</p>
+        </div>
+        {canManage && propertyId && sortedRooms.length > 1 && (
+          <button
+            type="button"
+            className="btn-edit"
+            onClick={() => setEditorOpen(true)}
+          >
+            Edit Hotspots
+          </button>
+        )}
       </div>
 
       <div className="property-rooms-360-grid">
@@ -917,8 +973,8 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
             </>
           )}
 
-          {/* ── 360° Viewer ── */}
-          <div className="vr360-viewer-area">
+          {/* ── 360° Viewer with hotspots ── */}
+          <div className={`vr360-viewer-area${fading ? " is-fading" : ""}`}>
             <Sphere360Viewer
               key={activeRoom.key || activeRoom.url}
               src={activeRoom.url}
@@ -926,6 +982,8 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
               autoRotate
               autoRotateSpeed={0.4}
               height="100%"
+              hotspots={roomHotspots}
+              onHotspotClick={handleHotspotClick}
             />
           </div>
 
@@ -949,9 +1007,7 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
                     key={room.key || index}
                     type="button"
                     className={`vr360-room-panel-item${index === activeIndex ? " is-active" : ""}`}
-                    onClick={() => {
-                      setActiveIndex(index);
-                    }}
+                    onClick={() => navigateToRoom(index)}
                   >
                     <img src={room.url} alt={getRoomDisplayName(room)} />
                     <span>{getRoomDisplayName(room)}</span>
@@ -961,6 +1017,20 @@ function VirtualRooms360({ rooms }: VirtualRooms360Props) {
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Hotspot Editor ── */}
+      {editorOpen && canManage && propertyId && (
+        <HotspotEditor
+          rooms={sortedRooms}
+          virtualTourConfig={virtualTourConfig}
+          propertyId={propertyId}
+          onClose={() => setEditorOpen(false)}
+          onSaved={(config) => {
+            onConfigSaved?.(config);
+            setEditorOpen(false);
+          }}
+        />
       )}
     </section>
   );
@@ -986,6 +1056,7 @@ export default function PropertyDetailPage() {
   const [hasActiveApplication, setHasActiveApplication] = useState(false);
   const [checkingApplication, setCheckingApplication] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [stagingOpen, setStagingOpen] = useState(false);
   const [aiSaveError, setAiSaveError] = useState<string | null>(null);
   const [detectedPanoramaKeys, setDetectedPanoramaKeys] = useState<string[]>(
     [],
@@ -1543,7 +1614,19 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        {virtualRooms.length > 0 && <VirtualRooms360 rooms={virtualRooms} />}
+        {virtualRooms.length > 0 && (
+          <VirtualRooms360
+            rooms={virtualRooms}
+            virtualTourConfig={property.virtualTourConfig}
+            canManage={canManage}
+            propertyId={property.id || property._id}
+            onConfigSaved={(config) => {
+              setProperty((prev) =>
+                prev ? { ...prev, virtualTourConfig: config } : prev,
+              );
+            }}
+          />
+        )}
 
         <ImageGallery images={normalImages} />
 
@@ -1908,6 +1991,16 @@ export default function PropertyDetailPage() {
                   >
                     {t.propertyDetail.aiDescription.cta}
                   </button>
+                  {property.images && property.images.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-ai-trigger"
+                      onClick={() => setStagingOpen(true)}
+                      style={{ width: "100%" }}
+                    >
+                      AI Virtual Staging
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1919,6 +2012,14 @@ export default function PropertyDetailPage() {
                 snapshot={buildAiSnapshot()}
                 propertyId={property.id || property._id}
                 onApply={handleApplyAiDescription}
+              />
+            )}
+
+            {canManage && stagingOpen && (
+              <VirtualStagingPanel
+                images={property.images || []}
+                propertyId={property.id || property._id || ""}
+                onClose={() => setStagingOpen(false)}
               />
             )}
 
