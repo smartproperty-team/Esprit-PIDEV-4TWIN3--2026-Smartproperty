@@ -30,7 +30,8 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
-          command: ["server", "/data", "--console-address", ":9001"]
+          command: ["minio"]
+          args: ["server", "/data", "--console-address", ":9001"]
           ports:
             - containerPort: 9000
               name: api

@@ -51,8 +51,9 @@ spec:
           readinessProbe:
             exec:
               command: ["mongosh", "--eval", "db.adminCommand('ping')"]
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 5
           resources:
             requests:
               memory: "256Mi"

@@ -107,3 +107,4 @@ backend/dist/tsconfig.build.tsbuildinfo
 /backend/dist
 /backend/dist
 /.venv311
+*.tar
