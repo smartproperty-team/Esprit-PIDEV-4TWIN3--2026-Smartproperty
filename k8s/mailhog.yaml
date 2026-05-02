@@ -46,3 +46,17 @@ spec:
     - port: 8025
       targetPort: 8025
       name: web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailhog-nodeport
+  namespace: smartproperty
+spec:
+  type: NodePort
+  selector:
+    app: mailhog
+  ports:
+    - port: 8025
+      targetPort: 8025
+      nodePort: 30025
