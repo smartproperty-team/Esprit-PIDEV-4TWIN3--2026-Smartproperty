@@ -4,9 +4,14 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Agency } from '../agencies/entities/agency.entity';
 import { UploadModule } from '../upload/upload.module';
+import { User } from '../users/entities/user.entity';
 import { AiDescriptionService } from './ai-description.service';
 import { AiPricingService } from './ai-pricing.service';
+import { AiRecommendationService } from './ai-recommendation.service';
+import { AiStagingService } from './ai-staging.service';
+import { AiVirtualTourService } from './ai-virtual-tour.service';
 import { Property } from './entities/property.entity';
 import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
@@ -15,10 +20,18 @@ import { PropertyImagesService } from './property-images.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Property]),
+    TypeOrmModule.forFeature([Property, User, Agency]),
     UploadModule, // For MinIO service
   ],
-  providers: [PropertiesService, PropertyImagesService, AiDescriptionService, AiPricingService],
+  providers: [
+    PropertiesService,
+    PropertyImagesService,
+    AiDescriptionService,
+    AiPricingService,
+    AiStagingService,
+    AiVirtualTourService,
+    AiRecommendationService,
+  ],
   controllers: [PropertiesController, PropertyImagesController],
   exports: [PropertiesService, PropertyImagesService, TypeOrmModule],
 })

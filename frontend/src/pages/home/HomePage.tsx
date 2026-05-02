@@ -7,9 +7,11 @@
 import { HomeFooter, Navbar } from "@/components/layout";
 import { useTranslation } from "@/i18n";
 import { propertyService } from "@/services/property.service";
+import { useAuthStore, usePreferencesStore } from "@/store";
+import { UserRole } from "@/types/auth";
 import type { Property as BackendProperty } from "@/types/property";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./home3.css";
 
 // City data - Famous cities in Tunisia
@@ -42,6 +44,8 @@ function PropertyCard({ property }: { property: BackendProperty }) {
           src={imageUrl}
           alt={`${property.title} at ${property.address.city}, ${property.address.country}`}
           loading="lazy"
+          width={400}
+          height={220}
           onError={(e) => {
             (e.target as HTMLImageElement).src = "/placeholder-property.svg";
           }}
@@ -171,7 +175,13 @@ function CityCard({ city }: { city: (typeof cities)[0] }) {
       className="city-card"
       aria-label={`Browse ${city.properties} properties in ${city.name}`}
     >
-      <img src={city.image} alt={`${city.name} cityscape`} loading="lazy" />
+      <img
+        src={city.image}
+        alt={`${city.name} cityscape`}
+        loading="lazy"
+        width={400}
+        height={300}
+      />
       <div className="city-overlay">
         <h4>{city.name}</h4>
         <span>{city.properties} Properties</span>
@@ -205,6 +215,8 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
           src={primaryImage}
           alt={property.title}
           loading="lazy"
+          width={400}
+          height={220}
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src =
               "/tq_1s1jvryd0n-ta2j-1500h.png";
@@ -323,30 +335,98 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
 
 export default function HomePage() {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuthStore();
+  const currentUserPreferences = usePreferencesStore((state) =>
+    user?.id ? state.getUserPreferences(user.id) : undefined,
+  );
   const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
   const [properties, setProperties] = useState<BackendProperty[]>([]);
   const mainContentRef = useRef<HTMLElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [rentalProperties, setRentalProperties] = useState<BackendProperty[]>(
     [],
   );
+  const [showBestMatch, setShowBestMatch] = useState(false);
   const [rentalLoading, setRentalLoading] = useState(true);
   const [rentalError, setRentalError] = useState<string | null>(null);
 
+  // Debounced search input handler (INP optimization - reduces re-renders)
+  const handleSearchInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchInput(value);
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        setSearchQuery(value);
+      }, 300);
+    },
+    [],
+  );
+
   // Fetch rental properties from backend
   useEffect(() => {
+    if (!user) {
+      setRentalLoading(false);
+      setRentalProperties([]);
+      return;
+    }
+
     const fetchRentals = async () => {
       try {
         setRentalLoading(true);
         setRentalError(null);
+
+        const preferencesCompleted =
+          !!currentUserPreferences?.completed || !!user?.preferences?.completed;
+
+        const canUsePreferences =
+          isAuthenticated &&
+          user?.role === UserRole.TENANT &&
+          !!user?.id &&
+          preferencesCompleted;
+
+        // Keep the section in "Best Match" mode for eligible tenants, even when
+        // we need to fallback to regular rental results.
+        setShowBestMatch(canUsePreferences);
+
+        if (canUsePreferences) {
+          try {
+            const recommendationResponse =
+              await propertyService.getBestMatchRecommendations(6);
+            const recommendedProperties = (
+              recommendationResponse.recommendations || []
+            )
+              .map((item) => item.property)
+              .filter(Boolean);
+
+            if (recommendedProperties.length > 0) {
+              setShowBestMatch(true);
+              setRentalProperties(recommendedProperties);
+              return;
+            }
+          } catch {
+            // Silent fallback to default rental feed.
+          }
+        }
+
+        const budgetRange = currentUserPreferences?.budgetRange;
+        const hasBudgetRange =
+          canUsePreferences &&
+          Array.isArray(budgetRange) &&
+          budgetRange.length === 2;
+
         const response = await propertyService.getProperties({
           status: "available",
           limit: 6,
+          minPrice: hasBudgetRange ? budgetRange[0] : undefined,
+          maxPrice: hasBudgetRange ? budgetRange[1] : undefined,
         });
-        // Filter for rented/available properties — show all available since status is 'available'
         setRentalProperties(response.properties || []);
       } catch (err) {
         console.error("Failed to fetch rental properties:", err);
@@ -355,8 +435,8 @@ export default function HomePage() {
         setRentalLoading(false);
       }
     };
-    fetchRentals();
-  }, []);
+    void fetchRentals();
+  }, [currentUserPreferences, isAuthenticated, user]);
 
   useEffect(() => {
     const loadHomeProperties = async () => {
@@ -387,7 +467,7 @@ export default function HomePage() {
       if (searchQuery) params.set("search", searchQuery);
       if (roomFilter) params.set("bedrooms", roomFilter);
       if (priceFilter) params.set("priceRange", priceFilter);
-      window.location.href = `/properties?${params.toString()}`;
+      navigate(`/properties?${params.toString()}`);
     },
     [activeTab, priceFilter, propertyType, roomFilter, searchQuery],
   );
@@ -469,8 +549,8 @@ export default function HomePage() {
                   id="search-location"
                   type="text"
                   placeholder={t.home.locationPlaceholder}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={handleSearchInput}
                   aria-label="Enter location"
                 />
               </div>
@@ -609,9 +689,13 @@ export default function HomePage() {
             <header className="section-header">
               <span className="section-tag">{t.home.forRent}</span>
               <h2 id="rent-title" className="section-title">
-                {t.home.recentRentTitle}
+                {showBestMatch ? t.home.bestMatchTitle : t.home.recentRentTitle}
               </h2>
-              <p className="section-subtitle">{t.home.recentRentSubtitle}</p>
+              <p className="section-subtitle">
+                {showBestMatch
+                  ? t.home.bestMatchSubtitle
+                  : t.home.recentRentSubtitle}
+              </p>
             </header>
             {rentalLoading ? (
               <div
@@ -864,6 +948,8 @@ export default function HomePage() {
                 src="/tq_n6jpin4sea-6ofk-1500h.png"
                 alt="Happy family in their new home"
                 loading="lazy"
+                width={600}
+                height={400}
               />
             </div>
           </div>

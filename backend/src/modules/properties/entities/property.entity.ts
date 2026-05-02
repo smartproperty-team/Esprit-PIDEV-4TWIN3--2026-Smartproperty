@@ -119,11 +119,27 @@ export class Property {
   @Column({ nullable: true })
   virtualTour?: string;
 
+  @Column('simple-json', { nullable: true })
+  virtualTourConfig?: {
+    hotspots: Array<{
+      id: string;
+      sourceRoomKey: string;
+      targetRoomKey: string;
+      yaw: number;
+      pitch: number;
+      label: string;
+    }>;
+    defaultRoomKey?: string;
+  };
+
   @Column()
   ownerId!: string;
 
   @Column({ nullable: true })
   managerId?: string;
+
+  @Column({ nullable: true })
+  agencyId?: string;
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -160,8 +176,10 @@ export class Property {
       features: this.features,
       images: this.images,
       virtualTour: this.virtualTour,
+      virtualTourConfig: this.virtualTourConfig,
       ownerId: this.ownerId,
       managerId: this.managerId,
+      agencyId: this.agencyId,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

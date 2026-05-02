@@ -111,6 +111,8 @@ interface FormData {
   status: PropertyStatus;
   price: string;
   currency: string;
+  virtualTour: string;
+  generateVirtualTourFromPhotos: boolean;
   address: AddressData;
   bedrooms: string;
   bathrooms: string;
@@ -123,6 +125,10 @@ interface FormData {
   availableTo: string;
 }
 
+interface PendingImage {
+  file: File;
+}
+
 const initialFormData: FormData = {
   title: "",
   description: "",
@@ -131,6 +137,8 @@ const initialFormData: FormData = {
   status: "available",
   price: "",
   currency: "TND",
+  virtualTour: "",
+  generateVirtualTourFromPhotos: false,
   address: {
     street: "",
     city: "",
@@ -170,7 +178,7 @@ export default function PropertyFormPage() {
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [existingImages, setExistingImages] = useState<
     { url: string; key: string }[]
   >([]);
@@ -191,7 +199,6 @@ export default function PropertyFormPage() {
   const [priceSuggestError, setPriceSuggestError] = useState<string | null>(
     null,
   );
-
   const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
     const amenitiesList = formData.amenities
       .split(",")
@@ -297,6 +304,8 @@ export default function PropertyFormPage() {
         status: property.status,
         price: property.price.toString(),
         currency: property.currency,
+        virtualTour: property.virtualTour || "",
+        generateVirtualTourFromPhotos: false,
         address: {
           street: property.address.street,
           city: property.address.city,
@@ -365,7 +374,7 @@ export default function PropertyFormPage() {
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
       return isValid && isValidSize;
     });
-    setImages((prev) => [...prev, ...validFiles]);
+       setImages((prev) => [...prev, ...validFiles]);
   };
 
   // Handle image removal
@@ -526,6 +535,7 @@ export default function PropertyFormPage() {
         status: formData.status,
         price: parseFloat(formData.price),
         currency: formData.currency,
+        virtualTour: formData.virtualTour.trim() || undefined,
         address: {
           street: formData.address.street,
           city: formData.address.city,
@@ -574,7 +584,10 @@ export default function PropertyFormPage() {
 
       // Upload new images if any
       if (images.length > 0) {
-        await propertyService.uploadImages(propertyId, images);
+        await propertyService.uploadImages(
+          propertyId,
+          images,
+        );
       }
 
       navigate(`/properties/${propertyId}`);
@@ -1131,11 +1144,49 @@ export default function PropertyFormPage() {
               />
             </div>
 
+            <div className="virtual-tour-owner-guide">
+              <h4>{t.properties.form.image.virtualTour.captureGuideTitle}</h4>
+              <p>{t.properties.form.image.virtualTour.captureGuideIntro}</p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                }}
+              >
+                <img
+                  src="/images/virtual-tour-diagram.svg"
+                  alt={t.properties.form.image.virtualTour.diagramAlt}
+                  className="virtual-tour-diagram"
+                  style={{ maxWidth: 320, width: "100%", height: "auto" }}
+                />
+                <ol>
+                  <li>
+                    {t.properties.form.image.virtualTour.guideStep1.replace(
+                      "{{count}}",
+                      String(VIRTUAL_TOUR_MIN_IMAGES),
+                    )}
+                  </li>
+                  <li>
+                    {t.properties.form.image.virtualTour.guideStep2
+                      .replace("{{width}}", String(VIRTUAL_TOUR_MIN_WIDTH))
+                      .replace("{{height}}", String(VIRTUAL_TOUR_MIN_HEIGHT))}
+                  </li>
+                  <li>{t.properties.form.image.virtualTour.guideStep3}</li>
+                  <li>{t.properties.form.image.virtualTour.guideStep4}</li>
+                </ol>
+              </div>
+            </div>
+
             {images.length > 0 && (
               <div className="image-preview-grid">
                 {images.map((file, index) => (
                   <div key={index} className="image-preview-item">
-                    <img src={URL.createObjectURL(file)} alt={file.name} />
+                    <img
+                       src={URL.createObjectURL(file)}
+                       alt={`Preview ${index + 1}`}
+                    />
                     <button
                       type="button"
                       className="image-preview-remove"
@@ -1200,42 +1251,7 @@ export default function PropertyFormPage() {
         );
 
       default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="property-form-page">
-      <Navbar />
-
-      <main className="property-form-container">
-        {/* Header */}
-        <div className="property-form-header">
-          <h1>
-            {isEditing
-              ? t.properties.form.page.editTitle
-              : t.properties.form.page.createTitle}
-          </h1>
-          <p>
-            {isEditing
-              ? t.properties.form.page.editDescription
-              : t.properties.form.page.createDescription}
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="property-form" role="form">
-          <Stepper
-            steps={wizardSteps}
-            currentStep={currentStep}
-            ariaLabel={t.properties.form.stepsAriaLabel}
-            allowStepNavigation
-            onStepChange={handleStepChange}
-            actions={
-              <div className="wizard-nav-actions">
-                <Link to="/properties" className="btn-cancel">
-                  {t.common.cancel}
-                </Link>
+                    </div>
                 <div className="wizard-nav-primary">
                   {currentStep !== PRICING_STEP_INDEX && (
                     <button

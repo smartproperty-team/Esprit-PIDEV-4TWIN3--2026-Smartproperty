@@ -22,17 +22,21 @@ import {
   VerifyEmailPage,
 } from "./pages/auth";
 import { HomePage, PaletteDemoPage } from "./pages/home";
+import { LeasesWorkspacePage } from "./pages/leases";
 import { PreferencesOnboardingModal } from "./pages/onboarding";
 import authService from "./services/auth.service";
 import { pushNotificationService } from "./services/push-notification.service";
 import { useAuthStore, usePreferencesStore } from "./store";
 import {
   canAccessAdminUsers,
+  canAccessLeases,
   canCreateMaintenanceRequest,
   canCreateProperties,
   canManageAgencyOnboarding,
   canManageAssignedMaintenance,
+  canManageFavorites,
   canManageProperties,
+  canModerateReviews,
   canReviewApplications,
   canReviewVerifications,
   canTrackMaintenanceRequests,
@@ -40,7 +44,9 @@ import {
 } from "./utils";
 
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
-const VerificationPage = lazy(() => import("./pages/dashboard/VerificationPage"));
+const VerificationPage = lazy(
+  () => import("./pages/dashboard/VerificationPage"),
+);
 const AdminVerificationPage = lazy(
   () => import("./pages/dashboard/AdminVerificationPage"),
 );
@@ -62,6 +68,9 @@ const PropertyFormPage = lazy(
 const PropertyDetailPage = lazy(
   () => import("./pages/properties/PropertyDetailPage"),
 );
+const VirtualVisitFormPage = lazy(
+  () => import("./pages/properties/VirtualVisitFormPage"),
+);
 
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
 const MaintenanceRequestFormPage = lazy(
@@ -72,6 +81,10 @@ const MyMaintenanceRequestsPage = lazy(
 );
 const ServiceProviderMaintenancePage = lazy(
   () => import("./pages/maintenance/ServiceProviderMaintenancePage"),
+);
+const FavoritesPage = lazy(() => import("./pages/favorites/FavoritesPage"));
+const ReviewModerationPage = lazy(
+  () => import("./pages/reviews/ReviewModerationPage"),
 );
 
 function RouteLoadingFallback() {
@@ -128,6 +141,9 @@ function getPageTitle(path: string, search: string): string {
     "/verification": "Verification",
     "/applications": "My Applications",
     "/applications/review": "Review Applications",
+    "/favorites": "My Favorites",
+    "/reviews/moderation": "Review Moderation",
+    "/leases": "Leases",
     "/super-administrator/verifications": "Admin Verifications",
     "/super-administrator/users": "Admin Users",
     "/branch-manager/agencies": "My Agencies",
@@ -164,11 +180,16 @@ function App() {
   const { openOnboarding, getUserPreferences, setUserPreferences } =
     usePreferencesStore();
   const promptedUserRef = useRef<string | null>(null);
- 
+
   // Check if user is authenticated on app load
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     document.title = getPageTitle(location.pathname, location.search);
@@ -326,6 +347,54 @@ function App() {
             }
           />
           <Route
+            path="/favorites"
+            element={
+              <ProtectedRoute>
+                {canManageFavorites(user) ? (
+                  <FavoritesPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviews/moderation"
+            element={
+              <ProtectedRoute>
+                {canModerateReviews(user) ? (
+                  <ReviewModerationPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leases"
+            element={
+              <ProtectedRoute>
+                {canAccessLeases(user) ? (
+                  <LeasesWorkspacePage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leases/:leaseId"
+            element={
+              <ProtectedRoute>
+                {canAccessLeases(user) ? (
+                  <LeasesWorkspacePage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/super-administrator/verifications"
             element={
               <ProtectedRoute>
@@ -425,6 +494,18 @@ function App() {
             }
           />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
+          <Route
+            path="/properties/:id/virtual-visit"
+            element={
+              <ProtectedRoute>
+                {canManageProperties(user) ? (
+                  <VirtualVisitFormPage />
+                ) : (
+                  <Navigate to="/properties" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/properties/:id/edit"
             element={

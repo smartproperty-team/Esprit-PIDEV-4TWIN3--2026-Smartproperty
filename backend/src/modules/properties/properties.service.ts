@@ -11,9 +11,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectId } from 'mongodb';
 import * as QRCode from 'qrcode';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import * as XLSX from 'xlsx';
-import { UserRole } from '../users/entities/user.entity';
+import { Agency } from '../agencies/entities/agency.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { hasPlatformAdminRole } from '../users/role-groups';
 import {
   PortfolioConnectorId,
@@ -134,6 +135,14 @@ export interface PortfolioConnectorSyncResult {
 
 @Injectable()
 export class PropertiesService {
+  private static readonly privateIpv4Patterns = [
+    /^10\./,
+    /^127\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^172\.(1[6-9]|2\d|3[0-1])\./,
+  ];
+
   private readonly portfolioConnectorCatalog: PortfolioConnectorDefinition[] = [
     {
       id: PortfolioConnectorId.SELOGER,
@@ -162,7 +171,203 @@ export class PropertiesService {
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
+    @InjectRepository(User)
+    private readonly usersRepository: MongoRepository<User>,
+    @InjectRepository(Agency)
+    private readonly agenciesRepository: MongoRepository<Agency>,
   ) {}
+
+  private async getAgencyManagerIdForOwner(
+    ownerId: string,
+  ): Promise<string | undefined> {
+    if (!ObjectId.isValid(ownerId)) {
+      return undefined;
+    }
+
+    const owner = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(ownerId) },
+    });
+
+    if (!owner?.agencyId || !ObjectId.isValid(owner.agencyId)) {
+      return undefined;
+    }
+
+    const agency = await this.agenciesRepository.findOne({
+      where: { _id: new ObjectId(owner.agencyId) },
+    });
+
+    if (!agency?.createdBy) {
+      return undefined;
+    }
+
+    const members = agency.members || [];
+    const preferredManager = members.find(
+      (member) => member.role === UserRole.REAL_ESTATE_AGENT,
+    );
+
+    if (preferredManager?.userId) {
+      return preferredManager.userId;
+    }
+
+    const rentalManager = members.find(
+      (member) => member.role === UserRole.RENTAL_MANAGER,
+    );
+
+    if (rentalManager?.userId) {
+      return rentalManager.userId;
+    }
+
+    return agency.createdBy;
+  }
+
+  private async getAgencyOwnerIdsForManager(
+    managerId?: string,
+  ): Promise<string[]> {
+    if (!managerId || !ObjectId.isValid(managerId)) {
+      return [];
+    }
+
+    const manager = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(managerId) },
+    });
+
+    if (!manager?.agencyId || !ObjectId.isValid(manager.agencyId)) {
+      return [];
+    }
+
+    const owners = await this.usersRepository.find({
+      where: {
+        agencyId: manager.agencyId,
+        role: UserRole.OWNER,
+        deletedAt: null as any,
+      },
+    });
+
+    return Array.from(new Set(owners.map((owner) => owner.id)));
+  }
+
+  private async getAgencyIdForUser(
+    userId?: string,
+  ): Promise<string | undefined> {
+    if (!userId || !ObjectId.isValid(userId)) {
+      return undefined;
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { _id: new ObjectId(userId) },
+    });
+
+    if (!user?.agencyId || !ObjectId.isValid(user.agencyId)) {
+      return undefined;
+    }
+
+    return user.agencyId;
+  }
+
+  private async resolvePropertyAgencyId(
+    currentUserId: string,
+    ownerId: string,
+    currentUserRole: UserRole,
+  ): Promise<string | undefined> {
+    if (!hasPlatformAdminRole(currentUserRole)) {
+      return this.getAgencyIdForUser(currentUserId);
+    }
+
+    if (ownerId && ObjectId.isValid(ownerId)) {
+      const owner = await this.usersRepository.findOne({
+        where: { _id: new ObjectId(ownerId) },
+      });
+
+      if (owner?.agencyId && ObjectId.isValid(owner.agencyId)) {
+        return owner.agencyId;
+      }
+    }
+
+    return this.getAgencyIdForUser(currentUserId);
+  }
+
+  private async mapPropertiesWithOwnerSummary(properties: Property[]) {
+    if (!properties.length) {
+      return [];
+    }
+
+    const ownerIds = Array.from(
+      new Set(properties.map((property) => property.ownerId).filter(Boolean)),
+    ).filter((ownerId) => ObjectId.isValid(ownerId));
+
+    const owners = await this.usersRepository.find({
+      where: {
+        _id: { $in: ownerIds.map((ownerId) => new ObjectId(ownerId)) } as any,
+      },
+    });
+
+    const ownersById = new Map(
+      owners.map((owner) => [
+        owner.id,
+        {
+          id: owner.id,
+          name: owner.fullName,
+          email: owner.email,
+          agencyId: owner.agencyId,
+        },
+      ]),
+    );
+
+    const agencyIds = Array.from(
+      new Set(
+        [
+          ...properties.map((property) => property.agencyId),
+          ...owners.map((owner) => owner.agencyId),
+        ]
+          .filter((agencyId): agencyId is string => !!agencyId)
+          .filter((agencyId) => ObjectId.isValid(agencyId)),
+      ),
+    );
+
+    const agencies =
+      agencyIds.length > 0
+        ? await this.agenciesRepository.find({
+            where: {
+              _id: {
+                $in: agencyIds.map((agencyId) => new ObjectId(agencyId)),
+              } as any,
+            } as any,
+          })
+        : [];
+
+    const agenciesById = new Map(
+      agencies.map((agency) => [
+        agency.id,
+        {
+          id: agency.id,
+          name: agency.name,
+          slug: agency.slug,
+          region: agency.region,
+        },
+      ]),
+    );
+
+    return properties.map((property) => {
+      const json = property.toJSON() as any;
+      const owner = ownersById.get(property.ownerId);
+
+      if (owner) {
+        json.owner = owner;
+      }
+
+      const resolvedAgencyId = property.agencyId || owner?.agencyId;
+      if (resolvedAgencyId) {
+        json.agencyId = resolvedAgencyId;
+
+        const agency = agenciesById.get(resolvedAgencyId);
+        if (agency) {
+          json.agency = agency;
+        }
+      }
+
+      return json;
+    });
+  }
 
   // ===========================================
   // Helpers
@@ -191,6 +396,56 @@ export class PropertiesService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return earthRadiusKm * c;
+  }
+
+  private isPrivateOrLocalHost(hostname: string): boolean {
+    const normalized = hostname.toLowerCase();
+
+    if (
+      normalized === 'localhost' ||
+      normalized === '::1' ||
+      normalized.endsWith('.localhost')
+    ) {
+      return true;
+    }
+
+    return PropertiesService.privateIpv4Patterns.some((pattern) =>
+      pattern.test(normalized),
+    );
+  }
+
+  private sanitizeVirtualTourUrl(url?: string): string | undefined {
+    if (url === undefined) {
+      return undefined;
+    }
+
+    const normalizedUrl = url.trim();
+    if (!normalizedUrl) {
+      return undefined;
+    }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(normalizedUrl);
+    } catch {
+      throw new BadRequestException('virtualTour must be a valid URL');
+    }
+
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      throw new BadRequestException(
+        'virtualTour must use http or https protocol',
+      );
+    }
+
+    if (this.isPrivateOrLocalHost(parsedUrl.hostname)) {
+      throw new BadRequestException(
+        'virtualTour cannot point to local or private network hosts',
+      );
+    }
+
+    parsedUrl.hash = '';
+
+    return parsedUrl.toString();
   }
 
   private canManage(
@@ -224,11 +479,11 @@ export class PropertiesService {
     );
   }
 
-  private buildScopedWhere(
+  private async buildScopedWhere(
     currentUserId: string,
     currentUserRole: UserRole,
     scope?: 'owner' | 'manager' | 'all',
-  ): Record<string, any> {
+  ): Promise<Record<string, any>> {
     const where: Record<string, any> = {
       deletedAt: null,
     };
@@ -246,7 +501,14 @@ export class PropertiesService {
     }
 
     if (currentUserRole === UserRole.OWNER) {
-      where.ownerId = currentUserId;
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
+
+      if (agencyId) {
+        where.$or = [{ ownerId: currentUserId }, { agencyId }];
+      } else {
+        where.ownerId = currentUserId;
+      }
+
       return where;
     }
 
@@ -255,15 +517,47 @@ export class PropertiesService {
       currentUserRole === UserRole.REAL_ESTATE_AGENT ||
       currentUserRole === UserRole.RENTAL_MANAGER
     ) {
-      where.managerId = currentUserId;
+      const agencyOwnerIds =
+        await this.getAgencyOwnerIdsForManager(currentUserId);
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
+
+      if (scope === 'owner') {
+        if (agencyOwnerIds.length > 0) {
+          where.ownerId = { $in: agencyOwnerIds };
+        } else {
+          where.ownerId = '__none__';
+        }
+
+        return where;
+      }
+
+      if (agencyOwnerIds.length > 0) {
+        const scopedOr: Record<string, any>[] = [
+          { managerId: currentUserId },
+          { ownerId: { $in: agencyOwnerIds } },
+        ];
+
+        if (agencyId) {
+          scopedOr.push({ agencyId });
+        }
+
+        where.$or = scopedOr;
+      } else if (agencyId) {
+        where.$or = [{ managerId: currentUserId }, { agencyId }];
+      } else {
+        where.managerId = currentUserId;
+      }
+
       return where;
     }
 
     if (currentUserRole === UserRole.ACCOUNTANT_ADMIN_ASSISTANT) {
-      if (scope === 'owner') {
-        where.ownerId = currentUserId;
+      const agencyId = await this.getAgencyIdForUser(currentUserId);
+
+      if (agencyId) {
+        where.agencyId = agencyId;
       } else {
-        where.managerId = currentUserId;
+        where.ownerId = '__none__';
       }
 
       return where;
@@ -754,9 +1048,23 @@ export class PropertiesService {
       currentUserRole === UserRole.REAL_ESTATE_AGENT ||
       currentUserRole === UserRole.RENTAL_MANAGER;
 
-    const managerId =
+    let managerId =
       requestedManagerId ||
       (shouldAutoAssignManager ? currentUserId : undefined);
+
+    if (!managerId && currentUserRole === UserRole.OWNER) {
+      managerId = await this.getAgencyManagerIdForOwner(currentUserId);
+    }
+
+    const agencyId = await this.resolvePropertyAgencyId(
+      currentUserId,
+      ownerId,
+      currentUserRole,
+    );
+
+    createPropertyDto.virtualTour = this.sanitizeVirtualTourUrl(
+      createPropertyDto.virtualTour,
+    );
 
     // Build a clean object without undefined values – MongoDB's $jsonSchema
     // validator does not recognise "undefined" as a BSON type, so sending
@@ -765,6 +1073,7 @@ export class PropertiesService {
       ...createPropertyDto,
       ownerId,
       managerId,
+      agencyId,
       status: createPropertyDto.status || PropertyStatus.AVAILABLE,
       currency: createPropertyDto.currency || 'USD',
       createdAt: new Date(),
@@ -810,6 +1119,11 @@ export class PropertiesService {
     const where: Record<string, any> = {
       deletedAt: null,
     };
+
+    const managerAgencyOwnerIds = await this.getAgencyOwnerIdsForManager(
+      options.managerId,
+    );
+    const managerAgencyId = await this.getAgencyIdForUser(options.managerId);
 
     if (options.type) {
       where.type = options.type;
@@ -867,11 +1181,46 @@ export class PropertiesService {
       ];
     }
 
+    let effectiveWhere: Record<string, any> = where;
+
+    if (
+      options.managerId &&
+      (managerAgencyOwnerIds.length > 0 || !!managerAgencyId)
+    ) {
+      const managerScopeOr: Record<string, any>[] = [
+        { managerId: options.managerId },
+      ];
+
+      if (managerAgencyOwnerIds.length > 0) {
+        managerScopeOr.push({ ownerId: { $in: managerAgencyOwnerIds } });
+      }
+
+      if (managerAgencyId) {
+        managerScopeOr.push({ agencyId: managerAgencyId });
+      }
+
+      const baseWhere = { ...where };
+      const existingSearchOr = baseWhere.$or;
+      delete baseWhere.$or;
+      delete baseWhere.managerId;
+
+      if (existingSearchOr) {
+        effectiveWhere = {
+          $and: [baseWhere, { $or: existingSearchOr }, { $or: managerScopeOr }],
+        };
+      } else {
+        effectiveWhere = {
+          ...baseWhere,
+          $or: managerScopeOr,
+        };
+      }
+    }
+
     const hasNearbyFilter = nearLat !== undefined && nearLng !== undefined;
 
     if (hasNearbyFilter) {
       const allMatching = await this.propertyRepository.find({
-        where,
+        where: effectiveWhere,
         order: { createdAt: 'DESC' },
       });
 
@@ -889,8 +1238,11 @@ export class PropertiesService {
       const total = filtered.length;
       const properties = filtered.slice(skip, skip + limit);
 
+      const serializedProperties =
+        await this.mapPropertiesWithOwnerSummary(properties);
+
       return {
-        properties: properties.map((property) => property.toJSON() as Property),
+        properties: serializedProperties as Property[],
         total,
         page,
         limit,
@@ -898,14 +1250,17 @@ export class PropertiesService {
     }
 
     const [properties, total] = await this.propertyRepository.findAndCount({
-      where,
+      where: effectiveWhere,
       skip,
       take: limit,
       order: { createdAt: 'DESC' },
     });
 
+    const serializedProperties =
+      await this.mapPropertiesWithOwnerSummary(properties);
+
     return {
-      properties: properties.map((property) => property.toJSON() as Property),
+      properties: serializedProperties as Property[],
       total,
       page,
       limit,
@@ -930,6 +1285,13 @@ export class PropertiesService {
     }
 
     return property;
+  }
+
+  async findByIdView(id: string): Promise<Record<string, any>> {
+    const property = await this.findById(id);
+    const [serialized] = await this.mapPropertiesWithOwnerSummary([property]);
+
+    return serialized || property.toJSON();
   }
 
   async update(
@@ -985,6 +1347,14 @@ export class PropertiesService {
       };
     }
 
+    if (
+      Object.prototype.hasOwnProperty.call(updatePropertyDto, 'virtualTour')
+    ) {
+      updatePropertyDto.virtualTour = this.sanitizeVirtualTourUrl(
+        updatePropertyDto.virtualTour,
+      );
+    }
+
     const remainingUpdates = { ...updatePropertyDto };
     delete remainingUpdates.address;
     delete remainingUpdates.features;
@@ -1027,7 +1397,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1142,7 +1512,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1225,7 +1595,7 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to portfolio data');
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       filters.scope,
@@ -1373,6 +1743,11 @@ export class PropertiesService {
         currentUserId,
         currentUserRole,
       );
+      const agencyId = await this.resolvePropertyAgencyId(
+        currentUserId,
+        scopedIds.ownerId,
+        currentUserRole,
+      );
 
       if (skipDuplicates) {
         const duplicate = await this.propertyRepository.findOne({
@@ -1420,6 +1795,7 @@ export class PropertiesService {
         },
         ownerId: scopedIds.ownerId,
         managerId: scopedIds.managerId,
+        agencyId,
       } as Partial<Property>);
 
       try {
@@ -1476,7 +1852,7 @@ export class PropertiesService {
       );
     }
 
-    const scopedWhere = this.buildScopedWhere(
+    const scopedWhere = await this.buildScopedWhere(
       currentUserId,
       currentUserRole,
       payload.scope,

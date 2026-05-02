@@ -4,6 +4,11 @@
 
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
+import HotspotEditor from "@/components/properties/HotspotEditor";
+import VirtualStagingPanel from "@/components/properties/VirtualStagingPanel";
+import Sphere360Viewer from "@/components/properties/Sphere360Viewer";
+import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
+import PropertyReviewsSection from "@/components/reviews/PropertyReviewsSection";
 import { useTranslation } from "@/i18n";
 import applicationService from "@/services/application.service";
 import {
@@ -11,16 +16,27 @@ import {
   type AiPropertySnapshot,
   type PropertyShareData,
 } from "@/services/property.service";
+import reviewsFavoritesService from "@/services/reviews-favorites.service";
 import { useAuthStore } from "@/store";
 import { ApplicationStatus } from "@/types/application";
 import type { Property, PropertyImage } from "@/types/property";
-import { canManageProperties, isTenant } from "@/utils";
+import type {
+  PropertyReview,
+  PropertyReviewSummary,
+} from "@/types/reviews-favorites";
+import { canManageFavorites, canManageProperties, isTenant } from "@/utils";
 import L from "leaflet";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "./properties.css";
 
@@ -621,7 +637,7 @@ function ImageGallery({ images }: ImageGalleryProps) {
   });
 
   const mainImage = sortedImages[selectedIndex] || sortedImages[0];
-  const thumbnails = sortedImages.slice(0, 4);
+  const thumbnails = sortedImages.slice(1, 5);
 
   if (images.length === 0) {
     return (
@@ -642,42 +658,381 @@ function ImageGallery({ images }: ImageGalleryProps) {
         <img
           src={mainImage?.url}
           alt={mainImage?.caption || t.propertyDetail.galleryAlt}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder-property.svg";
-          }}
         />
       </div>
       {images.length > 1 && (
         <div className="gallery-thumbnails">
-          {thumbnails.slice(1, 3).map((img, index) => (
+          {thumbnails.map((img, index) => (
             <button
               type="button"
-              key={img.key || index}
-              className="gallery-thumb"
+              key={img.key || index + 1}
+              className={`gallery-thumb ${selectedIndex === index + 1 ? "is-active" : ""}`}
               onClick={() => setSelectedIndex(index + 1)}
               aria-label={`Show image ${index + 2}`}
             >
               <img
                 src={img.url}
-                alt={img.caption || t.propertyDetail.galleryAlt}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "/placeholder-property.svg";
-                }}
+                alt={
+                  img.caption || `${t.propertyDetail.galleryAlt} ${index + 2}`
+                }
               />
-              {index === 1 && images.length > 3 && (
-                <div className="gallery-more">
-                  {t.propertyDetail.morePhotos.replace(
-                    "{{count}}",
-                    String(images.length - 3),
-                  )}
-                </div>
+              {images.length > 5 && index === 3 && (
+                <div className="gallery-more">+{images.length - 5}</div>
               )}
             </button>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+interface VirtualRooms360Props {
+  rooms: PropertyImage[];
+  virtualTourConfig?: import("@/types/property").VirtualTourConfig;
+  canManage?: boolean;
+  propertyId?: string;
+  onConfigSaved?: (config: import("@/types/property").VirtualTourConfig) => void;
+}
+
+const PANORAMA_CAPTION_PREFIX = "__VR360__";
+
+const PANORAMA_RATIO_THRESHOLD = 1.8;
+
+const getImageIdentity = (image: PropertyImage): string =>
+  image.key || image.url;
+
+const isLikelyPanoramaByShape = (width: number, height: number): boolean => {
+  if (!width || !height) return false;
+  return width / height >= PANORAMA_RATIO_THRESHOLD;
+};
+
+const getRoomTitle = (image: PropertyImage): string => {
+  const caption = image.caption?.trim() || "";
+  if (caption.startsWith(PANORAMA_CAPTION_PREFIX)) {
+    return caption.slice(PANORAMA_CAPTION_PREFIX.length).trim();
+  }
+  return caption;
+};
+
+const getRoomDisplayName = (image: PropertyImage): string =>
+  getRoomTitle(image) || "Panoramic room";
+
+const isMarkedPanoramaRoom = (image: PropertyImage): boolean =>
+  Boolean(image.caption?.trim().startsWith(PANORAMA_CAPTION_PREFIX));
+
+function VirtualRooms360({
+  rooms,
+  virtualTourConfig,
+  canManage,
+  propertyId,
+  onConfigSaved,
+}: VirtualRooms360Props) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [roomPanelOpen, setRoomPanelOpen] = useState(false);
+  const [fading, setFading] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const pendingRoomIndex = useRef<number | null>(null);
+
+  const sortedRooms = [...rooms].sort((a, b) => {
+    if (a.isPrimary) return -1;
+    if (b.isPrimary) return 1;
+    return (a.order || 0) - (b.order || 0);
+  });
+
+  const activeRoom =
+    activeIndex === null ? null : (sortedRooms[activeIndex] ?? sortedRooms[0]);
+
+  // Hotspots for the currently active room
+  const activeRoomKey = activeRoom?.key;
+  const roomHotspots = (virtualTourConfig?.hotspots ?? []).filter(
+    (hs) => hs.sourceRoomKey === activeRoomKey,
+  );
+
+  // Fade transition: fade out → swap room → fade in
+  const navigateToRoom = useCallback(
+    (targetIndex: number) => {
+      if (targetIndex === activeIndex || fading) return;
+      setFading(true);
+      pendingRoomIndex.current = targetIndex;
+      // After fade-out (300ms), swap the room
+      setTimeout(() => {
+        setActiveIndex(pendingRoomIndex.current);
+        pendingRoomIndex.current = null;
+        // After a brief moment, fade back in
+        setTimeout(() => setFading(false), 50);
+      }, 300);
+    },
+    [activeIndex, fading],
+  );
+
+  const handleHotspotClick = useCallback(
+    (hotspot: { targetRoomKey: string }) => {
+      const targetIdx = sortedRooms.findIndex(
+        (r) => r.key === hotspot.targetRoomKey,
+      );
+      if (targetIdx !== -1) {
+        navigateToRoom(targetIdx);
+      }
+    },
+    [sortedRooms, navigateToRoom],
+  );
+
+  const closeViewer = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+    setActiveIndex(null);
+    setRoomPanelOpen(false);
+  }, []);
+
+  const showPreviousRoom = useCallback(() => {
+    const current = activeIndex ?? 0;
+    const prev = current === 0 ? sortedRooms.length - 1 : current - 1;
+    navigateToRoom(prev);
+  }, [activeIndex, sortedRooms.length, navigateToRoom]);
+
+  const showNextRoom = useCallback(() => {
+    const current = activeIndex ?? 0;
+    const next = current >= sortedRooms.length - 1 ? 0 : current + 1;
+    navigateToRoom(next);
+  }, [activeIndex, sortedRooms.length, navigateToRoom]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!modalRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      modalRef.current.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  // Sync fullscreen state
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (activeIndex === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (document.fullscreenElement) return;
+        closeViewer();
+      }
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        showPreviousRoom();
+      }
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        showNextRoom();
+      }
+      if (event.key === "f" || event.key === "F") {
+        toggleFullscreen();
+      }
+      if (event.key === "r" || event.key === "R") {
+        setRoomPanelOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex, closeViewer, showPreviousRoom, showNextRoom, toggleFullscreen]);
+
+  if (rooms.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="property-rooms-360">
+      <div className="property-rooms-360-header">
+        <div>
+          <h3>360° Virtual Tour</h3>
+          <p>Click a room to explore in immersive 360° view.</p>
+        </div>
+        {canManage && propertyId && sortedRooms.length > 1 && (
+          <button
+            type="button"
+            className="btn-edit"
+            onClick={() => setEditorOpen(true)}
+          >
+            Edit Hotspots
+          </button>
+        )}
+      </div>
+
+      <div className="property-rooms-360-grid">
+        {sortedRooms.map((room, index) => (
+          <button
+            key={room.key || index}
+            type="button"
+            className="property-rooms-360-card"
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Open ${getRoomDisplayName(room)} in 360° viewer`}
+          >
+            <img src={room.url} alt={getRoomDisplayName(room)} />
+            <span>{getRoomDisplayName(room)}</span>
+            <small>360° panoramic room</small>
+          </button>
+        ))}
+      </div>
+
+      {activeRoom && (
+        <div
+          ref={modalRef}
+          className={`property-rooms-360-modal${isFullscreen ? " is-fullscreen" : ""}`}
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* ── Toolbar ── */}
+          <div className="vr360-toolbar">
+            <div className="vr360-toolbar-left">
+              <strong className="vr360-toolbar-title">
+                {getRoomDisplayName(activeRoom)}
+              </strong>
+              <span className="vr360-toolbar-count">
+                {(activeIndex ?? 0) + 1} / {sortedRooms.length}
+              </span>
+            </div>
+            <div className="vr360-toolbar-right">
+              {sortedRooms.length > 1 && (
+                <button
+                  type="button"
+                  className="vr360-toolbar-btn"
+                  onClick={() => setRoomPanelOpen((p) => !p)}
+                  aria-label="Toggle room list"
+                  title="Room list (R)"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
+                </button>
+              )}
+              <button
+                type="button"
+                className="vr360-toolbar-btn"
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title="Fullscreen (F)"
+              >
+                {isFullscreen ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 14 10 14 10 20" />
+                    <polyline points="20 10 14 10 14 4" />
+                    <line x1="14" y1="10" x2="21" y2="3" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                className="vr360-toolbar-btn"
+                onClick={closeViewer}
+                aria-label="Close viewer"
+                title="Close (Esc)"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* ── Previous / Next arrows ── */}
+          {sortedRooms.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="property-rooms-360-arrow property-rooms-360-arrow-left"
+                onClick={showPreviousRoom}
+                aria-label="Previous room"
+              >
+                &#9664;
+              </button>
+              <button
+                type="button"
+                className="property-rooms-360-arrow property-rooms-360-arrow-right"
+                onClick={showNextRoom}
+                aria-label="Next room"
+              >
+                &#9654;
+              </button>
+            </>
+          )}
+
+          {/* ── 360° Viewer with hotspots ── */}
+          <div className={`vr360-viewer-area${fading ? " is-fading" : ""}`}>
+            <Sphere360Viewer
+              key={activeRoom.key || activeRoom.url}
+              src={activeRoom.url}
+              altText={getRoomDisplayName(activeRoom)}
+              autoRotate
+              autoRotateSpeed={0.4}
+              height="100%"
+              hotspots={roomHotspots}
+              onHotspotClick={handleHotspotClick}
+            />
+          </div>
+
+          {/* ── Room selector panel ── */}
+          {roomPanelOpen && sortedRooms.length > 1 && (
+            <div className="vr360-room-panel">
+              <div className="vr360-room-panel-header">
+                <strong>Rooms</strong>
+                <button
+                  type="button"
+                  className="vr360-room-panel-close"
+                  onClick={() => setRoomPanelOpen(false)}
+                  aria-label="Close room panel"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="vr360-room-panel-list">
+                {sortedRooms.map((room, index) => (
+                  <button
+                    key={room.key || index}
+                    type="button"
+                    className={`vr360-room-panel-item${index === activeIndex ? " is-active" : ""}`}
+                    onClick={() => navigateToRoom(index)}
+                  >
+                    <img src={room.url} alt={getRoomDisplayName(room)} />
+                    <span>{getRoomDisplayName(room)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Hotspot Editor ── */}
+      {editorOpen && canManage && propertyId && (
+        <HotspotEditor
+          rooms={sortedRooms}
+          virtualTourConfig={virtualTourConfig}
+          propertyId={propertyId}
+          onClose={() => setEditorOpen(false)}
+          onSaved={(config) => {
+            onConfigSaved?.(config);
+            setEditorOpen(false);
+          }}
+        />
+      )}
+    </section>
   );
 }
 
@@ -691,6 +1046,7 @@ export default function PropertyDetailPage() {
   const { user } = useAuthStore();
   const t = useTranslation();
   const canManage = canManageProperties(user);
+  const canUseFavorites = canManageFavorites(user);
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"load" | null>(null);
@@ -700,7 +1056,27 @@ export default function PropertyDetailPage() {
   const [hasActiveApplication, setHasActiveApplication] = useState(false);
   const [checkingApplication, setCheckingApplication] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [stagingOpen, setStagingOpen] = useState(false);
   const [aiSaveError, setAiSaveError] = useState<string | null>(null);
+  const [detectedPanoramaKeys, setDetectedPanoramaKeys] = useState<string[]>(
+    [],
+  );
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<PropertyReviewSummary>({
+    totalReviews: 0,
+    averageRating: 0,
+  });
+  const [approvedReviews, setApprovedReviews] = useState<PropertyReview[]>([]);
+  const [myReview, setMyReview] = useState<PropertyReview | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: "",
+    comment: "",
+  });
 
   const buildAiSnapshot = useCallback((): AiPropertySnapshot => {
     if (!property) return {};
@@ -741,6 +1117,23 @@ export default function PropertyDetailPage() {
     [property, t.propertyDetail.aiDescription.saveError],
   );
 
+  const hydrateReviewForm = useCallback((review: PropertyReview | null) => {
+    if (!review) {
+      setReviewForm({
+        rating: 5,
+        title: "",
+        comment: "",
+      });
+      return;
+    }
+
+    setReviewForm({
+      rating: review.rating,
+      title: review.title || "",
+      comment: review.comment || "",
+    });
+  }, []);
+
   const loadProperty = useCallback(async () => {
     if (!id) return;
 
@@ -761,6 +1154,93 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     loadProperty();
   }, [loadProperty]);
+
+  const loadEngagement = useCallback(async () => {
+    const propertyId = property?.id || property?._id;
+
+    if (!propertyId) {
+      return;
+    }
+
+    setReviewsLoading(true);
+    setReviewError(null);
+
+    try {
+      const [publicReviews, mineReview, favoriteStatus] = await Promise.all([
+        reviewsFavoritesService.getPropertyReviews(propertyId),
+        isTenant(user)
+          ? reviewsFavoritesService.getMyPropertyReview(propertyId)
+          : Promise.resolve(null),
+        canUseFavorites
+          ? reviewsFavoritesService.getFavoriteStatus(propertyId)
+          : Promise.resolve(null),
+      ]);
+
+      setReviewSummary(publicReviews.summary);
+      setApprovedReviews(publicReviews.reviews);
+      setMyReview(mineReview);
+      hydrateReviewForm(mineReview);
+      setIsFavorite(!!favoriteStatus?.favorited);
+    } catch (err) {
+      console.error("Failed to load reviews/favorites:", err);
+      setReviewError("Unable to load reviews or favorites right now.");
+      if (!isTenant(user)) {
+        setMyReview(null);
+      }
+      if (!canUseFavorites) {
+        setIsFavorite(false);
+      }
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [canUseFavorites, hydrateReviewForm, property?._id, property?.id, user]);
+
+  useEffect(() => {
+    void loadEngagement();
+  }, [loadEngagement]);
+
+  useEffect(() => {
+    const images = property?.images || [];
+    if (images.length === 0) {
+      setDetectedPanoramaKeys([]);
+      return;
+    }
+
+    const candidates = images.filter((image) => !isMarkedPanoramaRoom(image));
+    if (candidates.length === 0) {
+      setDetectedPanoramaKeys([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    Promise.all(
+      candidates.map(
+        (image) =>
+          new Promise<string | null>((resolve) => {
+            const probe = new Image();
+            probe.onload = () => {
+              resolve(
+                isLikelyPanoramaByShape(probe.naturalWidth, probe.naturalHeight)
+                  ? getImageIdentity(image)
+                  : null,
+              );
+            };
+            probe.onerror = () => resolve(null);
+            probe.src = image.url;
+          }),
+      ),
+    ).then((keys) => {
+      if (isCancelled) return;
+      setDetectedPanoramaKeys(
+        keys.filter((key): key is string => Boolean(key)),
+      );
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [property?.images]);
 
   useEffect(() => {
     const propertyId = property?.id || property?._id;
@@ -793,6 +1273,111 @@ export default function PropertyDetailPage() {
 
     void checkApplicationEligibility();
   }, [property?.id, property?._id, user]);
+
+  const handleToggleFavorite = async () => {
+    const propertyId = property?.id || property?._id;
+
+    if (!propertyId || !canUseFavorites) {
+      return;
+    }
+
+    setFavoriteLoading(true);
+
+    try {
+      const response = isFavorite
+        ? await reviewsFavoritesService.removeFavorite(propertyId)
+        : await reviewsFavoritesService.addFavorite(propertyId);
+
+      setIsFavorite(response.favorited);
+    } catch (err) {
+      console.error("Failed to toggle favorite:", err);
+      setReviewError("Unable to update favorites right now.");
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const propertyId = property?.id || property?._id;
+
+    if (!propertyId || !isTenant(user)) {
+      return;
+    }
+
+    if (!reviewForm.comment.trim()) {
+      setReviewError("Please write a short review comment.");
+      return;
+    }
+
+    setReviewBusy(true);
+    setReviewError(null);
+
+    try {
+      if (myReview) {
+        const updated = await reviewsFavoritesService.updatePropertyReview(
+          myReview.id,
+          {
+            rating: reviewForm.rating,
+            title: reviewForm.title.trim() || undefined,
+            comment: reviewForm.comment.trim(),
+          },
+        );
+        setMyReview(updated);
+      } else {
+        const created = await reviewsFavoritesService.createPropertyReview(
+          propertyId,
+          {
+            rating: reviewForm.rating,
+            title: reviewForm.title.trim() || undefined,
+            comment: reviewForm.comment.trim(),
+          },
+        );
+        setMyReview(created);
+      }
+
+      await loadEngagement();
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: { data?: { message?: unknown } } }).response
+          ?.data?.message === "string"
+          ? (err as { response: { data: { message: string } } }).response.data
+              .message
+          : "Unable to submit your review right now.";
+
+      setReviewError(message);
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview) {
+      return;
+    }
+
+    if (!window.confirm("Delete your review for this property?")) {
+      return;
+    }
+
+    setReviewBusy(true);
+    setReviewError(null);
+
+    try {
+      await reviewsFavoritesService.deletePropertyReview(myReview.id);
+      setMyReview(null);
+      hydrateReviewForm(null);
+      await loadEngagement();
+    } catch {
+      setReviewError("Unable to delete your review right now.");
+    } finally {
+      setReviewBusy(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!property) return;
@@ -971,6 +1556,19 @@ export default function PropertyDetailPage() {
     );
   }
 
+  const allImages = property.images || [];
+  const virtualRooms = allImages.filter(
+    (image) =>
+      isMarkedPanoramaRoom(image) ||
+      detectedPanoramaKeys.includes(getImageIdentity(image)),
+  );
+  const normalImages = allImages.filter(
+    (image) =>
+      !virtualRooms.some(
+        (room) => getImageIdentity(room) === getImageIdentity(image),
+      ),
+  );
+
   return (
     <div className="property-detail-page">
       <Navbar />
@@ -992,6 +1590,12 @@ export default function PropertyDetailPage() {
               {property.address.state} {property.address.zipCode},{" "}
               {property.address.country}
             </p>
+            {property.agency?.name && (
+              <p className="property-detail-address">
+                <strong>{t.propertyDetail.agency}:</strong>{" "}
+                {property.agency.name}
+              </p>
+            )}
           </div>
           <div className="property-detail-header-meta">
             <div className="property-detail-price">
@@ -1010,8 +1614,28 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        {/* Image Gallery */}
-        <ImageGallery images={property.images || []} />
+        {virtualRooms.length > 0 && (
+          <VirtualRooms360
+            rooms={virtualRooms}
+            virtualTourConfig={property.virtualTourConfig}
+            canManage={canManage}
+            propertyId={property.id || property._id}
+            onConfigSaved={(config) => {
+              setProperty((prev) =>
+                prev ? { ...prev, virtualTourConfig: config } : prev,
+              );
+            }}
+          />
+        )}
+
+        <ImageGallery images={normalImages} />
+
+        {normalImages.length === 0 && virtualRooms.length === 0 && (
+          <VirtualTourViewer
+            url={property.virtualTour}
+            propertyId={property.id}
+          />
+        )}
 
         {/* Content */}
         <div className="property-content">
@@ -1170,6 +1794,20 @@ export default function PropertyDetailPage() {
               </div>
             )}
 
+            <PropertyReviewsSection
+              reviewSummary={reviewSummary}
+              approvedReviews={approvedReviews}
+              reviewError={reviewError}
+              reviewsLoading={reviewsLoading}
+              myReview={myReview}
+              reviewBusy={reviewBusy}
+              canLeaveReview={isTenant(user)}
+              reviewForm={reviewForm}
+              setReviewForm={setReviewForm}
+              onSubmitReview={handleSubmitReview}
+              onDeleteReview={() => void handleDeleteReview()}
+            />
+
             {property.features?.amenities &&
               property.features.amenities.length > 0 && (
                 <div className="property-description">
@@ -1196,6 +1834,33 @@ export default function PropertyDetailPage() {
           </div>
 
           <div className="property-sidebar">
+            {canUseFavorites && (
+              <div className="sidebar-card">
+                <h3>Favorites</h3>
+                <p className="share-description">
+                  Save this property and access it later from your favorites
+                  workspace.
+                </p>
+                <div className="share-actions">
+                  <button
+                    type="button"
+                    className={isFavorite ? "btn-edit" : "btn-view"}
+                    onClick={() => void handleToggleFavorite()}
+                    disabled={favoriteLoading}
+                  >
+                    {favoriteLoading
+                      ? "Updating..."
+                      : isFavorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"}
+                  </button>
+                  <Link to="/favorites" className="btn-share">
+                    Open Favorites
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <div className="sidebar-card">
               <h3>{t.propertyDetail.shareTitle}</h3>
               <p className="share-description">
@@ -1304,6 +1969,12 @@ export default function PropertyDetailPage() {
                   >
                     {t.propertyDetail.manageImages}
                   </Link>
+                  <Link
+                    to={`/properties/${property.id || property._id}/virtual-visit`}
+                    className="btn-view sidebar-action-link"
+                  >
+                    3D Virtual Tour
+                  </Link>
                   <button
                     className="btn-delete btn-delete-full"
                     onClick={handleDelete}
@@ -1320,6 +1991,16 @@ export default function PropertyDetailPage() {
                   >
                     {t.propertyDetail.aiDescription.cta}
                   </button>
+                  {property.images && property.images.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-ai-trigger"
+                      onClick={() => setStagingOpen(true)}
+                      style={{ width: "100%" }}
+                    >
+                      AI Virtual Staging
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1331,6 +2012,14 @@ export default function PropertyDetailPage() {
                 snapshot={buildAiSnapshot()}
                 propertyId={property.id || property._id}
                 onApply={handleApplyAiDescription}
+              />
+            )}
+
+            {canManage && stagingOpen && (
+              <VirtualStagingPanel
+                images={property.images || []}
+                propertyId={property.id || property._id || ""}
+                onClose={() => setStagingOpen(false)}
               />
             )}
 
@@ -1359,6 +2048,12 @@ export default function PropertyDetailPage() {
               <div className="sidebar-card">
                 <h3>{t.propertyDetail.info}</h3>
                 <div className="property-meta-info">
+                  {property.agency?.name && (
+                    <p>
+                      <strong>{t.propertyDetail.agency}:</strong>{" "}
+                      {property.agency.name}
+                    </p>
+                  )}
                   <p>
                     <strong>{t.propertyDetail.propertyId}:</strong>{" "}
                     {property.id || property._id}
