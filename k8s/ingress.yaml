@@ -4,7 +4,6 @@ metadata:
   name: smartproperty-ingress
   namespace: smartproperty
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
@@ -14,13 +13,6 @@ spec:
     - host: smartproperty.local
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 80
           - path: /api
             pathType: Prefix
             backend:
@@ -35,6 +27,13 @@ spec:
                 name: mailhog
                 port:
                   number: 8025
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
 ---
 # MinIO Ingress (separate host)
 apiVersion: networking.k8s.io/v1
