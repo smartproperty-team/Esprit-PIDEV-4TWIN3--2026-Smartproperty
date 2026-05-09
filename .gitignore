@@ -109,3 +109,4 @@ backend/dist/tsconfig.build.tsbuildinfo
 /.venv311
 smartproperty-backend.tar
 smartproperty-frontend.tar
+.claude/worktrees/determined-ishizaka-ef18e8/
