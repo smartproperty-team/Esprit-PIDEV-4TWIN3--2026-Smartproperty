@@ -53,6 +53,9 @@ const ApplicationsReviewPage = lazy(
 const TenantApplicationsPage = lazy(
   () => import("./pages/applications/TenantApplicationsPage"),
 );
+const ApplicationHistoryPage = lazy(
+  () => import("./pages/applications/ApplicationHistoryPage"),
+);
 
 // Leases
 const LeasesWorkspacePage = lazy(
@@ -182,6 +185,7 @@ function getPageTitle(path: string, search: string): string {
     "/sessions": "Session Settings",
     "/verification": "Verification",
     "/applications": "My Applications",
+    "/applications/history": "Application History",
     "/applications/review": "Review Applications",
     "/favorites": "My Favorites",
     "/reviews/moderation": "Review Moderation",
@@ -370,6 +374,18 @@ function App() {
               <ProtectedRoute>
                 {isTenant(user) ? (
                   <TenantApplicationsPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/applications/history"
+            element={
+              <ProtectedRoute>
+                {isTenant(user) ? (
+                  <ApplicationHistoryPage />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )}
