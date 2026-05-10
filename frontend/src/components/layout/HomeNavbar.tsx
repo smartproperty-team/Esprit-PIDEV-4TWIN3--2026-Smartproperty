@@ -5,23 +5,16 @@ import {
   getAccessToken,
   getRefreshToken,
   notificationService,
-<<<<<<< Updated upstream
-} from "@/services";
-import type { Notification } from "@/services/notification.service";
-import { useAuthStore, usePreferencesStore } from "@/store";
+} from '@/services';
+import type { Notification } from '@/services/notification.service';
+import { useAuthStore, usePreferencesStore } from '@/store';
 import {
   canManageFavorites,
   canModerateReviews,
   isOwner,
   isTenant,
   prefetchRoute,
-} from "@/utils";
-=======
-} from '@/services';
-import type { Notification } from '@/services/notification.service';
-import { useAuthStore, usePreferencesStore } from '@/store';
-import { isOwner, isTenant, prefetchRoute } from '@/utils';
->>>>>>> Stashed changes
+} from '@/utils';
 import {
   BellRing,
   ChevronDown,
@@ -575,10 +568,10 @@ export default function HomeNavbar() {
                       type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
-                        navigate("/favorites");
+                        navigate('/favorites');
                       }}
-                      onMouseEnter={() => handleRoutePrefetch("/favorites")}
-                      onFocus={() => handleRoutePrefetch("/favorites")}
+                      onMouseEnter={() => handleRoutePrefetch('/favorites')}
+                      onFocus={() => handleRoutePrefetch('/favorites')}
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <span className="mr-3">★</span>
@@ -590,12 +583,12 @@ export default function HomeNavbar() {
                       type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
-                        navigate("/reviews/moderation");
+                        navigate('/reviews/moderation');
                       }}
                       onMouseEnter={() =>
-                        handleRoutePrefetch("/reviews/moderation")
+                        handleRoutePrefetch('/reviews/moderation')
                       }
-                      onFocus={() => handleRoutePrefetch("/reviews/moderation")}
+                      onFocus={() => handleRoutePrefetch('/reviews/moderation')}
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <span className="mr-3">🛡</span>

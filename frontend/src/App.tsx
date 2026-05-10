@@ -20,22 +20,13 @@ import {
   RegisterPage,
   ResetPasswordPage,
   VerifyEmailPage,
-<<<<<<< Updated upstream
-} from "./pages/auth";
-import { HomePage, PaletteDemoPage } from "./pages/home";
-import { LeasesWorkspacePage } from "./pages/leases";
-import { PreferencesOnboardingModal } from "./pages/onboarding";
-import authService from "./services/auth.service";
-import { pushNotificationService } from "./services/push-notification.service";
-import { useAuthStore, usePreferencesStore } from "./store";
-=======
 } from './pages/auth';
 import { HomePage, PaletteDemoPage } from './pages/home';
+import { LeasesWorkspacePage } from './pages/leases';
 import { PreferencesOnboardingModal } from './pages/onboarding';
 import authService from './services/auth.service';
 import { pushNotificationService } from './services/push-notification.service';
 import { useAuthStore, usePreferencesStore } from './store';
->>>>>>> Stashed changes
 import {
   canAccessAdminUsers,
   canAccessLeases,
@@ -52,14 +43,6 @@ import {
   isTenant,
 } from './utils';
 
-<<<<<<< Updated upstream
-const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
-const VerificationPage = lazy(
-  () => import("./pages/dashboard/VerificationPage"),
-);
-const AdminVerificationPage = lazy(
-  () => import("./pages/dashboard/AdminVerificationPage"),
-=======
 const formatError = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
@@ -95,7 +78,6 @@ const lazyWithSafeError = <T extends ComponentType<any>>(
 
 const DashboardPage = lazyWithSafeError(
   () => import('./pages/dashboard/DashboardPage'),
->>>>>>> Stashed changes
 );
 const VerificationPage = lazyWithSafeError(
   () => import('./pages/dashboard/VerificationPage'),
@@ -125,8 +107,8 @@ const PropertyFormPage = lazyWithSafeError(
 const PropertyDetailPage = lazyWithSafeError(
   () => import('./pages/properties/PropertyDetailPage'),
 );
-const VirtualVisitFormPage = lazy(
-  () => import("./pages/properties/VirtualVisitFormPage"),
+const VirtualVisitFormPage = lazyWithSafeError(
+  () => import('./pages/properties/VirtualVisitFormPage'),
 );
 
 const SettingsPage = lazyWithSafeError(
@@ -144,9 +126,11 @@ const ServiceProviderMaintenancePage = lazyWithSafeError(
 const MessagingPage = lazyWithSafeError(
   () => import('./components/messaging/MessagingPage'),
 );
-const FavoritesPage = lazy(() => import("./pages/favorites/FavoritesPage"));
-const ReviewModerationPage = lazy(
-  () => import("./pages/reviews/ReviewModerationPage"),
+const FavoritesPage = lazyWithSafeError(
+  () => import('./pages/favorites/FavoritesPage'),
+);
+const ReviewModerationPage = lazyWithSafeError(
+  () => import('./pages/reviews/ReviewModerationPage'),
 );
 
 function RouteLoadingFallback() {
@@ -191,35 +175,6 @@ function getPageTitle(path: string, search: string): string {
   }
 
   const exactTitles: Record<string, string> = {
-<<<<<<< Updated upstream
-    "/": "Home",
-    "/design/palette": "Design Palette",
-    "/login": "Sign In",
-    "/register": "Register",
-    "/forgot-password": "Forgot Password",
-    "/reset-password": "Reset Password",
-    "/verify-email": "Verify Email",
-    "/dashboard": "Dashboard",
-    "/sessions": "Session Settings",
-    "/verification": "Verification",
-    "/applications": "My Applications",
-    "/applications/review": "Review Applications",
-    "/favorites": "My Favorites",
-    "/reviews/moderation": "Review Moderation",
-    "/leases": "Leases",
-    "/super-administrator/verifications": "Admin Verifications",
-    "/super-administrator/users": "Admin Users",
-    "/branch-manager/agencies": "My Agencies",
-    "/branch-manager/agencies/new": "Agency Onboarding",
-    "/profile": "Account Settings",
-    "/security/2fa": "Security Settings",
-    "/properties": "Properties",
-    "/properties/mine": "My Properties",
-    "/properties/new": "Add Property",
-    "/maintenance/requests/new": "Maintenance Request",
-    "/maintenance/requests/mine": "My Maintenance Status",
-    "/maintenance/requests/assigned": "Assigned Maintenance",
-=======
     '/': 'Home',
     '/design/palette': 'Design Palette',
     '/login': 'Sign In',
@@ -232,6 +187,9 @@ function getPageTitle(path: string, search: string): string {
     '/verification': 'Verification',
     '/applications': 'My Applications',
     '/applications/review': 'Review Applications',
+    '/favorites': 'My Favorites',
+    '/reviews/moderation': 'Review Moderation',
+    '/leases': 'Leases',
     '/super-administrator/verifications': 'Admin Verifications',
     '/super-administrator/users': 'Admin Users',
     '/branch-manager/agencies': 'My Agencies',
@@ -245,7 +203,6 @@ function getPageTitle(path: string, search: string): string {
     '/maintenance/requests/mine': 'My Maintenance Status',
     '/maintenance/requests/assigned': 'Assigned Maintenance',
     '/messaging': 'Messages',
->>>>>>> Stashed changes
   };
 
   if (exactTitles[path]) {
@@ -438,7 +395,6 @@ function App() {
             }
           />
           <Route
-<<<<<<< Updated upstream
             path="/favorites"
             element={
               <ProtectedRoute>
@@ -483,14 +439,14 @@ function App() {
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )}
-=======
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/messaging"
             element={
               <ProtectedRoute>
-                <Suspense fallback={<RouteLoadingFallback />}>
-                  <MessagingPage />
-                </Suspense>
->>>>>>> Stashed changes
+                <MessagingPage />
               </ProtectedRoute>
             }
           />

@@ -4,25 +4,15 @@
 // WCAG 2.1 AA Compliant
 // ===========================================
 
-<<<<<<< Updated upstream
-import { HomeFooter, Navbar } from "@/components/layout";
-import { useTranslation } from "@/i18n";
-import { propertyService } from "@/services/property.service";
-import { useAuthStore, usePreferencesStore } from "@/store";
-import { UserRole } from "@/types/auth";
-import type { Property as BackendProperty } from "@/types/property";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "./home3.css";
-=======
 import { HomeFooter, Navbar } from '@/components/layout';
 import { useTranslation } from '@/i18n';
 import { propertyService } from '@/services/property.service';
+import { useAuthStore, usePreferencesStore } from '@/store';
+import { UserRole } from '@/types/auth';
 import type { Property as BackendProperty } from '@/types/property';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './home3.css';
->>>>>>> Stashed changes
 
 // City data - Famous cities in Tunisia
 const cities = [
@@ -345,25 +335,17 @@ function RentalPropertyCard({ property }: { property: BackendProperty }) {
 
 export default function HomePage() {
   const t = useTranslation();
-<<<<<<< Updated upstream
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const currentUserPreferences = usePreferencesStore((state) =>
     user?.id ? state.getUserPreferences(user.id) : undefined,
   );
-  const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [roomFilter, setRoomFilter] = useState("");
-  const [priceFilter, setPriceFilter] = useState("");
-=======
   const [activeTab, setActiveTab] = useState<'sale' | 'rent'>('sale');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [roomFilter, setRoomFilter] = useState('');
   const [priceFilter, setPriceFilter] = useState('');
->>>>>>> Stashed changes
   const [properties, setProperties] = useState<BackendProperty[]>([]);
   const mainContentRef = useRef<HTMLElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -489,23 +471,14 @@ export default function HomePage() {
       e.preventDefault();
       // Navigate to search results
       const params = new URLSearchParams();
-<<<<<<< Updated upstream
-      params.set("listingType", activeTab);
-      if (propertyType) params.set("type", propertyType);
-      if (searchQuery) params.set("search", searchQuery);
-      if (roomFilter) params.set("bedrooms", roomFilter);
-      if (priceFilter) params.set("priceRange", priceFilter);
-      navigate(`/properties?${params.toString()}`);
-=======
       params.set('listingType', activeTab);
       if (propertyType) params.set('type', propertyType);
       if (searchQuery) params.set('search', searchQuery);
       if (roomFilter) params.set('bedrooms', roomFilter);
       if (priceFilter) params.set('priceRange', priceFilter);
-      window.location.href = `/properties?${params.toString()}`;
->>>>>>> Stashed changes
+      navigate(`/properties?${params.toString()}`);
     },
-    [activeTab, priceFilter, propertyType, roomFilter, searchQuery],
+    [activeTab, navigate, priceFilter, propertyType, roomFilter, searchQuery],
   );
 
   // Skip to main content
