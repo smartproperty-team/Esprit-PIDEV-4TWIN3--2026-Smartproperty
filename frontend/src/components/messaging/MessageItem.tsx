@@ -21,7 +21,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onDelete,
 }) => {
   const readByCount = useMemo(() => {
-    return Object.keys(message.readBy).length;
+    return Object.keys(message.readBy ?? {}).length;
   }, [message.readBy]);
 
   return (
