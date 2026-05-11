@@ -146,7 +146,6 @@ interface PendingImage {
 }
 
 const initialFormData: FormData = {
-<<<<<<< Updated upstream
   title: "",
   description: "",
   type: "apartment",
@@ -156,15 +155,6 @@ const initialFormData: FormData = {
   currency: "TND",
   virtualTour: "",
   generateVirtualTourFromPhotos: false,
-=======
-  title: '',
-  description: '',
-  type: 'apartment',
-  category: 'rental',
-  status: 'available',
-  price: '',
-  currency: 'TND',
->>>>>>> Stashed changes
   address: {
     street: '',
     city: '',

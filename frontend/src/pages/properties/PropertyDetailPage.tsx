@@ -2,7 +2,6 @@
 // SmartProperty - Property Detail Page
 // ===========================================
 
-<<<<<<< Updated upstream
 import { HomeFooter, Navbar } from "@/components/layout";
 import AiDescriptionPanel from "@/components/properties/AiDescriptionPanel";
 import HotspotEditor from "@/components/properties/HotspotEditor";
@@ -12,17 +11,10 @@ import VirtualTourViewer from "@/components/properties/VirtualTourViewer";
 import PropertyReviewsSection from "@/components/reviews/PropertyReviewsSection";
 import { useTranslation } from "@/i18n";
 import applicationService from "@/services/application.service";
-=======
-import { HomeFooter, Navbar } from '@/components/layout';
-import AiDescriptionPanel from '@/components/properties/AiDescriptionPanel';
-import { useTranslation } from '@/i18n';
-import applicationService from '@/services/application.service';
->>>>>>> Stashed changes
 import {
   propertyService,
   type AiPropertySnapshot,
   type PropertyShareData,
-<<<<<<< Updated upstream
 } from "@/services/property.service";
 import reviewsFavoritesService from "@/services/reviews-favorites.service";
 import { useAuthStore } from "@/store";
@@ -47,20 +39,6 @@ import {
 } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "./properties.css";
-=======
-} from '@/services/property.service';
-import { useAuthStore } from '@/store';
-import { ApplicationStatus } from '@/types/application';
-import type { Property, PropertyImage } from '@/types/property';
-import { canManageProperties, isTenant } from '@/utils';
-import L from 'leaflet';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-import 'leaflet/dist/leaflet.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import './properties.css';
 
 const formatError = (error: unknown): string => {
   if (error instanceof Error) {
@@ -77,7 +55,6 @@ const formatError = (error: unknown): string => {
     return String(error);
   }
 };
->>>>>>> Stashed changes
 
 const ACTIVE_APPLICATION_STATUSES = new Set<ApplicationStatus>([
   ApplicationStatus.SUBMITTED,
@@ -697,12 +674,9 @@ function ImageGallery({ images }: ImageGalleryProps) {
         <img
           src={mainImage?.url}
           alt={mainImage?.caption || t.propertyDetail.galleryAlt}
-<<<<<<< Updated upstream
-=======
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/placeholder-property.svg';
           }}
->>>>>>> Stashed changes
         />
       </div>
       {images.length > 1 && (
@@ -717,28 +691,21 @@ function ImageGallery({ images }: ImageGalleryProps) {
             >
               <img
                 src={img.url}
-<<<<<<< Updated upstream
                 alt={
                   img.caption || `${t.propertyDetail.galleryAlt} ${index + 2}`
                 }
-              />
-              {images.length > 5 && index === 3 && (
-                <div className="gallery-more">+{images.length - 5}</div>
-=======
-                alt={img.caption || t.propertyDetail.galleryAlt}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
                     '/placeholder-property.svg';
                 }}
               />
-              {index === 1 && images.length > 3 && (
+              {images.length > 5 && index === 3 && (
                 <div className="gallery-more">
                   {t.propertyDetail.morePhotos.replace(
                     '{{count}}',
-                    String(images.length - 3),
+                    String(images.length - 5),
                   )}
                 </div>
->>>>>>> Stashed changes
               )}
             </button>
           ))}

@@ -15,18 +15,11 @@ import type {
   PropertyFilters,
   PropertyStatus,
   PropertyType,
-<<<<<<< Updated upstream
 } from "@/types/property";
 import { canManageFavorites, canManageProperties, isOwner } from "@/utils";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import "./properties.css";
-=======
-} from '@/types/property';
-import { canManageProperties, isOwner } from '@/utils';
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import './properties.css';
 
 const formatError = (error: unknown): string => {
   if (error instanceof Error) {
@@ -43,7 +36,6 @@ const formatError = (error: unknown): string => {
     return String(error);
   }
 };
->>>>>>> Stashed changes
 
 // ===========================================
 // Icons
