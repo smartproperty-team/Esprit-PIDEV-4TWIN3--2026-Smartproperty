@@ -1046,7 +1046,7 @@ export default function DashboardPage() {
     }
 
     if (isTenant(user)) {
-      navigate("/applications");
+      navigate("/applications/history");
     }
   };
 

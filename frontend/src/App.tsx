@@ -35,9 +35,7 @@ const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const ForgotPasswordPage = lazy(
   () => import("./pages/auth/ForgotPasswordPage"),
 );
-const ResetPasswordPage = lazy(
-  () => import("./pages/auth/ResetPasswordPage"),
-);
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage"));
 const GoogleCallbackPage = lazy(
   () => import("./pages/auth/GoogleCallbackPage"),
@@ -53,6 +51,9 @@ const ApplicationsReviewPage = lazy(
 const TenantApplicationsPage = lazy(
   () => import("./pages/applications/TenantApplicationsPage"),
 );
+const ApplicationHistoryPage = lazy(
+  () => import("./pages/applications/ApplicationHistoryPage"),
+);
 
 // Leases
 const LeasesWorkspacePage = lazy(
@@ -64,11 +65,10 @@ const PaletteDemoPage = lazy(() => import("./pages/home/PaletteDemoPage"));
 const PreferencesOnboardingModal = lazy(
   () => import("./pages/onboarding/PreferencesOnboardingModal"),
 );
-const PushNotificationTestButton = lazy(
-  () =>
-    import("./components/notifications/PushNotificationTestButton").then(
-      (m) => ({ default: m.PushNotificationTestButton }),
-    ),
+const PushNotificationTestButton = lazy(() =>
+  import("./components/notifications/PushNotificationTestButton").then((m) => ({
+    default: m.PushNotificationTestButton,
+  })),
 );
 
 // Dashboard pages
@@ -117,6 +117,8 @@ const FavoritesPage = lazy(() => import("./pages/favorites/FavoritesPage"));
 const ReviewModerationPage = lazy(
   () => import("./pages/reviews/ReviewModerationPage"),
 );
+
+const ContactPage = lazy(() => import("./pages/contact/ContactPage"));
 
 const PaymentInitiatePage = lazy(() =>
   import("./pages/payments").then((m) => ({
@@ -172,6 +174,7 @@ function getPageTitle(path: string, search: string): string {
 
   const exactTitles: Record<string, string> = {
     "/": "Home",
+    "/contact": "Contact",
     "/design/palette": "Design Palette",
     "/login": "Sign In",
     "/register": "Register",
@@ -182,6 +185,7 @@ function getPageTitle(path: string, search: string): string {
     "/sessions": "Session Settings",
     "/verification": "Verification",
     "/applications": "My Applications",
+    "/applications/history": "Application History",
     "/applications/review": "Review Applications",
     "/favorites": "My Favorites",
     "/reviews/moderation": "Review Moderation",
@@ -306,6 +310,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/design/palette" element={<PaletteDemoPage />} />
           <Route
             path="/login"
@@ -370,6 +375,18 @@ function App() {
               <ProtectedRoute>
                 {isTenant(user) ? (
                   <TenantApplicationsPage />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/applications/history"
+            element={
+              <ProtectedRoute>
+                {isTenant(user) ? (
+                  <ApplicationHistoryPage />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )}
