@@ -118,6 +118,8 @@ const ReviewModerationPage = lazy(
   () => import("./pages/reviews/ReviewModerationPage"),
 );
 
+const ContactPage = lazy(() => import("./pages/contact/ContactPage"));
+
 const PaymentInitiatePage = lazy(() =>
   import("./pages/payments").then((m) => ({
     default: m.PaymentInitiatePage,
@@ -172,6 +174,7 @@ function getPageTitle(path: string, search: string): string {
 
   const exactTitles: Record<string, string> = {
     "/": "Home",
+    "/contact": "Contact",
     "/design/palette": "Design Palette",
     "/login": "Sign In",
     "/register": "Register",
@@ -307,6 +310,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/design/palette" element={<PaletteDemoPage />} />
           <Route
             path="/login"

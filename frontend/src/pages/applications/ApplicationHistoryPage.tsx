@@ -108,7 +108,9 @@ function ApplicationSummaryCard({ application }: { application: Application }) {
           <p className="mt-1 font-medium text-slate-900">{label}</p>
         </div>
         <div className="rounded-2xl bg-slate-50 p-3">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Owner</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Owner
+          </p>
           <p className="mt-1 font-medium text-slate-900">
             {application.ownerName || "Not available"}
           </p>
@@ -143,7 +145,9 @@ function ApplicationSummaryCard({ application }: { application: Application }) {
       {isActiveApplication && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Active application</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Active application
+            </p>
             <p className="text-xs text-slate-500">
               You can cancel this request before it is approved or disapproved.
             </p>
@@ -405,7 +409,9 @@ export default function ApplicationHistoryPage() {
                   type="button"
                   onClick={() => setView(card.key)}
                   className={`text-left transition-transform duration-200 hover:-translate-y-0.5 ${
-                    isActive ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-gray-50" : ""
+                    isActive
+                      ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-gray-50"
+                      : ""
                   }`}
                 >
                   <Card className="h-full overflow-hidden border-slate-200 shadow-sm shadow-slate-100">
@@ -416,7 +422,9 @@ export default function ApplicationHistoryPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-end justify-between gap-4">
-                      <p className={`text-3xl font-black tracking-tight ${card.tone}`}>
+                      <p
+                        className={`text-3xl font-black tracking-tight ${card.tone}`}
+                      >
                         {loading ? "…" : card.value}
                       </p>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -454,19 +462,21 @@ export default function ApplicationHistoryPage() {
             </Card>
           ) : (
             <div className="space-y-8">
-              {visibleSections.includes("current") && renderSection(
-                "Current applications",
-                "No response yet until reviewed",
-                currentApplications,
-                "No current applications waiting for a response.",
-              )}
+              {visibleSections.includes("current") &&
+                renderSection(
+                  "Current applications",
+                  "No response yet until reviewed",
+                  currentApplications,
+                  "No current applications waiting for a response.",
+                )}
 
-              {visibleSections.includes("completed") && renderSection(
-                "Past applications",
-                "Approved, disapproved, or withdrawn",
-                pastApplications,
-                "You do not have any completed applications yet.",
-              )}
+              {visibleSections.includes("completed") &&
+                renderSection(
+                  "Past applications",
+                  "Approved, disapproved, or withdrawn",
+                  pastApplications,
+                  "You do not have any completed applications yet.",
+                )}
             </div>
           )}
         </div>

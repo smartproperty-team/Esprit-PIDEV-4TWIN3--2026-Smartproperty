@@ -379,10 +379,7 @@ export default function PropertyFormPage() {
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
       return isValid && isValidSize;
     });
-    setImages((prev) => [
-      ...prev,
-      ...validFiles.map((f) => ({ file: f })),
-    ]);
+    setImages((prev) => [...prev, ...validFiles.map((f) => ({ file: f }))]);
   };
 
   // Handle image removal
@@ -421,10 +418,7 @@ export default function PropertyFormPage() {
     const files = Array.from(e.dataTransfer.files).filter((file) =>
       file.type.startsWith("image/"),
     );
-    setImages((prev) => [
-      ...prev,
-      ...files.map((f) => ({ file: f })),
-    ]);
+    setImages((prev) => [...prev, ...files.map((f) => ({ file: f }))]);
   };
 
   // Validate form
@@ -1191,23 +1185,26 @@ export default function PropertyFormPage() {
 
             {images.length > 0 && (
               <div className="image-preview-grid">
-                  {images.map((img, index) => (
-                    <div key={`${img.file.name}-${index}`} className="image-preview-item">
-                      <img
-                         src={URL.createObjectURL(img.file)}
-                         alt={`Preview ${index + 1}`}
-                      />
-                      <button
-                        type="button"
-                        className="image-preview-remove"
-                        onClick={() => handleRemoveImage(index)}
-                        aria-label={`Remove image ${index + 1}`}
-                      >
-                        <CloseIcon />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                {images.map((img, index) => (
+                  <div
+                    key={`${img.file.name}-${index}`}
+                    className="image-preview-item"
+                  >
+                    <img
+                      src={URL.createObjectURL(img.file)}
+                      alt={`Preview ${index + 1}`}
+                    />
+                    <button
+                      type="button"
+                      className="image-preview-remove"
+                      onClick={() => handleRemoveImage(index)}
+                      aria-label={`Remove image ${index + 1}`}
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Description (final step) - generated from the data entered in
